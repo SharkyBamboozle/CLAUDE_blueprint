@@ -141,12 +141,7 @@ the ADR lock protects the blueprint's own decisions.
      — Full mechanics in GitHub's guide:
      [Creating a repository from a template](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
    - **B · `gh` CLI**: `gh repo create MyNewProject --private --template SharkyBamboozle/CLAUDE_blueprint --clone`.
-
-   Either route, **choose visibility deliberately** — a private repo's Pages
-   site can still be publicly reachable, so the choice interacts with the
-   docs-to-Pages publishing setup (see #3).
-2. In the new repo — a local clone **or** a cloud Claude session opened
-   directly on it — start a Claude session: **"Run BOOTSTRAP.md."**
+2. Open a Claude session in the clone: **"Run BOOTSTRAP.md."**
 3. The session interviews you (name, one-liner, domain areas, binary-policy
    posture, which modules, whether to publish docs to Pages — default off),
    fills the placeholders, writes the judgment
