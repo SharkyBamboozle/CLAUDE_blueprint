@@ -6,4 +6,4 @@ pymdown-extensions>=11.0.1
 # Direct dep: scripts/check_ci_gates.py (the D-004 meta-gate) imports PyYAML,
 # and its ImportError points users here — so name it, don't rely on mkdocs
 # pulling it in transitively.
-pyyaml>=6
+pyyaml>=6.0.3
