@@ -26,6 +26,12 @@ Ask the user (skip anything already answered in their invoking message):
    and the architecture seams), `data-repo`? (then: artifact kinds;
    `{{DATA_REPO}}` = `<slug>-data` unless told otherwise), `lfs-assets`?
    (then: asset types/dirs).
+6. **Docs publishing** — publish docs to GitHub Pages on each merge to
+   `development`/`main`? **(default: no.)** For **private** projects, keep
+   this **off** — a published Pages site can be publicly reachable and would
+   leak sensitive project information. Enable only if the docs are meant to be
+   public, understanding that every merge then publishes them. → drives the
+   `--deploy-docs` flag on `scripts/github_setup.sh` (see step 8).
 
 ## 2 · Apply the core
 
@@ -91,8 +97,9 @@ Fix and re-run until green. Do not rationalize a red gate.
 ## 6 · Write POST_INIT_CHECKLIST.md
 
 Everything that couldn't be done here, as a checklist the user works
-through: `scripts/github_setup.sh` invocation (with `--areas`; required
-checks default to the template's own shipped gates) **if `gh` was
+through: `scripts/github_setup.sh` invocation (with `--areas`, and
+`--deploy-docs` only if Pages publishing was chosen in the interview;
+required checks default to the template's own shipped gates) **if `gh` was
 unavailable in this session — write the exact command**; `git lfs install` (per machine, if lfs-assets);
 data-repo creation steps (if that module was chosen but `gh` unavailable —
 create the repo and push the **preserved `data-repo-seed/`** the module
@@ -141,11 +148,14 @@ re-run until green before committing.
    `main` before bootstrapping), stop and ask the user to run or approve
    the push — do not work around the hook.
 3. If `gh` is available: run
-   `scripts/github_setup.sh --areas "<areas>"`
+   `scripts/github_setup.sh --areas "<areas>"` — append `--deploy-docs` only
+   if the user opted into Pages publishing (interview Q6; default off, and off
+   for private projects)
    (creates `development`, makes it default, protection with the shipped
-   gates as required checks, Pages, labels). Do not pass `--require-check`
-   unless deliberately overriding the defaults — an explicit list replaces
-   them. Otherwise it's the top item of POST_INIT_CHECKLIST.md.
+   gates as required checks, labels; a Pages site + deploy only with
+   `--deploy-docs`). Do not pass `--require-check` unless deliberately
+   overriding the defaults — an explicit list replaces them. Otherwise it's
+   the top item of POST_INIT_CHECKLIST.md.
 4. Report to the user: what was applied, what's in the checklist, and a
    suggested first move (usually `/epic-kickoff` for the first slice of
    work).

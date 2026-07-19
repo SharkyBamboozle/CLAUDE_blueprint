@@ -109,7 +109,10 @@ cards under `.claude/skills/`):
 
 **🔧 GitHub wiring a template can't carry, scripted:** `scripts/github_setup.sh`
 idempotently creates the integration branch, branch protection with the
-shipped checks required, the label taxonomy, and Pages deployment.
+shipped checks required, and the label taxonomy. Publishing the docs to
+GitHub Pages is opt-in (`--deploy-docs`, default off): a private repo's Pages
+site can be publicly reachable, so a seeded project doesn't publish until its
+owner asks.
 
 ![What a seeded project gets](blueprint/assets/README_what_a_seeded_project_gets.png)
 
@@ -135,7 +138,8 @@ the ADR lock protects the blueprint's own decisions.
 1. `gh repo create MyNewProject --private --template SharkyBamboozle/CLAUDE_blueprint --clone`
 2. Open a Claude session in the clone: **"Run BOOTSTRAP.md."**
 3. The session interviews you (name, one-liner, domain areas, binary-policy
-   posture, which modules), fills the placeholders, writes the judgment
+   posture, which modules, whether to publish docs to Pages — default off),
+   fills the placeholders, writes the judgment
    sections, passes the completion gate (`scripts/check_bootstrap_complete.sh`
    — no unfilled tokens, no unresolved judgment markers, including this
    README), deletes the blueprint machinery, commits *"Initialize from
