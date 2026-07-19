@@ -135,8 +135,13 @@ the ADR lock protects the blueprint's own decisions.
 
 ## 🚀 Instantiating a new project
 
-1. `gh repo create MyNewProject --private --template SharkyBamboozle/CLAUDE_blueprint --clone`
-2. Open a Claude session in the clone: **"Run BOOTSTRAP.md."**
+1. **Create the repo from this template — pick one route:**
+   - **A · GitHub UI** (recommended for most):
+     [![Use this template](https://img.shields.io/badge/template-use%20this%20repo-2ea44f?logo=github)](https://github.com/SharkyBamboozle/CLAUDE_blueprint/generate)
+     — Full mechanics in GitHub's guide:
+     [Creating a repository from a template](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+   - **B · `gh` CLI**: `gh repo create MyNewProject --private --template SharkyBamboozle/CLAUDE_blueprint --clone`.
+2. Point a Claude session at the new repo: **"Run BOOTSTRAP.md."**
 3. The session interviews you (name, one-liner, domain areas, binary-policy
    posture, which modules, whether to publish docs to Pages — default off),
    fills the placeholders, writes the judgment
