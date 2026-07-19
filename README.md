@@ -136,12 +136,9 @@ the ADR lock protects the blueprint's own decisions.
 ## 🚀 Instantiating a new project
 
 1. **Create the repo from this template — pick one route:**
-   - **A · GitHub UI** (recommended for most): click the
-     **[Use this template](https://github.com/SharkyBamboozle/CLAUDE_blueprint/generate)**
-     badge at the top of this README — it links straight to the
-     create-from-template page, no button-hunting — then name the repo, choose
-     owner + visibility, and **Create repository**. Full mechanics in GitHub's
-     guide:
+   - **A · GitHub UI** (recommended for most):
+     [![Use this template](https://img.shields.io/badge/template-use%20this%20repo-2ea44f?logo=github)](https://github.com/SharkyBamboozle/CLAUDE_blueprint/generate)
+     — Full mechanics in GitHub's guide:
      [Creating a repository from a template](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
    - **B · `gh` CLI**: `gh repo create MyNewProject --private --template SharkyBamboozle/CLAUDE_blueprint --clone`.
 
