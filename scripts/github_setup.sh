@@ -7,12 +7,12 @@
 # Usage:
 #   scripts/github_setup.sh [-R owner/repo] [--profile code|data]
 #                           [--areas "name1,name2"] [--require-check <ctx>]...
+#                           [--deploy-docs]
 #
 #   -R               target repo (default: origin of the current directory)
 #   --profile code   full setup: labels, development branch (made default),
-#                    branch protection, Pages via Actions + github-pages
-#                    environment branch policy, DEPLOY_DOCS variable, merge
-#                    settings. (default)
+#                    branch protection, merge settings. (default) Publishing
+#                    docs to GitHub Pages is OFF unless --deploy-docs is given.
 #   --profile data   paired data repo: labels + anti-force-push protection
 #                    only (no development branch, no Pages — data repos take
 #                    direct pushes from tooling).
@@ -20,6 +20,12 @@
 #   --require-check  a status-check context required on main (repeatable);
 #                    default when omitted: build + flow-guard — the two jobs
 #                    the template itself ships (docs.yml, branch-flow-guard.yml)
+#   --deploy-docs    (code profile) opt IN to publishing docs to GitHub Pages
+#                    on merges to development/main: provisions the Pages site,
+#                    the github-pages env branch policy, and DEPLOY_DOCS=true.
+#                    Default OFF — publishing is outward-facing, and on GitHub
+#                    Free a private repo's Pages site can be publicly reachable
+#                    (#3). The strict-build merge gate runs either way.
 #
 # Requires: gh (authenticated with repo admin), python3 + PyYAML (labels).
 # Not scriptable here (do manually if wanted): secrets, Pages custom domain,
@@ -30,12 +36,14 @@ PROFILE=code
 AREAS=""
 CHECKS=()
 REPO=""
+DEPLOY_DOCS_OPT=false   # docs publishing is opt-in, default off (#3)
 while [ $# -gt 0 ]; do
   case "$1" in
     -R) REPO="$2"; shift 2 ;;
     --profile) PROFILE="$2"; shift 2 ;;
     --areas) AREAS="$2"; shift 2 ;;
     --require-check) CHECKS+=("$2"); shift 2 ;;
+    --deploy-docs) DEPLOY_DOCS_OPT=true; shift ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -113,27 +121,47 @@ JSON
 JSON
   echo "protected: development (no force-push; required check: build)"
 
-  # --- GitHub Pages via Actions + environment branch policy ---------------
-  # The silent-breakage trap: the github-pages environment must ALLOW deploys
-  # from development as well as main, or the deploy job is rejected for any
-  # non-default branch. docs.yml deploys only when DEPLOY_DOCS=true.
-  if ! gh api "repos/$REPO/pages" >/dev/null 2>&1; then
-    gh api -X POST "repos/$REPO/pages" -f build_type=workflow >/dev/null
-    echo "pages: created (source = GitHub Actions)"
-  else
-    gh api -X PUT "repos/$REPO/pages" -f build_type=workflow >/dev/null
-    echo "pages: source = GitHub Actions"
-  fi
-  gh api -X PUT "repos/$REPO/environments/github-pages" --input - >/dev/null <<'JSON'
+  # --- GitHub Pages via Actions: OPT-IN, default OFF (#3) ------------------
+  # Publishing docs is an outward-facing act, so it is the owner's decision,
+  # not a default. A freshly-seeded project is still full of {{TOKEN}}
+  # placeholders and half-written vision; default-on would push all of that to
+  # a public URL on the first merge to development/main, before the owner chose
+  # to publish (CLAUDE.md's autonomy contract lists "publishes anything" as a
+  # stop-and-ask). And on GitHub Free a *private* repo's Pages site can still
+  # be publicly reachable, so default-on could leak a deliberately-private
+  # project. --deploy-docs opts in: it provisions the Pages site, the env
+  # branch policy, and DEPLOY_DOCS=true together. Only publishing is gated —
+  # the strict-build merge gate (docs.yml `build`) runs regardless.
+  if [ "$DEPLOY_DOCS_OPT" = true ]; then
+    # The silent-breakage trap: the github-pages environment must ALLOW deploys
+    # from development as well as main, or the deploy job is rejected for any
+    # non-default branch. docs.yml deploys only when DEPLOY_DOCS=true.
+    if ! gh api "repos/$REPO/pages" >/dev/null 2>&1; then
+      gh api -X POST "repos/$REPO/pages" -f build_type=workflow >/dev/null
+      echo "pages: created (source = GitHub Actions)"
+    else
+      gh api -X PUT "repos/$REPO/pages" -f build_type=workflow >/dev/null
+      echo "pages: source = GitHub Actions"
+    fi
+    gh api -X PUT "repos/$REPO/environments/github-pages" --input - >/dev/null <<'JSON'
 {"deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
 JSON
-  for BR in main development; do
-    gh api -X POST "repos/$REPO/environments/github-pages/deployment-branch-policies" \
-      -f name="$BR" >/dev/null 2>&1 || true   # 422 = policy already exists
-  done
-  echo "pages env: deploys allowed from main + development"
-  gh variable set DEPLOY_DOCS -b "true" -R "$REPO"
-  echo "variable: DEPLOY_DOCS=true (docs.yml deploy job enabled)"
+    for BR in main development; do
+      gh api -X POST "repos/$REPO/environments/github-pages/deployment-branch-policies" \
+        -f name="$BR" >/dev/null 2>&1 || true   # 422 = policy already exists
+    done
+    echo "pages env: deploys allowed from main + development"
+    gh variable set DEPLOY_DOCS -b "true" -R "$REPO"
+    echo "variable: DEPLOY_DOCS=true (docs PUBLISH on merge to development/main)"
+  else
+    # Default: publishing off. Assert the variable so the state is explicit and
+    # visible in the repo's Actions variables; provision no Pages site.
+    gh variable set DEPLOY_DOCS -b "false" -R "$REPO"
+    echo "variable: DEPLOY_DOCS=false (docs publishing OFF — the default)"
+    echo "  no Pages site created. Re-run with --deploy-docs to publish docs to"
+    echo "  GitHub Pages on merges to development/main. Keep OFF for private"
+    echo "  projects: a Pages site can be publicly reachable (#3)."
+  fi
 
   # --- Merge settings ------------------------------------------------------
   gh api -X PATCH "repos/$REPO" \

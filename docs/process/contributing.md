@@ -419,6 +419,14 @@ mkdocs serve
 The site builds with `mkdocs build --strict` (also via `make verify`), so
 **all internal links must resolve** — check links when you add or move pages.
 
+**Publishing is opt-in and off by default.** The strict build is a *merge
+gate* — it runs on every push and PR (`docs.yml`'s `build` job) and publishes
+nothing. Deploying the built site to GitHub Pages on merges to
+`development`/`main` happens only when the `DEPLOY_DOCS` repository variable is
+`true`, which `scripts/github_setup.sh` sets solely under its `--deploy-docs`
+opt-in. Keep publishing off for private projects — a Pages site can be publicly
+reachable and would expose the docs (#3).
+
 ## Growth areas
 
 Sections likely to be added as the project expands — extend this guide (and
