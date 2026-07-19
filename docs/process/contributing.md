@@ -7,8 +7,9 @@ they are recorded as the project's founding decisions in the
 
 ## How the docs are organised
 
-The top level is deliberately small: **Home** plus the **Project** tab, which
-holds four sections — **Direction** (vision → principles → requirements →
+The top level is deliberately small: **Home**, the **Project** tab, and one
+top-level tab per **domain area**. Project holds four meta sections —
+**Direction** (vision → principles → requirements →
 open questions → roadmap, the traceability chain in reading order),
 **Decisions** (the ADR registry + one page per ADR), **Records** (epic
 stories, agent-research reports, the changelog), and **Process** (this guide +
@@ -18,11 +19,14 @@ section, one directory.
 **Where does a new page go?** Direction-setting pages → **Direction**; ADRs →
 **Decisions**; history → **Records**; process manuals and lookups →
 **Process**. Domain/system pages (architecture, design, …) get their own
-section under Project (`docs/<area>/`) — that is where the topic pages ADRs
-link to live. Keep the top level shallow — depth goes inside a tab by default.
-**Promoting a section to a new top-level tab is a structural decision**: it
-gets an ADR and a registry row like any other `D-xxx`. *(Advisory — no gate
-detects a new nav tab that skipped its ADR; caught at review, per D-004.)*
+**top-level tab** (`docs/<area>/`), a sibling of Home and Project — that is
+where the topic pages ADRs link to live. Domain-area tabs are the one
+sanctioned exception to a shallow top level: they are named up front (at
+bootstrap, or when the project grows a new area) and need no ADR; otherwise
+depth goes inside a tab. **Promoting any *other* section to a top-level tab
+is a structural decision**: it gets an ADR and a registry row like any other
+`D-xxx`. *(Advisory — no gate detects a new non-area nav tab that skipped its
+ADR; caught at review, per D-004.)*
 
 ## Canonicality convention
 
@@ -414,6 +418,14 @@ mkdocs serve
 
 The site builds with `mkdocs build --strict` (also via `make verify`), so
 **all internal links must resolve** — check links when you add or move pages.
+
+**Publishing is opt-in and off by default.** The strict build is a *merge
+gate* — it runs on every push and PR (`docs.yml`'s `build` job) and publishes
+nothing. Deploying the built site to GitHub Pages on merges to
+`development`/`main` happens only when the `DEPLOY_DOCS` repository variable is
+`true`, which `scripts/github_setup.sh` sets solely under its `--deploy-docs`
+opt-in. Keep publishing off for private projects — a Pages site can be publicly
+reachable and would expose the docs (#3).
 
 ## Growth areas
 

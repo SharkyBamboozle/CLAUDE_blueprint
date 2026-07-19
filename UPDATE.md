@@ -12,6 +12,9 @@ body, its filled registries, its ADR contents, its history.
 - **From:** the project's blueprint stamp — the README footer
   ("Initialized from Project Blueprint vN" / "updated to vM"), or the
   birth commit (`git log --grep "Initialize from Project Blueprint"`).
+  The footer's name may be bare text or a Markdown link
+  (`[Project Blueprint](…)`) — the version reads the same either way, and
+  the birth-commit fallback is always plain text.
 - **To:** the blueprint clone's `blueprint/VERSION`.
 - When a merge base is needed, check out the FROM version in the blueprint
   clone by its **release tag** (the harvest ritual tags every release, on
@@ -76,8 +79,10 @@ body, its filled registries, its ADR contents, its history.
 - Feature branch → PR into the project's integration branch, with a
   per-tier summary: applied clean / three-way merged / conflicts resolved /
   decisions re-proposed / deferred-with-trigger.
-- Update the README footer to "updated to Project Blueprint vM (from vN)"
-  — the stamp the next update reads.
+- Update the README footer to
+  "updated to [Project Blueprint](https://github.com/SharkyBamboozle/CLAUDE_blueprint) vM (from vN)"
+  — the stamp the next update reads; keep the name linked (matching the
+  bootstrap footer) and the versions as bare text.
 - A **settled kept-divergence** — a conflict the owner resolved by
   deliberately keeping the project's version — gets one line in the
   project's lessons page, so the next update (and the next harvest) reads it

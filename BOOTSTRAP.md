@@ -26,6 +26,12 @@ Ask the user (skip anything already answered in their invoking message):
    and the architecture seams), `data-repo`? (then: artifact kinds;
    `{{DATA_REPO}}` = `<slug>-data` unless told otherwise), `lfs-assets`?
    (then: asset types/dirs).
+6. **Docs publishing** — publish docs to GitHub Pages on each merge to
+   `development`/`main`? **(default: no.)** For **private** projects, keep
+   this **off** — a published Pages site can be publicly reachable and would
+   leak sensitive project information. Enable only if the docs are meant to be
+   public, understanding that every merge then publishes them. → drives the
+   `--deploy-docs` flag on `scripts/github_setup.sh` (see step 8).
 
 ## 2 · Apply the core
 
@@ -43,19 +49,24 @@ Ask the user (skip anything already answered in their invoking message):
    registry example comments, the changelog's Session 1 entry (today's
    date; note "Initialized from Project Blueprint v<VERSION>"; which
    modules were applied).
-3. Prune the mkdocs `nav` to the pages that exist; add domain-area
-   sections inside existing tabs. **Every `nav` entry must point at a file
-   that exists** — adding a domain-area section means creating at least a
+3. Prune the mkdocs `nav` to the pages that exist; add each domain area as
+   its own top-level nav tab (`docs/<area>/`, a sibling of Home and Project).
+   **Every `nav` entry must point at a file
+   that exists** — adding a domain-area tab means creating at least a
    one-line stub page for it in the same step, or the strict build (step 5)
    fails ("A reference to 'docs/…' is included in the 'nav' configuration,
    which is not found in the documentation files"). The reverse also fails
    under `--strict`: a page under `docs/` that no `nav` entry lists.
 4. **Rewrite `README.md` as the project's README** (name, one-liner, docs
-   pointer, setup + verify commands, "Initialized from Project Blueprint
-   vN" footer) — the shipped README describes the blueprint, not your
-   project. The footer is machine-read: the blueprint's `UPDATE.md` ritual
-   uses it to establish the project's version span — keep its exact
-   wording.
+   pointer, setup + verify commands, and the footer
+   `Initialized from [Project Blueprint](https://github.com/SharkyBamboozle/CLAUDE_blueprint) vN`)
+   — the shipped README describes the blueprint, not your project. Linking
+   the name turns every kept stamp into a backlink (attribution +
+   provenance); the version stays bare text right after the link. The
+   footer is machine-read: the blueprint's `UPDATE.md` ritual uses it to
+   establish the project's version span — keep the canonical (linked) form
+   above (the version bare, so it reads the same whether or not the link
+   survives).
 5. **`site/` is reserved** — it is the MkDocs build output directory
    (gitignored, clobbered on every docs build). Never place project sources
    there; pick another name (`web/`, `content/`, `assets/`).
@@ -91,8 +102,9 @@ Fix and re-run until green. Do not rationalize a red gate.
 ## 6 · Write POST_INIT_CHECKLIST.md
 
 Everything that couldn't be done here, as a checklist the user works
-through: `scripts/github_setup.sh` invocation (with `--areas`; required
-checks default to the template's own shipped gates) **if `gh` was
+through: `scripts/github_setup.sh` invocation (with `--areas`, and
+`--deploy-docs` only if Pages publishing was chosen in the interview;
+required checks default to the template's own shipped gates) **if `gh` was
 unavailable in this session — write the exact command**; `git lfs install` (per machine, if lfs-assets);
 data-repo creation steps (if that module was chosen but `gh` unavailable —
 create the repo and push the **preserved `data-repo-seed/`** the module
@@ -133,7 +145,10 @@ re-run until green before committing.
 
 ## 8 · Commit, push, GitHub setup
 
-1. Commit everything as: `Initialize from Project Blueprint v<VERSION>`.
+1. Commit everything as: `Initialize from Project Blueprint v<VERSION>`
+   (plain text, never linked — this commit message is the format-proof
+   version anchor `UPDATE.md` step 0 falls back to when the README footer is
+   absent or reworded).
 2. Push to `main` — **the one sanctioned direct push**: the guard hook
    permits it while the repo is demonstrably un-bootstrapped (remote `main`
    absent, or still the template's single initial commit carrying
@@ -141,11 +156,14 @@ re-run until green before committing.
    `main` before bootstrapping), stop and ask the user to run or approve
    the push — do not work around the hook.
 3. If `gh` is available: run
-   `scripts/github_setup.sh --areas "<areas>"`
+   `scripts/github_setup.sh --areas "<areas>"` — append `--deploy-docs` only
+   if the user opted into Pages publishing (interview Q6; default off, and off
+   for private projects)
    (creates `development`, makes it default, protection with the shipped
-   gates as required checks, Pages, labels). Do not pass `--require-check`
-   unless deliberately overriding the defaults — an explicit list replaces
-   them. Otherwise it's the top item of POST_INIT_CHECKLIST.md.
+   gates as required checks, labels; a Pages site + deploy only with
+   `--deploy-docs`). Do not pass `--require-check` unless deliberately
+   overriding the defaults — an explicit list replaces them. Otherwise it's
+   the top item of POST_INIT_CHECKLIST.md.
 4. Report to the user: what was applied, what's in the checklist, and a
    suggested first move (usually `/epic-kickoff` for the first slice of
    work).

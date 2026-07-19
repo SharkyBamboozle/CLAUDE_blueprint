@@ -8,8 +8,12 @@ name: Documentation
 # DEPLOY = publish the built site to GitHub Pages. Runs on pushes to
 #          `development` and `main` — a merge into EITHER updates the live
 #          site — and only when the repository variable DEPLOY_DOCS is "true".
+#          Publishing is OPT-IN and default-OFF (#3): DEPLOY_DOCS is set true
+#          only when scripts/github_setup.sh is run with --deploy-docs.
 #
-# One-time setup (scripts/github_setup.sh does all of this):
+# One-time setup — scripts/github_setup.sh does all of this, but ONLY under its
+# --deploy-docs opt-in (the default leaves publishing off and creates no Pages
+# site):
 #   - Settings -> Pages -> Source = "GitHub Actions"
 #   - Environment github-pages -> deployment branch policy must allow
 #     `development` as well as `main` (otherwise the deploy job is rejected
