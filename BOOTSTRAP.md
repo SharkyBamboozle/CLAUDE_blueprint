@@ -58,11 +58,15 @@ Ask the user (skip anything already answered in their invoking message):
    which is not found in the documentation files"). The reverse also fails
    under `--strict`: a page under `docs/` that no `nav` entry lists.
 4. **Rewrite `README.md` as the project's README** (name, one-liner, docs
-   pointer, setup + verify commands, "Initialized from Project Blueprint
-   vN" footer) — the shipped README describes the blueprint, not your
-   project. The footer is machine-read: the blueprint's `UPDATE.md` ritual
-   uses it to establish the project's version span — keep its exact
-   wording.
+   pointer, setup + verify commands, and the footer
+   `Initialized from [Project Blueprint](https://github.com/SharkyBamboozle/CLAUDE_blueprint) vN`)
+   — the shipped README describes the blueprint, not your project. Linking
+   the name turns every kept stamp into a backlink (attribution +
+   provenance); the version stays bare text right after the link. The
+   footer is machine-read: the blueprint's `UPDATE.md` ritual uses it to
+   establish the project's version span — keep the canonical (linked) form
+   above (the version bare, so it reads the same whether or not the link
+   survives).
 5. **`site/` is reserved** — it is the MkDocs build output directory
    (gitignored, clobbered on every docs build). Never place project sources
    there; pick another name (`web/`, `content/`, `assets/`).
@@ -141,7 +145,10 @@ re-run until green before committing.
 
 ## 8 · Commit, push, GitHub setup
 
-1. Commit everything as: `Initialize from Project Blueprint v<VERSION>`.
+1. Commit everything as: `Initialize from Project Blueprint v<VERSION>`
+   (plain text, never linked — this commit message is the format-proof
+   version anchor `UPDATE.md` step 0 falls back to when the README footer is
+   absent or reworded).
 2. Push to `main` — **the one sanctioned direct push**: the guard hook
    permits it while the repo is demonstrably un-bootstrapped (remote `main`
    absent, or still the template's single initial commit carrying
