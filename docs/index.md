@@ -31,9 +31,10 @@ directory layout under `docs/` mirrors the nav):
   manual) and the [glossary](process/glossary.md) (track new terminology here).
 
 <!-- BLUEPRINT: As domain areas appear (architecture, design, etc.), add each
-as a new section under Project (its own docs/<area>/ directory) — that is
-where topic pages live. Promoting an area to its own top-level tab is a
-structural decision — record it as an ADR. -->
+as its own top-level tab (a sibling of Home and Project; its own
+docs/<area>/ directory) — that is where topic pages live. Domain-area tabs
+need no ADR; promoting any other section to a top-level tab is a structural
+decision — record that as an ADR. -->
 
 ## Status legend
 

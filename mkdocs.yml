@@ -28,8 +28,8 @@ theme:
     - navigation.tracking
     # Top-level groups become header TABS; deeper levels are collapsible
     # dropdowns in the sidebar. Keep the top level shallow — depth goes inside
-    # a tab; a new tab is an ADR-worthy structural decision
-    # (docs/process/contributing.md).
+    # a tab. Domain-area tabs are the sanctioned exception; any other new tab
+    # is an ADR-worthy structural decision (docs/process/contributing.md).
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.indexes
@@ -86,9 +86,9 @@ extra:
     deferred: Deferred
 
 # The nav mirrors the directory layout under docs/ (one section = one
-# directory). Project holds all project-meta sections; domain areas
-# (architecture, design, ...) are added as further Project sections and may
-# graduate to their own tabs by ADR (docs/process/contributing.md).
+# directory). Project holds the project-meta sections (Direction, Decisions,
+# Records, Process); each domain area (architecture, design, ...) is its own
+# top-level tab, a sibling of Home and Project (docs/process/contributing.md).
 nav:
   - Home: index.md
   - Project:

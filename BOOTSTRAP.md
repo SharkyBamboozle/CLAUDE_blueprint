@@ -43,9 +43,10 @@ Ask the user (skip anything already answered in their invoking message):
    registry example comments, the changelog's Session 1 entry (today's
    date; note "Initialized from Project Blueprint v<VERSION>"; which
    modules were applied).
-3. Prune the mkdocs `nav` to the pages that exist; add domain-area
-   sections inside existing tabs. **Every `nav` entry must point at a file
-   that exists** — adding a domain-area section means creating at least a
+3. Prune the mkdocs `nav` to the pages that exist; add each domain area as
+   its own top-level nav tab (`docs/<area>/`, a sibling of Home and Project).
+   **Every `nav` entry must point at a file
+   that exists** — adding a domain-area tab means creating at least a
    one-line stub page for it in the same step, or the strict build (step 5)
    fails ("A reference to 'docs/…' is included in the 'nav' configuration,
    which is not found in the documentation files"). The reverse also fails
