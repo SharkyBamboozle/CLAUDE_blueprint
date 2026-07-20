@@ -5,7 +5,8 @@ disable-model-invocation: true
 
 Close out this working session. Steps, in order:
 
-1. **Changelog entry** — append to `docs/records/changelog.md`:
+1. **Changelog entry** — prepend (newest first, under the header) to
+   `docs/records/changelog.md`:
    `### Session N (YYYY-MM-DD) — <title>` (next free N), then 3–8 sentences:
    what was attempted → what landed (PRs/commits) → what was found (link
    `note` issues) → what was decided (link `D-xxx`) → what carries forward.
