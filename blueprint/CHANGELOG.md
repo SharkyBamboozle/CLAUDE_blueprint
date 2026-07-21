@@ -6,10 +6,11 @@ its init commit.
 
 ## v1.0.2 — Multi-agent entry point (AGENTS.md)
 
-Adds a tool-neutral entry point so agents that aren't Claude Code can find
-the contract. Additive and backward-compatible — a clean `UPDATE.md` pull for
-downstream projects: one new root file plus a doc-scan list extension, no new
-machinery and no breaking changes.
+Two backward-compatible changes since v1.0.1: a tool-neutral entry point
+(`AGENTS.md`) so agents that aren't Claude Code can find the contract, and a
+fix flipping the seeded changelog convention to newest-first. A clean
+`UPDATE.md` pull for downstream projects — no new machinery, no breaking
+changes.
 
 - **`AGENTS.md` routes non-Claude agents to `CLAUDE.md`**: a thin pointer file
   (no duplicated rules) so tools following the `AGENTS.md` convention (e.g.
@@ -26,6 +27,16 @@ machinery and no breaking changes.
   its enforcement are tool-neutral while the agent-facing ergonomics
   (`CLAUDE.md`, `.claude/`) are tuned for Claude Code, other agents routed
   through `AGENTS.md`.
+- **Seeded changelog convention flips to newest-first** (#12): the seeded
+  `docs/records/changelog.md` grew oldest-first while its sibling logs
+  (`docs/records/lessons.md`, `blueprint/CHANGELOG.md`) are newest-first, so
+  the session-start orientation hook (`grep -m1 '^### '`) surfaced the *oldest*
+  entry mislabeled "Last" in multi-session projects. The convention is flipped
+  to newest-first across `docs/records/changelog.md`,
+  `.claude/commands/session-close.md`, `docs/process/contributing.md`, and
+  `CLAUDE.md`; no code change — the hook's existing grep becomes correct. No
+  ADR — ADR-0001 (D-001) calls the changelog a "chronological diary" without
+  fixing a direction.
 
 ## v1.0.1 — Post-launch dogfooding fixes
 
