@@ -21,6 +21,14 @@ development process — canonical documentation, addressable decisions,
 honest-reporting rules for AI agents, and CI gates that keep all of it true
 — so every project starts on rails, for humans and AI agents alike.
 
+> [!NOTE]
+> **Agent-agnostic by design, Claude Code-tuned in practice.** The process and
+> its enforcement are tool-neutral — the CI gates in `.github/workflows/` bind
+> any agent or human, and `make verify` runs anywhere. The *agent-facing*
+> ergonomics, though, are built for Claude Code: `CLAUDE.md` plus the `.claude/`
+> hooks, commands, and skills. Other agents (e.g. Codex) get the same contract
+> through a thin `AGENTS.md` that points back to `CLAUDE.md`.
+
 > [!TIP]
 > **Contents:**
 > [Why it exists](#-why-it-exists) ·

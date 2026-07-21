@@ -4,6 +4,29 @@ What each blueprint version changed. Bumped by the harvest ritual
 (`HARVEST.md`); each seeded project records the version it started from in
 its init commit.
 
+## v1.0.2 — Multi-agent entry point (AGENTS.md)
+
+Adds a tool-neutral entry point so agents that aren't Claude Code can find
+the contract. Additive and backward-compatible — a clean `UPDATE.md` pull for
+downstream projects: one new root file plus a doc-scan list extension, no new
+machinery and no breaking changes.
+
+- **`AGENTS.md` routes non-Claude agents to `CLAUDE.md`**: a thin pointer file
+  (no duplicated rules) so tools following the `AGENTS.md` convention (e.g.
+  Codex) are sent to the one maintained contract. It names which rules are
+  tool-neutral and CI-enforced for any agent, and which `.claude/` machinery
+  is Claude Code-specific and safe for other agents to ignore. No ADR —
+  additive entry point, consistent with D-001 (docs canonical) and D-004 (CI
+  is the cross-agent enforcer).
+- **`AGENTS.md` is truth-checked like its siblings**: added to
+  `check_docs_truth.py`'s `DOC_ROOT_FILES` and `ROOT_FILES`, so its
+  backtick-cited paths are validated in `make verify`/CI alongside `CLAUDE.md`
+  and `README.md` (D-004 — a new entry point names its enforcer).
+- **README documents the agent-agnostic posture**: a note that the process and
+  its enforcement are tool-neutral while the agent-facing ergonomics
+  (`CLAUDE.md`, `.claude/`) are tuned for Claude Code, other agents routed
+  through `AGENTS.md`.
+
 ## v1.0.1 — Post-launch dogfooding fixes
 
 First patch after the public release — five changes surfaced by using the

@@ -53,8 +53,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Doc surfaces scanned. docs/.templates/ is excluded below via the ledger.
 DOC_GLOBS_DIRS = ["docs"]
+# AGENTS.md joins CLAUDE.md as an agent entry point (it points other agents at
+# CLAUDE.md), so its path citations are truth-checked like its siblings.
 DOC_ROOT_FILES = [
-    "CLAUDE.md", "README.md", "BOOTSTRAP.md", "HARVEST.md",
+    "CLAUDE.md", "AGENTS.md", "README.md", "BOOTSTRAP.md", "HARVEST.md",
     "UPDATE.md", "ADOPT.md", "CONTRIBUTING.md",
 ]
 
@@ -62,7 +64,7 @@ DOC_ROOT_FILES = [
 # directories or exactly names one of these root files.
 TOP_DIRS = {"docs", "scripts", "modules", "blueprint", ".claude", ".github"}
 ROOT_FILES = {
-    "CLAUDE.md", "README.md", "BOOTSTRAP.md", "HARVEST.md",
+    "CLAUDE.md", "AGENTS.md", "README.md", "BOOTSTRAP.md", "HARVEST.md",
     "UPDATE.md", "ADOPT.md", "CONTRIBUTING.md", "LICENSE",
     "Makefile", "mkdocs.yml", ".gitignore", ".gitleaks.toml",
 }
