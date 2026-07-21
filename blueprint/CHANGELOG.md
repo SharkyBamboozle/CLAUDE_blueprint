@@ -4,6 +4,40 @@ What each blueprint version changed. Bumped by the harvest ritual
 (`HARVEST.md`); each seeded project records the version it started from in
 its init commit.
 
+## v1.0.2 — Multi-agent entry point (AGENTS.md)
+
+Two backward-compatible changes since v1.0.1: a tool-neutral entry point
+(`AGENTS.md`) so agents that aren't Claude Code can find the contract, and a
+fix flipping the seeded changelog convention to newest-first. A clean
+`UPDATE.md` pull for downstream projects — no new machinery, no breaking
+changes.
+
+- **`AGENTS.md` routes non-Claude agents to `CLAUDE.md`**: a thin pointer file
+  (no duplicated rules) so tools following the `AGENTS.md` convention (e.g.
+  Codex) are sent to the one maintained contract. It names which rules are
+  tool-neutral and CI-enforced for any agent, and which `.claude/` machinery
+  is Claude Code-specific and safe for other agents to ignore. No ADR —
+  additive entry point, consistent with D-001 (docs canonical) and D-004 (CI
+  is the cross-agent enforcer).
+- **`AGENTS.md` is truth-checked like its siblings**: added to
+  `check_docs_truth.py`'s `DOC_ROOT_FILES` and `ROOT_FILES`, so its
+  backtick-cited paths are validated in `make verify`/CI alongside `CLAUDE.md`
+  and `README.md` (D-004 — a new entry point names its enforcer).
+- **README documents the agent-agnostic posture**: a note that the process and
+  its enforcement are tool-neutral while the agent-facing ergonomics
+  (`CLAUDE.md`, `.claude/`) are tuned for Claude Code, other agents routed
+  through `AGENTS.md`.
+- **Seeded changelog convention flips to newest-first** (#12): the seeded
+  `docs/records/changelog.md` grew oldest-first while its sibling logs
+  (`docs/records/lessons.md`, `blueprint/CHANGELOG.md`) are newest-first, so
+  the session-start orientation hook (`grep -m1 '^### '`) surfaced the *oldest*
+  entry mislabeled "Last" in multi-session projects. The convention is flipped
+  to newest-first across `docs/records/changelog.md`,
+  `.claude/commands/session-close.md`, `docs/process/contributing.md`, and
+  `CLAUDE.md`; no code change — the hook's existing grep becomes correct. No
+  ADR — ADR-0001 (D-001) calls the changelog a "chronological diary" without
+  fixing a direction.
+
 ## v1.0.1 — Post-launch dogfooding fixes
 
 First patch after the public release — five changes surfaced by using the

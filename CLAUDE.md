@@ -233,7 +233,8 @@ gated (D-004).*
   `.claude/archive/YYYY-MM-DD/<task-slug>/` via `/handoff` — archive, never
   delete. Exception: never archive a still-running task's state files.
 - **Session changelog:** every working session ends with a
-  `docs/records/changelog.md` entry (dated, titled, IDs and issue numbers cited).
+  `docs/records/changelog.md` entry (dated, titled, IDs and issue numbers
+  cited), prepended newest first.
 - **Ritual commands:** the multi-step conventions are packaged as slash
   commands — `/adr-new`, `/note`, `/epic-kickoff`, `/epic-closeout`,
   `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`, `/lock-adr`

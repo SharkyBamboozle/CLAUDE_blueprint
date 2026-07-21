@@ -121,7 +121,7 @@ type appears — one home per record type:
 | Surface | Lens |
 |---|---|
 | [Epic page](../records/epics/index.md) | the epic's **curated story / retrospective** — the clean arc, dead-ends dropped |
-| [Changelog](../records/changelog.md) | the **chronological diary** — every session, cross-epic, intermediate steps kept |
+| [Changelog](../records/changelog.md) | the **chronological diary** — every session (newest first), cross-epic, intermediate steps kept |
 | [Lessons](../records/lessons.md) | the **distilled "never again" list** — load-bearing lessons only; append-only, superseded in place, real incidents only |
 | The **GitHub epic issue** | the **live plan + tracker** — scope, sub-issue DAG, notes index |
 | [Decisions](../decisions/index.md) + topic docs | the **canonical decisions & current system state** |
@@ -212,7 +212,8 @@ literature in parallel) get a dated report page under
 ## Changelog
 
 [The changelog](../records/changelog.md) is the chronological diary and the project's
-inter-session memory. One entry per working session:
+inter-session memory. One entry per working session, prepended newest first
+(newest entry directly under the header):
 `### Session N (YYYY-MM-DD) — title`, then 3–8 sentences: what was attempted →
 what landed (PRs/commits) → what was found (link `note` issues) → what was
 decided (link `D-xxx`) → what carries forward. Session numbers are citable IDs
