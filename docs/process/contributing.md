@@ -251,6 +251,46 @@ only by PR from `development`, never by direct push (branch protection +
 the git guard hook enforce this; the single exception is the repo's birth
 commit during bootstrap). Never merge your own PR.
 
+## PR ↔ issue linking
+
+A GitHub closing keyword (`close`/`closes`/`closed`, `fix`/`fixes`/`fixed`,
+`resolve`/`resolves`/`resolved`) in a PR body, PR title, or commit message
+**auto-closes its target** when the PR merges into `development` — the
+integration branch is the repo default, so every integration PR is a live
+close surface. GitHub ignores qualifiers: `Closes #7 (partial)` still closes
+#7. Hence one rule:
+
+**A closing keyword targets only an issue the PR fully completes.**
+
+- **Completing a sub-issue:** `Closes #NN (epic: #MM)` — the keyword targets
+  the sub-issue; its epic is referenced without a keyword.
+- **Advancing an epic without completing any single issue:**
+  `Closes — · Part of #MM (epic)` — closes nothing.
+- **Closing an epic** is reserved for its own closeout PR (the
+  `/epic-closeout` ritual, every sub-issue already closed): `Closes #MM
+  (epic)` then closes it atomically when the retrospective lands.
+
+Enforcement (D-004): the PR template's forced-choice linking block, and the
+**issue-link guard** (`.github/workflows/issue-link-guard.yml`) — a required
+check that fails any PR whose body, title, commit messages, or resolved link
+set carry a closing reference to an `epic`-labeled issue with open
+sub-issues (decision logic: `scripts/issue_link_decision.sh`; suite:
+`scripts/test_issue_link_guard.sh`; deliberate exception:
+`Skip-Issue-Link-Guard: <reason>` trailer). It runs on `edited` and
+`synchronize` too, so a keyword added to the body or a commit after the
+first CI run is re-checked; the meta-gate pins that event list. The general
+completes-it rule for non-epic issues is *advisory* — whether a PR
+"completes" an ordinary issue is judgment, upheld by the template's
+hard-rule checkbox and review (D-004).
+
+Two residual paths bypass the gate and are accepted, named (D-004): an
+issue linked via the PR's *Development* sidebar **after** the gate's last
+run (link edits emit no `pull_request` event), and a direct push to
+`development` carrying a closing keyword in its commit message (no PR, no
+gate). Both are caught after the fact by the docs-truth `epic-state` lane
+(`scripts/check_docs_truth.py`): an epic page still marked 🟡 whose epic
+issue is closed fails the next `make verify` / CI run.
+
 ## Commit conventions
 
 - **The body of a non-trivial commit tells the story** in four short parts:

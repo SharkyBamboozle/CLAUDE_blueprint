@@ -75,6 +75,11 @@ edit time with "do this instead" messages, CI binds every client:
   (`.claude/hooks/guard-adr.sh`, `.github/workflows/adr-gates.yml`);
 - a server-side branch-flow guard — only the integration branch may
   promote into `main` (`.github/workflows/branch-flow-guard.yml`);
+- an issue-link guard — a PR whose body, title, or commits would
+  keyword-close (`Closes`/`Fixes`/`Resolves`) an epic that still has open
+  sub-issues fails; only the epic's closeout PR may close it
+  (`.github/workflows/issue-link-guard.yml`,
+  `scripts/issue_link_decision.sh`);
 - secret scanning and dependency audits on every PR **plus** a weekly
   sweep, with a value-scoped canary-convention allowlist designed not to
   silence real findings (`.github/workflows/security.yml`, `.gitleaks.toml`);
@@ -82,9 +87,11 @@ edit time with "do this instead" messages, CI binds every client:
   from the working branch or neutered by `continue-on-error` fails the
   build (`scripts/check_ci_gates.py`);
 - a **docs truth-checker** — backtick-cited paths must exist, issues cited
-  as open must actually be open, and cited CLI flags/env vars must exist
-  in the code once the project has code; its dormant lane *owns its own
-  activation* and demands configuration the moment code appears
+  as open must actually be open, an in-progress epic page must cite an
+  open epic issue (a wrongly-closed epic fails the next run), and cited
+  CLI flags/env vars must exist in the code once the project has code;
+  its dormant lane *owns its own activation* and demands configuration
+  the moment code appears
   (`scripts/check_docs_truth.py`, seam: `.claude/docs-truth.txt`);
 - exception lists are **ledgers** (D-004): a reason per entry, a size
   ceiling, stale entries fail loud, itemized matching only.

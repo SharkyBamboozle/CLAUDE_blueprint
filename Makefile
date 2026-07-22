@@ -10,9 +10,11 @@
 # --self-test) fails the gate instead of passing unnoticed (D-005).
 # check_docs_truth.py fails on docs claims that are no longer true (dead
 # path citations, closed issues cited as open, dead flag/env citations via
-# the self-arming seam in .claude/docs-truth.txt, and cross-artifact
+# the self-arming seam in .claude/docs-truth.txt, cross-artifact
 # registry consistency: status drift, page/row/nav bijection, duplicate
-# D-### IDs, dead ID cross-refs) — ADR-0004. Each checker's --self-test
+# D-### IDs, dead ID cross-refs, and in-progress epic pages whose epic
+# issue is closed — a wrongly-closed epic surfaces here, #18) — ADR-0004.
+# Each checker's --self-test
 # runs first so the checker itself stays pinned both ways (D-005).
 .PHONY: verify
 verify:
@@ -20,6 +22,7 @@ verify:
 	bash scripts/test_guard_adr.sh
 	bash scripts/test_branch_flow_guard.sh
 	bash scripts/test_adr_unlock_decision.sh
+	bash scripts/test_issue_link_guard.sh
 	@# Blueprint-only gate: deleted at bootstrap, so no-op in seeded projects.
 	@# Only the hermetic --self-test runs here — the live gate always trips in
 	@# the blueprint itself (tokens present by design), so it belongs in CI's

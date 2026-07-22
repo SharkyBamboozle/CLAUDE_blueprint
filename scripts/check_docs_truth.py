@@ -3,7 +3,7 @@
 
 Part of `make verify` (D-004; the no-silent-lanes doctrine — a dormant lane owns its
 activation condition). The strict mkdocs build validates markdown *links*; this checks
-the mechanically verifiable *claims* docs make, in four lanes:
+the mechanically verifiable *claims* docs make, in five lanes:
 
   A. Dead path citations (always on) — a backtick-cited repo path in the
      docs must exist on disk. Docs rot is usually introduced by NON-doc
@@ -32,6 +32,14 @@ the mechanically verifiable *claims* docs make, in four lanes:
      Deliberately mechanical-only: whether a claim is still semantically
      true is judgment work and stays out of the merge gate. HTML comments
      are stripped before parsing (templates embed example rows in them).
+  E. Epic-page status vs issue state (#18; same reachability posture as
+     lane B — NEVER guesses) — an epic page under docs/records/epics/
+     whose status line says in-progress (🟡/🔴) must cite an OPEN epic
+     issue. A closed issue behind an in-progress page means the epic was
+     wrongly closed (e.g. a PR's closing keyword slipped past the
+     issue-link guard via a path no PR event covers — a sidebar link added
+     after CI, a direct push) or the page went stale; either way the docs
+     no longer tell the truth, and this lane surfaces it on the next run.
 
 Exemptions live in KNOWN_EXEMPT below and follow the ledger rules (D-004):
 a reason per entry, a ceiling, itemized matching, and STALE ENTRIES FAIL —
@@ -490,6 +498,29 @@ def run_checks(root: str, seam=None):
     if lane_b_skipped:
         notes.append("issue-state lane: no verifiable open-claims (or GitHub unreachable — skipped, never guessed).")
 
+    # Lane E — epic-page status vs issue state (#18). Reuses lane B's
+    # resolver: offline / unknown skips, never guesses.
+    epics_dir = os.path.join(root, "docs", "records", "epics")
+    for p, text in texts.items():
+        rel = os.path.relpath(p, root)
+        if not p.startswith(epics_dir + os.sep) or os.path.basename(p) == "index.md":
+            continue
+        status = re.search(r"^\*\*Status:\*\*.*$", text, re.MULTILINE)
+        if not status or not ("🟡" in status.group(0) or "🔴" in status.group(0)):
+            continue  # done/superseded pages may cite a closed issue
+        cited = re.search(r"\[#(\d+)\]", status.group(0))
+        if not cited:
+            continue  # template placeholders ([#NN]) carry no digits
+        state = gh_issue_state(int(cited.group(1)))
+        if state is not None and state.upper() == "CLOSED":
+            issues.append(
+                f"[epic-state] {rel}: status line says in-progress but epic "
+                f"issue #{cited.group(1)} is CLOSED — if the epic was closed "
+                "by mistake (e.g. a PR closing keyword), reopen it; if the "
+                "epic really finished, finalise the page and flip its status "
+                "(/epic-closeout)."
+            )
+
     # Lane C — flag / env-var citations, self-arming seam.
     if seam["mode"] == "unconfigured":
         evidence = project_code_evidence(root)
@@ -636,6 +667,18 @@ def self_test() -> int:
         scenario("B-closed-as-open", ["[issue-state]"], lambda td: write(td, "docs/b.md", "TODO(#42) pending"))
         scenario("B-really-open", [], lambda td: write(td, "docs/b.md", "issue #43 still open"))
         scenario("B-unknown-skips", [], lambda td: write(td, "docs/b.md", "issue #99 still open"))
+
+        # Lane E: in-progress epic page citing a closed issue fails; open,
+        # finished-page, and unknown cases pass (never guesses).
+        epic_line = "# E\n\n**Status:** {} · epic issue [#{}](https://example.test/{})\n"
+        scenario("E-wrongly-closed-epic", ["[epic-state]"], lambda td: write(
+            td, "docs/records/epics/e.md", epic_line.format("🟡 In progress", 42, 42)))
+        scenario("E-open-epic", [], lambda td: write(
+            td, "docs/records/epics/e.md", epic_line.format("🟡 In progress", 43, 43)))
+        scenario("E-finished-page-closed-issue", [], lambda td: write(
+            td, "docs/records/epics/e.md", epic_line.format("✅ Done", 42, 42)))
+        scenario("E-unknown-skips", [], lambda td: write(
+            td, "docs/records/epics/e.md", epic_line.format("🟡 In progress", 99, 99)))
     finally:
         del os.environ["DOCS_TRUTH_FAKE_ISSUES"]
 
