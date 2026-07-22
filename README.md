@@ -74,7 +74,10 @@ edit time with "do this instead" messages, CI binds every client:
   `/unlock-adr` token and a CI-checked commit trailer
   (`.claude/hooks/guard-adr.sh`, `.github/workflows/adr-gates.yml`);
 - a server-side branch-flow guard — only the integration branch may
-  promote into `main` (`.github/workflows/branch-flow-guard.yml`);
+  promote into `main`, and a promotion must carry its release caboose:
+  version bumped by exactly one operator-approved semver step + a
+  release-log entry (`.github/workflows/branch-flow-guard.yml`; seam:
+  `.claude/release.txt`);
 - an issue-link guard — a PR whose body, title, or commits would
   keyword-close (`Closes`/`Fixes`/`Resolves`) an epic that still has open
   sub-issues fails; only the epic's closeout PR may close it

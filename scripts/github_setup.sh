@@ -18,9 +18,9 @@
 #                    direct pushes from tooling).
 #   --areas          extra area:* labels to create, comma-separated
 #   --require-check  a status-check context required on main (repeatable);
-#                    default when omitted: build + flow-guard + issue-link-guard
-#                    — the jobs the template itself ships (docs.yml,
-#                    branch-flow-guard.yml, issue-link-guard.yml)
+#                    default when omitted: build + flow-guard + release-gate
+#                    + issue-link-guard — the jobs the template itself ships
+#                    (docs.yml, branch-flow-guard.yml, issue-link-guard.yml)
 #   --deploy-docs    (code profile) opt IN to publishing docs to GitHub Pages
 #                    on merges to development/main: provisions the Pages site,
 #                    the github-pages env branch policy, and DEPLOY_DOCS=true.
@@ -84,13 +84,13 @@ if [ "$PROFILE" = "code" ]; then
   # main: PRs only (0 approvals — solo-dev calibrated: require checks, not
   # reviews), no force-pushes, no deletion, required status checks.
   # Default contexts: the template's own shipped gates — docs.yml's `build`,
-  # branch-flow-guard.yml's `flow-guard`, and issue-link-guard.yml's
-  # `issue-link-guard` (#18) — so the prose rules are backed by required
-  # checks out of the box (D-004; a required context that never reports
-  # blocks merges forever, hence only jobs the template itself ships).
-  # Override with --require-check.
+  # branch-flow-guard.yml's `flow-guard` + `release-gate` (#35), and
+  # issue-link-guard.yml's `issue-link-guard` (#18) — so the prose rules are
+  # backed by required checks out of the box (D-004; a required context that
+  # never reports blocks merges forever, hence only jobs the template itself
+  # ships). Override with --require-check.
   if [ ${#CHECKS[@]} -eq 0 ]; then
-    CHECKS=(build flow-guard issue-link-guard)
+    CHECKS=(build flow-guard release-gate issue-link-guard)
   fi
   CONTEXTS_JSON=$(printf '%s\n' "${CHECKS[@]:-}" | python3 -c \
     'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')

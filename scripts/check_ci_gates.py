@@ -53,7 +53,7 @@ MAKEFILE_PATH = os.path.join(ROOT, "Makefile")
 # renames or adds gates updates this list in the same diff — it IS the pin.
 REQUIRED_GATES = (
     "docs.yml", "repo-hygiene.yml", "adr-gates.yml", "security.yml",
-    "issue-link-guard.yml",
+    "issue-link-guard.yml", "branch-flow-guard.yml",
 )
 
 # Workflows whose pull_request `types:` list is load-bearing (#18): GitHub's
