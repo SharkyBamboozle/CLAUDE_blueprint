@@ -1,4 +1,17 @@
-Closes #___ (epic: #___)
+<!-- Linked issues — keep exactly ONE of the two lines below, filled in.
+     A closing keyword (Closes/Fixes/Resolves) AUTO-CLOSES its target when
+     this PR merges into development (the repo default branch), and GitHub
+     ignores qualifiers — "Closes #7 (partial)" still closes #7. So a
+     closing keyword targets ONLY an issue this PR fully completes —
+     normally a sub-issue; an epic ONLY in its own closeout PR, when every
+     sub-issue is already closed. Enforcement (D-004): the issue-link-guard
+     CI gate blocks closing references to an epic with open sub-issues; the
+     completes-it claim for ordinary issues is layout + review.
+     See docs/process/contributing.md → PR ↔ issue linking. -->
+
+Closes #___ (epic: #___)          <!-- fully completes that issue; drop "(epic: #___)" if it has no epic -->
+
+Closes — · Part of #___ (epic)    <!-- advances the epic, completes no single issue: closes nothing -->
 
 ## What / why
 
@@ -34,4 +47,6 @@ Closes #___ (epic: #___)
 
 - [ ] Target branch is `development` (never `main`)
 - [ ] No binaries added (LFS-covered assets excepted; artifacts go to the data repo)
+- [ ] Closing keywords target only issues this PR fully completes — never an
+  epic mid-flight (its closeout PR excepted; `issue-link-guard` gates the epic rule)
 - [ ] Findings surfaced along the way filed as `note` issues, linked to their epic (or none surfaced — say so)

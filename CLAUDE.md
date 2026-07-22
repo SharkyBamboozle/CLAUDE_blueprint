@@ -204,8 +204,9 @@ config — or state "none yet — linter defaults apply." -->
 
 ## Repo workflow
 
-*Except the branch model (server-side `branch-flow-guard`) and backtick-cited
-paths (the docs-truth checker), these are process conventions upheld by the
+*Except the branch model (server-side `branch-flow-guard`), backtick-cited
+paths (the docs-truth checker), and the epic closing-keyword rule (the
+`issue-link-guard` gate), these are process conventions upheld by the
 ritual commands, issue templates, and epic-closeout review — advisory, not
 gated (D-004).*
 
@@ -228,6 +229,12 @@ gated (D-004).*
   rates; anything load-bearing graduates into an ADR, epic, or open question.
 - **Branches:** develop on a feature branch → PR into **`development`** (the
   integration branch). `main` is the promoted branch.
+- **PR ↔ issue linking:** a closing keyword (`Closes`/`Fixes`/`Resolves`)
+  targets only an issue the PR fully completes — GitHub ignores qualifiers,
+  so `Closes #N (partial)` still closes #N. Progress PRs use
+  `Closes — · Part of #NN (epic)`; an epic is keyword-closed only by its
+  closeout PR. Epic rule enforced by the `issue-link-guard` CI gate; see
+  `docs/process/contributing.md` → *PR ↔ issue linking*.
 - **Agent working docs** live in `.claude/working/` — never under `docs/`
   (docs are human-curated). At task or session end, archive them to
   `.claude/archive/YYYY-MM-DD/<task-slug>/` via `/handoff` — archive, never
