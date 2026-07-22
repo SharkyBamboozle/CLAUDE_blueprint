@@ -205,10 +205,10 @@ config — or state "none yet — linter defaults apply." -->
 ## Repo workflow
 
 *Except the branch model (server-side `branch-flow-guard`), backtick-cited
-paths (the docs-truth checker), and the epic closing-keyword rule (the
-`issue-link-guard` gate), these are process conventions upheld by the
-ritual commands, issue templates, and epic-closeout review — advisory, not
-gated (D-004).*
+paths (the docs-truth checker), the epic closing-keyword rule (the
+`issue-link-guard` gate), and the promotion caboose (the `release-gate`),
+these are process conventions upheld by the ritual commands, issue
+templates, and epic-closeout review — advisory, not gated (D-004).*
 
 - **Docs are canonical; issues track work.** GitHub issues use `epic` +
   area/status labels; epics group children as native sub-issues.
@@ -229,6 +229,11 @@ gated (D-004).*
   rates; anything load-bearing graduates into an ADR, epic, or open question.
 - **Branches:** develop on a feature branch → PR into **`development`** (the
   integration branch). `main` is the promoted branch.
+- **Promotion is a release** — run `/promote`: operator-decided bump class
+  (hard STOP), caboose PR (version + release log, seam:
+  `.claude/release.txt`), promotion PR restating the train's `Closes #N`
+  lines, operator merge + tag. Gated by `release-gate`; see
+  `docs/process/contributing.md` → *Promotion & releases*.
 - **PR ↔ issue linking:** a closing keyword (`Closes`/`Fixes`/`Resolves`)
   targets only an issue the PR fully completes — GitHub ignores qualifiers,
   so `Closes #N (partial)` still closes #N. Progress PRs use
@@ -244,9 +249,9 @@ gated (D-004).*
   cited), prepended newest first.
 - **Ritual commands:** the multi-step conventions are packaged as slash
   commands — `/adr-new`, `/note`, `/epic-kickoff`, `/epic-closeout`,
-  `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`, `/lock-adr`
-  (`.claude/commands/`). Use them instead of reconstructing the steps from
-  memory.
+  `/promote`, `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`,
+  `/lock-adr` (`.claude/commands/`). Use them instead of reconstructing the
+  steps from memory.
 
 ## Definition of done
 

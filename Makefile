@@ -23,6 +23,7 @@ verify:
 	bash scripts/test_branch_flow_guard.sh
 	bash scripts/test_adr_unlock_decision.sh
 	bash scripts/test_issue_link_guard.sh
+	bash scripts/test_release_gate.sh
 	@# Blueprint-only gate: deleted at bootstrap, so no-op in seeded projects.
 	@# Only the hermetic --self-test runs here — the live gate always trips in
 	@# the blueprint itself (tokens present by design), so it belongs in CI's
