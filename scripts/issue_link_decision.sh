@@ -3,13 +3,17 @@
 # A GitHub closing keyword (close/closes/closed/fix/fixes/fixed/resolve/
 # resolves/resolved) auto-closes its target when the PR merges into the
 # default branch — and GitHub ignores qualifiers: "Closes #7 (partial)" still
-# closes #7. The rule (#18; docs/process/contributing.md → PR ↔ issue
+# closes #7. The rule (#18, #37; docs/process/contributing.md → PR ↔ issue
 # linking): a closing keyword may only target an issue the PR fully
-# completes; for an epic that means its own closeout PR, once every
-# sub-issue is already closed. This script blocks any closing reference —
-# in the PR body, PR title, a commit message, or GitHub's own resolved link
-# set (which includes sidebar-linked issues) — to an `epic`-labeled issue
-# that still has open sub-issues.
+# completes. This script blocks any closing reference — in the PR body, PR
+# title, a commit message, or GitHub's own resolved link set (which
+# includes sidebar-linked issues) — whose target is not completion-ready:
+#   epic-labeled issue  -> blocked while it has open sub-issues (only its
+#                          closeout PR, every sub-issue closed, passes);
+#   any other issue     -> blocked while its body carries unchecked
+#                          task-list deliverable boxes (- [ ] / * [ ]) —
+#                          tick what is done, re-home what is deferred, or
+#                          declare the exception (#37).
 #
 # Extracted into a script so the decision is unit-testable with a mocked `gh`
 # (scripts/test_issue_link_guard.sh) — the workflow just supplies the inputs.
@@ -93,10 +97,31 @@ for num in $candidates; do
   if [ "$flag" = "epic" ] && [ "${completed:-0}" -lt "${total:-0}" ]; then
     echo "::error::This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → PR ↔ issue linking (#18)."
     blocked=1
-  elif [ "$flag" = "epic" ]; then
+    continue
+  fi
+  if [ "$flag" = "epic" ]; then
     echo "OK: closing reference to epic #$num — all $total sub-issues complete (closeout)."
+    continue
+  fi
+  # Non-epic: count unchecked deliverable boxes LINE-ANCHORED, in the
+  # script (not jq), so the counting seam is covered by the mocked suite.
+  # GitHub renders a task item only at a list-item line start — prose
+  # QUOTING the syntax ("… task-list items (\`- [ ]\`) …") must not count;
+  # the gate's first live run false-positived on exactly that (#37's own
+  # spec body). Fenced code blocks containing real task-list lines still
+  # count — accepted, rare, and resolvable with the trailer.
+  body=$(gh api "repos/$REPO/issues/$num" --jq '.body // ""' 2>&1)
+  rc=$?
+  if [ "$rc" -ne 0 ]; then
+    echo "::error::issue-link-guard could not read issue #$num's body — 'gh api' failed (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $body"
+    exit 1
+  fi
+  unchecked=$(printf '%s\n' "$body" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[ \]')
+  if [ "$unchecked" -gt 0 ]; then
+    echo "::error::This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done, re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes (#37)."
+    blocked=1
   else
-    echo "OK: closing reference to #$num (not an epic; completing it is this PR's claim to keep honest)."
+    echo "OK: closing reference to #$num (not an epic; deliverable checklist clear or absent)."
   fi
 done
 

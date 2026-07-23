@@ -80,7 +80,9 @@ edit time with "do this instead" messages, CI binds every client:
   `.claude/release.txt`);
 - an issue-link guard — a PR whose body, title, or commits would
   keyword-close (`Closes`/`Fixes`/`Resolves`) an epic that still has open
-  sub-issues fails; only the epic's closeout PR may close it
+  sub-issues, or any issue whose deliverable boxes are still unchecked,
+  fails; only the epic's closeout PR may close it, and closing with open
+  deliverables takes a declared trailer
   (`.github/workflows/issue-link-guard.yml`,
   `scripts/issue_link_decision.sh`);
 - secret scanning and dependency audits on every PR **plus** a weekly
@@ -91,7 +93,9 @@ edit time with "do this instead" messages, CI binds every client:
   build (`scripts/check_ci_gates.py`);
 - a **docs truth-checker** — backtick-cited paths must exist, issues cited
   as open must actually be open, an in-progress epic page must cite an
-  open epic issue (a wrongly-closed epic fails the next run), and cited
+  open epic issue (a wrongly-closed epic fails the next run), a sub-issue
+  an epic page lists as built must be closed (an unclosed finished task
+  fails it too), and cited
   CLI flags/env vars must exist in the code once the project has code;
   its dormant lane *owns its own activation* and demands configuration
   the moment code appears

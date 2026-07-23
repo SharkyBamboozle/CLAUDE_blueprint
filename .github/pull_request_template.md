@@ -11,7 +11,11 @@
 
 Closes #___ (epic: #___)          <!-- fully completes that issue; drop "(epic: #___)" if it has no epic -->
 
-Closes — · Part of #___ (epic)    <!-- advances the epic, completes no single issue: closes nothing -->
+Closes — · Part of #___ (epic)    <!-- advances work, completes no issue: closes nothing.
+                                       Before picking this line, check the target's deliverable
+                                       boxes — a finished issue left open goes invisible (the
+                                       inverse failure, #37). If it stays open, state its tally
+                                       in What/why: "advances #NN — deliverables 3/5". -->
 
 ## What / why
 
@@ -47,6 +51,8 @@ Closes — · Part of #___ (epic)    <!-- advances the epic, completes no single
 
 - [ ] Target branch is `development` (never `main`)
 - [ ] No binaries added (LFS-covered assets excepted; artifacts go to the data repo)
-- [ ] Closing keywords target only issues this PR fully completes — never an
-  epic mid-flight (its closeout PR excepted; `issue-link-guard` gates the epic rule)
+- [ ] Closing keywords, both ways: every issue this PR fully completes has
+  one, and nothing this PR does not complete has one — an epic mid-flight
+  never (closeout PR excepted; `issue-link-guard` gates epics by sub-issue
+  count, other issues by unchecked deliverable boxes)
 - [ ] Findings surfaced along the way filed as `note` issues, linked to their epic (or none surfaced — say so)

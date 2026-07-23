@@ -3,7 +3,7 @@
 
 Part of `make verify` (D-004; the no-silent-lanes doctrine — a dormant lane owns its
 activation condition). The strict mkdocs build validates markdown *links*; this checks
-the mechanically verifiable *claims* docs make, in five lanes:
+the mechanically verifiable *claims* docs make, in six lanes:
 
   A. Dead path citations (always on) — a backtick-cited repo path in the
      docs must exist on disk. Docs rot is usually introduced by NON-doc
@@ -40,6 +40,13 @@ the mechanically verifiable *claims* docs make, in five lanes:
      issue-link guard via a path no PR event covers — a sidebar link added
      after CI, a direct push) or the page went stale; either way the docs
      no longer tell the truth, and this lane surfaces it on the next run.
+  F. Built-but-open sub-issues (#37; same posture — NEVER guesses) — a
+     bullet under an epic page's "What has been built" section leads with
+     its sub-issue number (epic-page-template); a bullet-leading #N whose
+     issue is still OPEN means the page claims done work the tracker
+     denies — the mirror of lane E, catching the under-closing direction
+     (close the issue with its readout, or don't list it as built yet).
+     Bullet-leading refs only: mid-line refs may legitimately cite PRs.
 
 Exemptions live in KNOWN_EXEMPT below and follow the ledger rules (D-004):
 a reason per entry, a ceiling, itemized matching, and STALE ENTRIES FAIL —
@@ -521,6 +528,26 @@ def run_checks(root: str, seam=None):
                 "(/epic-closeout)."
             )
 
+    # Lane F — built-but-open sub-issues (#37). Bullet-leading #N under
+    # "What has been built" only; same resolver: offline/unknown skips.
+    for p, text in texts.items():
+        rel = os.path.relpath(p, root)
+        if not p.startswith(epics_dir + os.sep) or os.path.basename(p) == "index.md":
+            continue
+        built = re.search(r"^## What has been built$(.*?)(?=^## |\Z)",
+                          text, re.MULTILINE | re.DOTALL)
+        if not built:
+            continue
+        for ref in re.finditer(r"^\s*[-*]\s+(?:\*\*)?#(\d+)", built.group(1), re.MULTILINE):
+            state = gh_issue_state(int(ref.group(1)))
+            if state is not None and state.upper() == "OPEN":
+                issues.append(
+                    f"[built-state] {rel}: lists #{ref.group(1)} under 'What "
+                    "has been built' but the issue is still OPEN — close it "
+                    "with its readout comment (close-at-completion, #37), or "
+                    "don't list it as built yet."
+                )
+
     # Lane C — flag / env-var citations, self-arming seam.
     if seam["mode"] == "unconfigured":
         evidence = project_code_evidence(root)
@@ -679,6 +706,19 @@ def self_test() -> int:
             td, "docs/records/epics/e.md", epic_line.format("✅ Done", 42, 42)))
         scenario("E-unknown-skips", [], lambda td: write(
             td, "docs/records/epics/e.md", epic_line.format("🟡 In progress", 99, 99)))
+
+        # Lane F: built-but-open fails; built-and-closed, unknown, and
+        # mid-line refs pass (never guesses; bullet-leading refs only).
+        built_page = "# F\n\n## What has been built\n\n- #{} vendor block landed\n"
+        scenario("F-built-but-open", ["[built-state]"], lambda td: write(
+            td, "docs/records/epics/f.md", built_page.format(43)))
+        scenario("F-built-and-closed", [], lambda td: write(
+            td, "docs/records/epics/f.md", built_page.format(42)))
+        scenario("F-unknown-skips", [], lambda td: write(
+            td, "docs/records/epics/f.md", built_page.format(99)))
+        scenario("F-midline-ref-ignored", [], lambda td: write(
+            td, "docs/records/epics/f.md",
+            "# F\n\n## What has been built\n\n- #42 done (via PR #43)\n"))
     finally:
         del os.environ["DOCS_TRUTH_FAKE_ISSUES"]
 

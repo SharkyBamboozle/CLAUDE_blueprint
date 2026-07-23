@@ -219,7 +219,11 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   **Related notes** section — **never** as sub-issues (a note never reaches
   "done" and would leave the epic perpetually unfinished). `label:note` is the
   durable index; **triage it at epic closeout** (close accepted/moot ones,
-  re-home live ones). Body skeletons: `docs/.templates/`.
+  re-home live ones). Body skeletons: `docs/.templates/`. A build issue
+  (standalone or sub-issue) **closes at the moment its deliverable boxes
+  are met** — by the completing PR's `Closes` or a manual readout-close,
+  never batched to closeout (close-direction gated by `issue-link-guard`;
+  see `docs/process/contributing.md` → *Issues, sub-issues & notes*).
 - **Epic pages — the story.** Every epic gets a page under `docs/records/epics/`
   (stub at kickoff → retrospective at closeout: goal → built → found → decided
   → carried forward); the epic issue closes with a short pointer comment +
