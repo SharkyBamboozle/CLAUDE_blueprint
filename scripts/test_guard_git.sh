@@ -15,9 +15,25 @@ emit() { # emit <command> -> PreToolUse JSON on stdout
     "$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1")"
 }
 
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+# Hermetic gh for the zombie-push check (#39): the hook's `gh pr list` gets
+# $MOCK_PRS (JSON array; default: no PR history) at rc $MOCK_GH_RC — so the
+# suite never touches the network even on machines with a real gh.
+mkdir -p "$TMP/bin"
+cat >"$TMP/bin/gh" <<'MOCK'
+#!/usr/bin/env bash
+[ "${MOCK_GH_RC:-0}" -ne 0 ] && exit "${MOCK_GH_RC}"
+printf '%s\n' "${MOCK_PRS:-[]}"
+MOCK
+chmod +x "$TMP/bin/gh"
+
 expect() { # expect <rc> <label> <command> [cwd]
   local want="$1" label="$2" cmd="$3" dir="${4:-$HERE/..}"
-  ( cd "$dir" && emit "$cmd" | env -u CLAUDE_PROJECT_DIR bash "$HOOK" >/dev/null 2>&1 )
+  ( cd "$dir" && emit "$cmd" | env -u CLAUDE_PROJECT_DIR \
+      PATH="$TMP/bin:$PATH" MOCK_PRS="${MOCK_PRS:-[]}" \
+      MOCK_GH_RC="${MOCK_GH_RC:-0}" bash "$HOOK" >/dev/null 2>&1 )
   local rc=$?
   if [ "$rc" -eq "$want" ]; then echo "PASS (rc=$rc): $label"
   else echo "FAIL (rc=$rc, want $want): $label"; fails=$((fails + 1)); fi
@@ -41,8 +57,6 @@ expect 0 "read-only chain -> allowed"            "git status && git diff"
 expect 0 "garbage input -> allowed (fail-open)"  "echo not even json"
 
 # ---- hermetic push-to-main + bulk-add cases (throwaway repos) -----------
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
 mk() { git init -q "$1"; git -C "$1" config user.email t@t.t; git -C "$1" config user.name t; }
 
 # armed: origin/main exists with >1 commit (not the template birth state)
@@ -81,6 +95,39 @@ expect 2 "bulk add -A with untracked binary -> blocked" "git add -A" "$TMP/armed
 expect 2 "bulk add . with untracked binary -> blocked"  "git add ."  "$TMP/armed"
 rm -f "$TMP/armed/pic.png"
 expect 0 "bulk add -A, no binaries -> allowed"          "git add -A" "$TMP/armed"
+
+# ---- zombie-push cases (#39): terminal-PR branches, mocked gh -----------
+# Fixture: feat branched from development@c1; development then moved to c3
+# (the "merge landed"), so feat's line no longer contains the integration
+# tip — the zombie shape. Restarting feat onto origin/development is the
+# sanctioned recovery and must stay allowed.
+git init -q --bare "$TMP/origin-z.git"
+mk "$TMP/z"; git -C "$TMP/z" checkout -q -b development
+echo 1 >"$TMP/z/f"; git -C "$TMP/z" add f; git -C "$TMP/z" commit -qm c1
+git -C "$TMP/z" remote add origin "$TMP/origin-z.git"
+git -C "$TMP/z" push -q origin development
+git -C "$TMP/z" checkout -q -b feat
+echo 2 >"$TMP/z/f"; git -C "$TMP/z" commit -qam c2
+git -C "$TMP/z" checkout -q development
+echo 3 >"$TMP/z/f"; git -C "$TMP/z" commit -qam c3
+git -C "$TMP/z" push -q origin development
+git -C "$TMP/z" checkout -q feat
+
+MOCK_PRS='[{"number":9,"state":"MERGED"}]'
+expect 2 "zombie: latest PR merged, branch on pre-merge line -> blocked" "git push -u origin feat" "$TMP/z"
+MOCK_PRS='[{"number":9,"state":"CLOSED"}]'
+expect 2 "zombie: latest PR closed-unmerged -> blocked (operator decision)" "git push" "$TMP/z"
+MOCK_PRS='[{"number":9,"state":"MERGED"},{"number":12,"state":"OPEN"}]'
+expect 0 "open PR alongside an older merged one -> allowed (normal appending)" "git push" "$TMP/z"
+MOCK_PRS='[]'
+expect 0 "no PR history -> allowed (first push)" "git push -u origin feat" "$TMP/z"
+MOCK_PRS='[{"number":9,"state":"MERGED"}]' MOCK_GH_RC=1
+expect 0 "gh unavailable/errors -> allowed (fail OPEN by design, #39)" "git push" "$TMP/z"
+MOCK_GH_RC=0
+git -C "$TMP/z" checkout -q -B feat origin/development
+MOCK_PRS='[{"number":9,"state":"MERGED"}]'
+expect 0 "restarted branch on current integration line -> allowed (fresh PR next)" "git push -u origin feat" "$TMP/z"
+MOCK_PRS='[]'
 
 [ "$fails" -eq 0 ] && echo "all asserted cases pass" || echo "$fails case(s) FAILED"
 exit "$fails"

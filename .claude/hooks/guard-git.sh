@@ -3,10 +3,14 @@
 # Exit 0 = allow · exit 2 = block (stderr is fed back to the agent).
 #
 # Guards CLAUDE.md's hard rules at the Bash layer — push to main, force-push,
-# remote branch deletion, staging un-LFS'd binaries, self-merging PRs. It
+# remote branch deletion, staging un-LFS'd binaries, self-merging PRs, and
+# zombie pushes to a branch whose PR is already merged/closed (#39). It
 # normalizes each command to its INTENT before matching (refspec forms,
 # quoting, bulk adds) rather than pattern-matching one literal form, and
-# FAILS CLOSED when repo state is inconclusive (D-004). The thorough net is
+# FAILS CLOSED when repo state is inconclusive (D-004) — except the
+# zombie-push check, which fails OPEN by design: blocking every push on a
+# gh/network error would brick normal work, and a wrongly-allowed zombie
+# push wastes effort but destroys nothing. The thorough net is
 # repo-hygiene CI + branch protection: enforcement is layered by design.
 #
 # Every block message says WHAT TO DO INSTEAD — a blocked agent with no
@@ -117,6 +121,43 @@ def norm_branch(ref, cur):
         return cur
     return dst.rsplit("/", 1)[-1]
 
+def dead_pr(branch, src_ref):
+    """Zombie-push detection (#39): returns (state, number) when the branch's
+    PR history is terminal (latest PR MERGED/CLOSED, none open) AND the
+    commits being pushed still sit on the old pre-merge line; None otherwise.
+    A branch legitimately RESTARTED from the integration line (its history
+    contains current origin/development) is fresh follow-up work headed for
+    a fresh PR — allowed. FAILS OPEN (None) on any gh/network error: see the
+    header. MCP/API pushes bypass this hook entirely — the session-start
+    PR verdict and the PR-lifecycle rule are that net
+    (docs/process/contributing.md → PR lifecycle)."""
+    try:
+        r = subprocess.run(
+            ["gh", "pr", "list", "--head", branch, "--state", "all",
+             "--json", "number,state", "--limit", "20"],
+            capture_output=True, text=True, timeout=15)
+        if r.returncode != 0:
+            return None
+        prs = json.loads(r.stdout or "[]")
+        if not prs or any(p.get("state") == "OPEN" for p in prs):
+            return None
+        latest = max(prs, key=lambda p: p.get("number", 0))
+        if latest.get("state") not in ("MERGED", "CLOSED"):
+            return None
+        # Best-effort fetch so a stale local origin/development ref cannot
+        # hide a moved integration line; ignore failures (offline degrades
+        # to the local ref, still better than memory).
+        subprocess.run(["git", "fetch", "origin", "development"],
+                       capture_output=True, timeout=20)
+        anc = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", "origin/development",
+             src_ref], capture_output=True, timeout=10)
+        if anc.returncode == 0:
+            return None  # restarted on the current integration line
+        return (latest.get("state"), latest.get("number"))
+    except Exception:
+        return None
+
 def worktree_new_binaries():
     # Files a bulk `git add` would stage: untracked + modified, .gitignore
     # respected. Fail-open (empty) on error — repo-hygiene CI is the backstop.
@@ -207,6 +248,41 @@ for seg in re.split(r"&&|\|\||;|\|", cmd):
                     block(PUSH_MAIN_MSG)
                 if any(a in ("--force", "-f", "--force-with-lease") for a in flags):
                     block(FORCE_MSG)
+                # R3 — zombie push (#39): git happily pushes to a branch whose
+                # PR was already merged or closed (delete-on-merge even
+                # recreates the pruned branch) and GitHub attaches the commits
+                # to nothing; the agent then reports "landed on the PR" off a
+                # local exit code. Verify the PR state before the push.
+                dests = {}
+                for a in refspecs:
+                    dests[norm_branch(a, cur)] = a.split(":")[0] or "HEAD"
+                if not dests and cur:
+                    dests[cur] = "HEAD"
+                for dest, src in dests.items():
+                    if not dest or dest in ("main", "master"):
+                        continue
+                    hit = dead_pr(dest, src)
+                    if hit and hit[0] == "MERGED":
+                        block(
+                            f"BLOCKED (PR lifecycle, #39): PR #{hit[1]} for "
+                            f"branch '{dest}' is MERGED — this branch is dead "
+                            "history; pushing would strand commits on a zombie "
+                            "branch that no PR will ever merge. Instead: "
+                            "restart the branch from the integration line "
+                            "(git fetch origin development && git checkout -B "
+                            f"{dest} origin/development), re-apply the "
+                            "follow-up work, push, and open a FRESH PR. Never "
+                            "stack new commits on merged history."
+                        )
+                    if hit and hit[0] == "CLOSED":
+                        block(
+                            f"BLOCKED (PR lifecycle, #39): PR #{hit[1]} for "
+                            f"branch '{dest}' was CLOSED without merging — the "
+                            "operator rejected that line of work; more commits "
+                            "do not reverse the decision. Ask the user how to "
+                            "proceed; if new work under this branch name is "
+                            "wanted, restart it from origin/development first."
+                        )
             elif sub == "add":
                 # Bulk add (`-A`, `--all`, `.`) stages the whole worktree, so
                 # inspect what it would actually stage, not just named paths.

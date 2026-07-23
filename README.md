@@ -68,8 +68,9 @@ templates under `docs/.templates/`.
 **🛡️ Enforcement in layers** — prose points at hooks, hooks nudge or deny at
 edit time with "do this instead" messages, CI binds every client:
 
-- a git guard against push-to-main, force-pushes, self-merges, and
-  un-LFS'd binaries (`.claude/hooks/guard-git.sh`);
+- a git guard against push-to-main, force-pushes, self-merges,
+  un-LFS'd binaries, and zombie pushes to a branch whose PR is already
+  merged or closed (`.claude/hooks/guard-git.sh`);
 - an edit lock on ✅ Decided decision records, with an expiring
   `/unlock-adr` token and a CI-checked commit trailer
   (`.claude/hooks/guard-adr.sh`, `.github/workflows/adr-gates.yml`);
