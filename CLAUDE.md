@@ -233,6 +233,13 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   rates; anything load-bearing graduates into an ADR, epic, or open question.
 - **Branches:** develop on a feature branch → PR into **`development`** (the
   integration branch). `main` is the promoted branch.
+- **PRs are append-only while OPEN** — before pushing to a branch with PR
+  history, read the PR's state: merged → restart the branch from
+  `development` (fresh PR — never stack on merged history); closed → stop
+  and ask. Never claim "landed on PR #N" without reading the PR after the
+  push — remote state is read, never recalled. Guarded at push time by
+  `guard-git.sh` (fail-open) + the session-start verdict line; see
+  `docs/process/contributing.md` → *PR lifecycle*.
 - **Promotion is a release** — run `/promote`: operator-decided bump class
   (hard STOP), caboose PR (version + release log, seam:
   `.claude/release.txt`), promotion PR restating the train's `Closes #N`

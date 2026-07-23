@@ -42,6 +42,20 @@ if [ -n "$lessons" ]; then
   echo "$lessons"
 fi
 if command -v gh >/dev/null 2>&1; then
+  # Current branch's PR verdict (#39): a fresh session resuming on a stale
+  # local branch is where zombie pushes are born — surface the terminal
+  # state BEFORE any push. Prints only when the branch has PR history;
+  # degrades silently offline (zero-noise discipline).
+  br=$(git branch --show-current 2>/dev/null || true)
+  if [ -n "$br" ] && [ "$br" != "main" ] && [ "$br" != "development" ]; then
+    verdict=$(gh pr list --head "$br" --state all --limit 1 \
+      --json number,state --jq '.[0] | "PR #\(.number) \(.state)"' 2>/dev/null || true)
+    case "$verdict" in
+      *MERGED*) echo "Branch $br: $verdict — dead history. Restart before pushing: git fetch origin development && git checkout -B $br origin/development (fresh PR; see contributing.md -> PR lifecycle)." ;;
+      *CLOSED*) echo "Branch $br: $verdict — closed without merging; ask the operator before continuing this line of work." ;;
+      *OPEN*)   echo "Branch $br: $verdict" ;;
+    esac
+  fi
   prs=$(gh pr list --limit 5 2>/dev/null || true)
   if [ -n "$prs" ]; then
     echo "-- Open PRs --"

@@ -270,6 +270,52 @@ only by PR from `development`, never by direct push (branch protection +
 the git guard hook enforce this; the single exception is the repo's birth
 commit during bootstrap). Never merge your own PR.
 
+## PR lifecycle
+
+**A PR is append-only while OPEN — and git will not tell you when it no
+longer is.** Pushing to a branch whose PR was merged or closed succeeds at
+the git layer (with delete-on-merge it even *recreates* the pruned branch),
+GitHub attaches the commits to nothing, and "the changes landed on the PR"
+becomes a false report backed only by a local exit code. Hence two rules:
+
+1. **Before pushing to any branch with PR history, read the PR's state
+   from the API** — a `git fetch` inspects refs, not PRs, and cannot
+   distinguish the two terminal states, which demand different responses:
+   - **Merged** → the branch is dead history. Restart it from the
+     integration line (`git fetch origin development &&
+     git checkout -B <branch> origin/development`), re-apply the follow-up
+     work, and open a **fresh PR** — never stack new commits on merged
+     history.
+   - **Closed without merging** → the operator *rejected* that line of
+     work; more commits do not reverse the decision. **Stop and ask.**
+2. **Remote state is read in the same turn it is asserted, never
+   recalled.** "Landed on PR #N" may only be claimed after reading the PR
+   and seeing the pushed head on it. This is the operational form: a
+   statement about a PR's or issue's state is backed by a fresh read made
+   in the same turn — session memory is never a source for remote state.
+   *(This half is advisory by nature and demonstrably the weakest layer —
+   the #39 authoring session itself asserted a stale PR state from memory
+   within an hour of writing the rule; that incident is why the
+   mechanical layers below sit at action moments, per D-004.)*
+
+Enforcement (D-004): the git guard hook checks the branch's PR state at
+push time (`.claude/hooks/guard-git.sh`; suite:
+`scripts/test_guard_git.sh`) — blocking pushes to terminal-PR branches
+still on the pre-merge line, while a branch restarted onto current
+`origin/development` passes (that IS the recovery). The check **fails
+open** on gh/network errors — blocking every push offline would brick
+normal work, and a wrongly-allowed zombie push wastes effort but destroys
+nothing. The session-start hook prints the current branch's PR verdict at
+the highest-risk moment (a fresh session on a stale branch). Named
+residuals: MCP/API pushes bypass the Bash hook, and **no CI gate can exist
+here** — a push to a dead branch fires no PR event; the verdict line,
+this rule, and review are that net. PR watching/subscription (where a
+harness offers it) remains a **per-PR operator choice, never a standing
+default**: subscriptions are session-bound where this failure is
+cross-session, merge events are not reliably delivered, and the blueprint's
+conventions bind any agent — a harness-specific habit no gate can verify
+is not a rule (D-004).
+
 ## PR ↔ issue linking
 
 A GitHub closing keyword (`close`/`closes`/`closed`, `fix`/`fixes`/`fixed`,
