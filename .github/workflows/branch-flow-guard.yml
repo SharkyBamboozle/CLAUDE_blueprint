@@ -15,7 +15,17 @@ name: Branch flow guard
 # unit-testable with a mocked gh (scripts/branch_flow_decision.sh,
 # scripts/test_branch_flow_guard.sh) — the workflow just supplies the inputs.
 #
-# scripts/github_setup.sh registers this job as a required check on `main`.
+# The sibling release-gate job guards the promotion's OTHER rule (#35):
+# a PR into `main` carries its release caboose — the seam-named version
+# file (.claude/release.txt) bumped by exactly one semver step (the class
+# is the operator's decision at the /promote ritual's STOP; the gate
+# checks the arithmetic, not the approval, which is advisory per D-004)
+# and a release-log entry for the new version. Projects that do not
+# version their promotions declare 'mode: off <reason>' in the seam.
+# Logic in scripts/release_gate_decision.sh, unit-tested against fixture
+# repos (scripts/test_release_gate.sh).
+#
+# scripts/github_setup.sh registers both jobs as required checks on `main`.
 on:
   pull_request:
     branches: [main]
@@ -35,3 +45,15 @@ jobs:
           BASE_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: bash "$GITHUB_WORKSPACE/scripts/branch_flow_decision.sh"
+
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Promotions carry their release caboose (bump + log entry)
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: bash "$GITHUB_WORKSPACE/scripts/release_gate_decision.sh"

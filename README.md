@@ -68,13 +68,24 @@ templates under `docs/.templates/`.
 **🛡️ Enforcement in layers** — prose points at hooks, hooks nudge or deny at
 edit time with "do this instead" messages, CI binds every client:
 
-- a git guard against push-to-main, force-pushes, self-merges, and
-  un-LFS'd binaries (`.claude/hooks/guard-git.sh`);
+- a git guard against push-to-main, force-pushes, self-merges,
+  un-LFS'd binaries, and zombie pushes to a branch whose PR is already
+  merged or closed (`.claude/hooks/guard-git.sh`);
 - an edit lock on ✅ Decided decision records, with an expiring
   `/unlock-adr` token and a CI-checked commit trailer
   (`.claude/hooks/guard-adr.sh`, `.github/workflows/adr-gates.yml`);
 - a server-side branch-flow guard — only the integration branch may
-  promote into `main` (`.github/workflows/branch-flow-guard.yml`);
+  promote into `main`, and a promotion must carry its release caboose:
+  version bumped by exactly one operator-approved semver step + a
+  release-log entry (`.github/workflows/branch-flow-guard.yml`; seam:
+  `.claude/release.txt`);
+- an issue-link guard — a PR whose body, title, or commits would
+  keyword-close (`Closes`/`Fixes`/`Resolves`) an epic that still has open
+  sub-issues, or any issue whose deliverable boxes are still unchecked,
+  fails; only the epic's closeout PR may close it, and closing with open
+  deliverables takes a declared trailer
+  (`.github/workflows/issue-link-guard.yml`,
+  `scripts/issue_link_decision.sh`);
 - secret scanning and dependency audits on every PR **plus** a weekly
   sweep, with a value-scoped canary-convention allowlist designed not to
   silence real findings (`.github/workflows/security.yml`, `.gitleaks.toml`);
@@ -82,9 +93,13 @@ edit time with "do this instead" messages, CI binds every client:
   from the working branch or neutered by `continue-on-error` fails the
   build (`scripts/check_ci_gates.py`);
 - a **docs truth-checker** — backtick-cited paths must exist, issues cited
-  as open must actually be open, and cited CLI flags/env vars must exist
-  in the code once the project has code; its dormant lane *owns its own
-  activation* and demands configuration the moment code appears
+  as open must actually be open, an in-progress epic page must cite an
+  open epic issue (a wrongly-closed epic fails the next run), a sub-issue
+  an epic page lists as built must be closed (an unclosed finished task
+  fails it too), and cited
+  CLI flags/env vars must exist in the code once the project has code;
+  its dormant lane *owns its own activation* and demands configuration
+  the moment code appears
   (`scripts/check_docs_truth.py`, seam: `.claude/docs-truth.txt`);
 - exception lists are **ledgers** (D-004): a reason per entry, a size
   ceiling, stale entries fail loud, itemized matching only.

@@ -4,6 +4,46 @@ What each blueprint version changed. Bumped by the harvest ritual
 (`HARVEST.md`); each seeded project records the version it started from in
 its init commit.
 
+## v1.0.3 — Lifecycle guardrails: issue-link guard, promotion train, zombie-push
+
+Five changes hardening how issues close and how releases are cut, plus
+push-time protection against stacking commits on an already-merged PR. Each
+lands or extends enforcement machinery — CI gates, a ritual command, a push
+hook — carrying its own both-ways test suite in `make verify`.
+
+- **`issue-link-guard` — closing keywords may only target issues a PR
+  completes** (#18): a required CI gate that blocks a closing reference to an
+  `epic`-labeled issue with open sub-issues (closeout PRs pass; the
+  `Skip-Issue-Link-Guard:` trailer is the declared exception; an inconclusive
+  `gh` fails closed). Adds the forced-choice linking block to the PR template,
+  the canonical *PR ↔ issue linking* section in `contributing.md`, and the
+  docs-truth `epic-state` lane covering the residual paths.
+- **Standardized promotion train** (#35): the `/promote` ritual — contents
+  derived from `main..development`, a per-change bump proposal, a hard operator
+  STOP on patch/minor/major, caboose PR, promotion PR, operator-only merge +
+  tag — plus a promotion PR template and the `release-gate` job (the seam-named
+  version file bumped by exactly one semver step and a release-log entry for
+  it; seam `.claude/release.txt`). Fills the release checklist and the
+  surrounding process prose.
+- **Close-at-completion guardrails** (#37): the symmetric rule that an issue
+  closes when its deliverables are met. Deliverables become task-list
+  checkboxes in the task template; `issue-link-guard` gains the general-issue
+  check (a `Closes` at any issue with unchecked boxes fails, the trailer
+  excepted); `/session-close` gains the per-issue `n/m` reconciliation sweep;
+  the docs-truth `built-state` lane mirrors `epic-state` for the under-closing
+  case.
+- **Zombie-push guardrails** (#39): `guard-git.sh` now reads the destination
+  branch's PR state at push time — terminal (merged or closed) history blocks
+  with state-specific recovery instructions, unless the push carries the
+  current `origin/development` restart line — and fails open on `gh`/network
+  errors. The session-start orientation prints the branch's PR verdict, and the
+  canonical *PR lifecycle* section is added.
+- **Mandatory deliverable checklist at close time** (#41): a `Closes` at a
+  box-less non-epic, non-`note` issue now fails unless a `Skip-Issue-Link-Guard`
+  trailer is present — absence no longer reads as compliance — and checkbox
+  counting is fence-aware, so a fenced *sample* of `- [ ]` syntax is not
+  miscounted as a real deliverable box.
+
 ## v1.0.2 — Multi-agent entry point (AGENTS.md)
 
 Two backward-compatible changes since v1.0.1: a tool-neutral entry point

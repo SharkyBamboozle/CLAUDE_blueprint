@@ -18,8 +18,9 @@
 #                    direct pushes from tooling).
 #   --areas          extra area:* labels to create, comma-separated
 #   --require-check  a status-check context required on main (repeatable);
-#                    default when omitted: build + flow-guard — the two jobs
-#                    the template itself ships (docs.yml, branch-flow-guard.yml)
+#                    default when omitted: build + flow-guard + release-gate
+#                    + issue-link-guard — the jobs the template itself ships
+#                    (docs.yml, branch-flow-guard.yml, issue-link-guard.yml)
 #   --deploy-docs    (code profile) opt IN to publishing docs to GitHub Pages
 #                    on merges to development/main: provisions the Pages site,
 #                    the github-pages env branch policy, and DEPLOY_DOCS=true.
@@ -82,13 +83,14 @@ if [ "$PROFILE" = "code" ]; then
   # --- Branch protection --------------------------------------------------
   # main: PRs only (0 approvals — solo-dev calibrated: require checks, not
   # reviews), no force-pushes, no deletion, required status checks.
-  # Default contexts: the template's own shipped gates — docs.yml's `build`
-  # and branch-flow-guard.yml's `flow-guard` — so the prose rules are backed
-  # by required checks out of the box (D-004; a required context that never
-  # reports blocks merges forever, hence only jobs the template itself
+  # Default contexts: the template's own shipped gates — docs.yml's `build`,
+  # branch-flow-guard.yml's `flow-guard` + `release-gate` (#35), and
+  # issue-link-guard.yml's `issue-link-guard` (#18) — so the prose rules are
+  # backed by required checks out of the box (D-004; a required context that
+  # never reports blocks merges forever, hence only jobs the template itself
   # ships). Override with --require-check.
   if [ ${#CHECKS[@]} -eq 0 ]; then
-    CHECKS=(build flow-guard)
+    CHECKS=(build flow-guard release-gate issue-link-guard)
   fi
   CONTEXTS_JSON=$(printf '%s\n' "${CHECKS[@]:-}" | python3 -c \
     'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
@@ -104,14 +106,16 @@ if [ "$PROFILE" = "code" ]; then
 JSON
   echo "protected: main (PRs only, checks: $CONTEXTS_JSON)"
 
-  # development: block force-pushes/deletion AND require the docs build to
-  # pass — CLAUDE.md's "never commit directly to development" was previously
-  # prose-only here; a required check makes green-build the price of landing
-  # anything on the integration branch (D-004). strict=false: development
-  # PRs need green checks but not a rebase race.
+  # development: block force-pushes/deletion AND require the docs build and
+  # the issue-link guard to pass — CLAUDE.md's "never commit directly to
+  # development" was previously prose-only here; a required check makes
+  # green-build the price of landing anything on the integration branch
+  # (D-004), and development is the default branch where closing keywords
+  # fire, so the issue-link guard must be merge-blocking exactly here (#18).
+  # strict=false: development PRs need green checks but not a rebase race.
   gh api -X PUT "repos/$REPO/branches/development/protection" --input - >/dev/null <<'JSON'
 {
-  "required_status_checks": {"strict": false, "contexts": ["build"]},
+  "required_status_checks": {"strict": false, "contexts": ["build", "issue-link-guard"]},
   "enforce_admins": false,
   "required_pull_request_reviews": null,
   "restrictions": null,
@@ -119,7 +123,7 @@ JSON
   "allow_deletions": false
 }
 JSON
-  echo "protected: development (no force-push; required check: build)"
+  echo "protected: development (no force-push; required checks: build, issue-link-guard)"
 
   # --- GitHub Pages via Actions: OPT-IN, default OFF (#3) ------------------
   # Publishing docs is an outward-facing act, so it is the owner's decision,

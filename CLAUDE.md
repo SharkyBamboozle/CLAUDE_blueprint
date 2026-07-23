@@ -204,10 +204,11 @@ config — or state "none yet — linter defaults apply." -->
 
 ## Repo workflow
 
-*Except the branch model (server-side `branch-flow-guard`) and backtick-cited
-paths (the docs-truth checker), these are process conventions upheld by the
-ritual commands, issue templates, and epic-closeout review — advisory, not
-gated (D-004).*
+*Except the branch model (server-side `branch-flow-guard`), backtick-cited
+paths (the docs-truth checker), the epic closing-keyword rule (the
+`issue-link-guard` gate), and the promotion caboose (the `release-gate`),
+these are process conventions upheld by the ritual commands, issue
+templates, and epic-closeout review — advisory, not gated (D-004).*
 
 - **Docs are canonical; issues track work.** GitHub issues use `epic` +
   area/status labels; epics group children as native sub-issues.
@@ -218,7 +219,11 @@ gated (D-004).*
   **Related notes** section — **never** as sub-issues (a note never reaches
   "done" and would leave the epic perpetually unfinished). `label:note` is the
   durable index; **triage it at epic closeout** (close accepted/moot ones,
-  re-home live ones). Body skeletons: `docs/.templates/`.
+  re-home live ones). Body skeletons: `docs/.templates/`. A build issue
+  (standalone or sub-issue) **closes at the moment its deliverable boxes
+  are met** — by the completing PR's `Closes` or a manual readout-close,
+  never batched to closeout (close-direction gated by `issue-link-guard`;
+  see `docs/process/contributing.md` → *Issues, sub-issues & notes*).
 - **Epic pages — the story.** Every epic gets a page under `docs/records/epics/`
   (stub at kickoff → retrospective at closeout: goal → built → found → decided
   → carried forward); the epic issue closes with a short pointer comment +
@@ -228,6 +233,24 @@ gated (D-004).*
   rates; anything load-bearing graduates into an ADR, epic, or open question.
 - **Branches:** develop on a feature branch → PR into **`development`** (the
   integration branch). `main` is the promoted branch.
+- **PRs are append-only while OPEN** — before pushing to a branch with PR
+  history, read the PR's state: merged → restart the branch from
+  `development` (fresh PR — never stack on merged history); closed → stop
+  and ask. Never claim "landed on PR #N" without reading the PR after the
+  push — remote state is read, never recalled. Guarded at push time by
+  `guard-git.sh` (fail-open) + the session-start verdict line; see
+  `docs/process/contributing.md` → *PR lifecycle*.
+- **Promotion is a release** — run `/promote`: operator-decided bump class
+  (hard STOP), caboose PR (version + release log, seam:
+  `.claude/release.txt`), promotion PR restating the train's `Closes #N`
+  lines, operator merge + tag. Gated by `release-gate`; see
+  `docs/process/contributing.md` → *Promotion & releases*.
+- **PR ↔ issue linking:** a closing keyword (`Closes`/`Fixes`/`Resolves`)
+  targets only an issue the PR fully completes — GitHub ignores qualifiers,
+  so `Closes #N (partial)` still closes #N. Progress PRs use
+  `Closes — · Part of #NN (epic)`; an epic is keyword-closed only by its
+  closeout PR. Epic rule enforced by the `issue-link-guard` CI gate; see
+  `docs/process/contributing.md` → *PR ↔ issue linking*.
 - **Agent working docs** live in `.claude/working/` — never under `docs/`
   (docs are human-curated). At task or session end, archive them to
   `.claude/archive/YYYY-MM-DD/<task-slug>/` via `/handoff` — archive, never
@@ -237,9 +260,9 @@ gated (D-004).*
   cited), prepended newest first.
 - **Ritual commands:** the multi-step conventions are packaged as slash
   commands — `/adr-new`, `/note`, `/epic-kickoff`, `/epic-closeout`,
-  `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`, `/lock-adr`
-  (`.claude/commands/`). Use them instead of reconstructing the steps from
-  memory.
+  `/promote`, `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`,
+  `/lock-adr` (`.claude/commands/`). Use them instead of reconstructing the
+  steps from memory.
 
 ## Definition of done
 

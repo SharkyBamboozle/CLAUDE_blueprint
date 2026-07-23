@@ -67,7 +67,10 @@ specific change by hand only when wanted.
   of the blueprint's own `CLAUDE.md` template. One home per fact — never
   both.
 - Bump `blueprint/VERSION`; append a `blueprint/CHANGELOG.md` entry naming
-  each harvested change and its source project.
+  each harvested change and its source project. The release train itself —
+  operator-decided bump class, caboose PR, promotion PR, tag — follows the
+  `/promote` ritual (`.claude/commands/promote.md`); the bullets below
+  state the harvest-specific details.
 - `make verify` + `bash -n` any touched scripts; run the matching hook
   suite if a guard changed (e.g. `scripts/test_guard_git.sh`).
 - Feature branch → PR (this repo follows its own branch model).

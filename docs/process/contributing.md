@@ -150,6 +150,37 @@ them is deliberate:
 - **Sub-issues are build tasks** — concrete deliverables that count toward an
   epic's completion. Add them incrementally and reconcile the epic body as they
   land ("Living scope").
+- **An issue closes at the moment its deliverables are met — never batched
+  to session end or epic closeout.** This holds for standalone tasks and
+  epic sub-issues alike. The completing PR carries `Closes #NN` (plus
+  `(epic: #MM)` when it has a parent — see *PR ↔ issue linking*); an issue
+  no single PR completes (substrate growing across PRs) is closed manually
+  the moment its boxes are all ticked, with its **readout as the closing
+  comment**. Deliverables and acceptance criteria are task-list checkboxes
+  — on **any issue that defines deliverables, however authored**: free-form
+  design issues included, not only build tasks created from
+  `docs/.templates/task-issue-body.md` (#41 closed exactly that loophole).
+  GitHub renders the `n/m` progress, and the `issue-link-guard` blocks a
+  `Closes` aimed at an issue with unchecked boxes **or with no checklist at
+  all** — a box-less close is a faith-based close; writing the checklist
+  **retroactively is sanctioned** (one ticked box per delivered artifact is
+  a completion record, not busywork), fenced code samples never count (the
+  counter strips them), and the declared exception is the
+  `Skip-Issue-Link-Guard: <reason>` trailer. The presence rule polices
+  *form, not substance* — the same reasoning that rejected coverage
+  thresholds (D-005) applies: a ritual box can satisfy it, and its
+  guarantee is only that **no close is silently faith-based**; checklist
+  honesty stays with D-006 ticking discipline and review, and manual
+  closes bypass CI by construction — the `/session-close` reconciliation
+  step is that path's net, sweeping every issue the session advanced:
+  `n = m` means closed, or argued. The
+  `/epic-closeout` sub-issue check is a **backstop that should find
+  nothing**, and closeout triage is for *notes* — build issues never wait
+  for it. Two exceptions: **epics** close only via their closeout, and
+  **notes** are triaged, never "done". *(Checkbox counts are self-reported
+  — the boxes make deliverable state visible and gateable, not true;
+  honest ticking (D-006) is the substrate, and the reconciliation sweep is
+  where drift gets caught.)*
 - **Notes** (`note` label) are **observations, design considerations, or run
   findings that are *not* build tasks**. A note is filed as its own issue with
   `note` (+ the relevant `area:*`), cross-linked to its epic, and listed in
@@ -250,6 +281,139 @@ branch, the repo default). **`main` is the promoted branch** — it advances
 only by PR from `development`, never by direct push (branch protection +
 the git guard hook enforce this; the single exception is the repo's birth
 commit during bootstrap). Never merge your own PR.
+
+## PR lifecycle
+
+**A PR is append-only while OPEN — and git will not tell you when it no
+longer is.** Pushing to a branch whose PR was merged or closed succeeds at
+the git layer (with delete-on-merge it even *recreates* the pruned branch),
+GitHub attaches the commits to nothing, and "the changes landed on the PR"
+becomes a false report backed only by a local exit code. Hence two rules:
+
+1. **Before pushing to any branch with PR history, read the PR's state
+   from the API** — a `git fetch` inspects refs, not PRs, and cannot
+   distinguish the two terminal states, which demand different responses:
+   - **Merged** → the branch is dead history. Restart it from the
+     integration line (`git fetch origin development &&
+     git checkout -B <branch> origin/development`), re-apply the follow-up
+     work, and open a **fresh PR** — never stack new commits on merged
+     history.
+   - **Closed without merging** → the operator *rejected* that line of
+     work; more commits do not reverse the decision. **Stop and ask.**
+2. **Remote state is read in the same turn it is asserted, never
+   recalled.** "Landed on PR #N" may only be claimed after reading the PR
+   and seeing the pushed head on it. This is the operational form: a
+   statement about a PR's or issue's state is backed by a fresh read made
+   in the same turn — session memory is never a source for remote state.
+   *(This half is advisory by nature and demonstrably the weakest layer —
+   the #39 authoring session itself asserted a stale PR state from memory
+   within an hour of writing the rule; that incident is why the
+   mechanical layers below sit at action moments, per D-004.)*
+
+Enforcement (D-004): the git guard hook checks the branch's PR state at
+push time (`.claude/hooks/guard-git.sh`; suite:
+`scripts/test_guard_git.sh`) — blocking pushes to terminal-PR branches
+still on the pre-merge line, while a branch restarted onto current
+`origin/development` passes (that IS the recovery). The check **fails
+open** on gh/network errors — blocking every push offline would brick
+normal work, and a wrongly-allowed zombie push wastes effort but destroys
+nothing. The session-start hook prints the current branch's PR verdict at
+the highest-risk moment (a fresh session on a stale branch). Named
+residuals: MCP/API pushes bypass the Bash hook, and **no CI gate can exist
+here** — a push to a dead branch fires no PR event; the verdict line,
+this rule, and review are that net. PR watching/subscription (where a
+harness offers it) remains a **per-PR operator choice, never a standing
+default**: subscriptions are session-bound where this failure is
+cross-session, merge events are not reliably delivered, and the blueprint's
+conventions bind any agent — a harness-specific habit no gate can verify
+is not a rule (D-004).
+
+## PR ↔ issue linking
+
+A GitHub closing keyword (`close`/`closes`/`closed`, `fix`/`fixes`/`fixed`,
+`resolve`/`resolves`/`resolved`) in a PR body, PR title, or commit message
+**auto-closes its target** when the PR merges into `development` — the
+integration branch is the repo default, so every integration PR is a live
+close surface. GitHub ignores qualifiers: `Closes #7 (partial)` still closes
+#7. Hence one rule:
+
+**A closing keyword targets only an issue the PR fully completes.**
+
+- **Completing a sub-issue:** `Closes #NN (epic: #MM)` — the keyword targets
+  the sub-issue; its epic is referenced without a keyword.
+- **Advancing an epic without completing any single issue:**
+  `Closes — · Part of #MM (epic)` — closes nothing.
+- **Closing an epic** is reserved for its own closeout PR (the
+  `/epic-closeout` ritual, every sub-issue already closed): `Closes #MM
+  (epic)` then closes it atomically when the retrospective lands.
+
+Enforcement (D-004): the PR template's forced-choice linking block, and the
+**issue-link guard** (`.github/workflows/issue-link-guard.yml`) — a required
+check that fails any PR whose body, title, commit messages, or resolved link
+set carry a closing reference to a target that is not completion-ready: an
+`epic`-labeled issue with open sub-issues, or **any other issue whose body
+still carries unchecked deliverable boxes (#37) — or none at all (#41)**
+(`note`-labeled issues excepted: their completion semantics are the triage
+verbs) — so closing with open or unstated deliverables requires the
+argued, durable exception, never a silent close
+(decision logic: `scripts/issue_link_decision.sh`; suite:
+`scripts/test_issue_link_guard.sh`; deliberate exception:
+`Skip-Issue-Link-Guard: <reason>` trailer). It runs on `edited` and
+`synchronize` too, so a keyword added to the body or a commit after the
+first CI run is re-checked; the meta-gate pins that event list. The forward
+direction — a PR that *should* have closed a now-complete issue but didn't
+— is *advisory*: no gate can know which PRs complete what; the
+`/session-close` reconciliation sweep, the template's two-sided checkbox,
+and review carry it (D-004).
+
+Two residual paths bypass the gate and are accepted, named (D-004): an
+issue linked via the PR's *Development* sidebar **after** the gate's last
+run (link edits emit no `pull_request` event), and a direct push to
+`development` carrying a closing keyword in its commit message (no PR, no
+gate). Both are caught after the fact by the docs-truth `epic-state` lane
+(`scripts/check_docs_truth.py`): an epic page still marked 🟡 whose epic
+issue is closed fails the next `make verify` / CI run.
+
+## Promotion & releases
+
+Promoting `development` into `main` is a **release**, and it is a
+standardized two-PR train run by the `/promote` ritual
+(`.claude/commands/promote.md`); the step-by-step canonical path is the
+[release checklist](release-checklist.md). The shape:
+
+1. **Bump decision — the operator's call.** The agent derives the release
+   contents from `main..development` (first-parent merges), proposes a bump
+   class per change with reasoning, and **stops for the operator to pick
+   patch / minor / major** — a hard STOP; an unanswered question blocks, it
+   never defaults.
+2. **Caboose PR** into `development`: the version file bumped and the
+   release-log entry prepended (both named by the seam
+   `.claude/release.txt`), the entry derived from the contents list —
+   bundling every promoted change, never written from memory.
+3. **Promotion PR** `development → main` from
+   `.github/PULL_REQUEST_TEMPLATE/promotion.md`, **restating `Closes #N`
+   for every issue the train completed**. This restatement is
+   default-branch-agnostic by construction: closing keywords only fire on
+   PRs into the repo's *default* branch, so on a main-default repo the
+   restated lines are what actually closes the issues (integration merges
+   never did), while on a dev-default repo they are a harmless no-op that
+   doubles as the release's issue manifest. The `issue-link-guard` vets the
+   restated set either way.
+4. **Operator-only finish:** merge (never self-merge, never the agent) and
+   the annotated tag on the `main` merge commit.
+
+Enforcement (D-004): the `release-gate` job
+(`.github/workflows/branch-flow-guard.yml`, required on `main`) fails a
+promotion whose seam-named version file is not bumped by **exactly one
+semver step**, or whose release log lacks an entry for the new version
+(logic: `scripts/release_gate_decision.sh`; suite:
+`scripts/test_release_gate.sh`). A project that does not version its
+promotions declares `mode: off <reason>` in `.claude/release.txt` — the
+bootstrap gate forces every seeded project to resolve that seam either
+way. *Advisory, stated as such:* whether the operator was actually asked
+(the ritual STOP + the promotion template's confirmation checkbox are the
+enforcers) and whether the restated `Closes` set is complete (the ritual
+generates it; review verifies it).
 
 ## Commit conventions
 

@@ -27,3 +27,11 @@ Steps, in order:
 6. Report: issue number, page path, and what the first sub-issue should be.
    Sub-issues are added incrementally (build tasks only — findings become
    `note` issues, see /note).
+7. Restate the PR linking convention for this epic in the report:
+   `Closes #<sub-issue> (epic: #NN)` when a PR completes a sub-issue,
+   `Closes — · Part of #NN (epic)` otherwise — never a closing keyword on
+   the epic itself before its closeout PR (the `issue-link-guard` gate
+   blocks it; `docs/process/contributing.md` → *PR ↔ issue linking*).
+   And the mirror rule: each sub-issue **closes at the moment its
+   deliverable boxes are all ticked** — by its completing PR or a manual
+   readout-close, never batched to closeout (#37).

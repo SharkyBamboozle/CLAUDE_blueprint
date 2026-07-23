@@ -27,6 +27,9 @@ Close out epic $ARGUMENTS. Steps, in order:
 5. **Pointer comment** — close the epic issue with the skeleton from
    `docs/.templates/epic-closeout-comment.md` (retrospective link, outcome,
    sub-issues, note-triage verbs, next frontier). The narrative lives on the
-   page — never duplicate it into the comment.
+   page — never duplicate it into the comment. If closing via the closeout
+   PR instead, `Closes #NN (epic)` is the one sanctioned closing keyword on
+   an epic — the `issue-link-guard` gate allows it only once every sub-issue
+   is closed (step 1).
 6. Run `make verify` (strict docs build must pass).
 7. Report: what was closed, what was re-homed where, and the next frontier.
