@@ -157,11 +157,23 @@ them is deliberate:
   no single PR completes (substrate growing across PRs) is closed manually
   the moment its boxes are all ticked, with its **readout as the closing
   comment**. Deliverables and acceptance criteria are task-list checkboxes
-  (`docs/.templates/task-issue-body.md`): GitHub renders the `n/m`
-  progress, the `issue-link-guard` blocks a `Closes` aimed at an issue with
-  unchecked boxes (declared exception: `Skip-Issue-Link-Guard: <reason>`
-  trailer), and the `/session-close` reconciliation step sweeps every issue
-  the session advanced — `n = m` means closed, or argued. The
+  — on **any issue that defines deliverables, however authored**: free-form
+  design issues included, not only build tasks created from
+  `docs/.templates/task-issue-body.md` (#41 closed exactly that loophole).
+  GitHub renders the `n/m` progress, and the `issue-link-guard` blocks a
+  `Closes` aimed at an issue with unchecked boxes **or with no checklist at
+  all** — a box-less close is a faith-based close; writing the checklist
+  **retroactively is sanctioned** (one ticked box per delivered artifact is
+  a completion record, not busywork), fenced code samples never count (the
+  counter strips them), and the declared exception is the
+  `Skip-Issue-Link-Guard: <reason>` trailer. The presence rule polices
+  *form, not substance* — the same reasoning that rejected coverage
+  thresholds (D-005) applies: a ritual box can satisfy it, and its
+  guarantee is only that **no close is silently faith-based**; checklist
+  honesty stays with D-006 ticking discipline and review, and manual
+  closes bypass CI by construction — the `/session-close` reconciliation
+  step is that path's net, sweeping every issue the session advanced:
+  `n = m` means closed, or argued. The
   `/epic-closeout` sub-issue check is a **backstop that should find
   nothing**, and closeout triage is for *notes* — build issues never wait
   for it. Two exceptions: **epics** close only via their closeout, and
@@ -340,8 +352,10 @@ Enforcement (D-004): the PR template's forced-choice linking block, and the
 check that fails any PR whose body, title, commit messages, or resolved link
 set carry a closing reference to a target that is not completion-ready: an
 `epic`-labeled issue with open sub-issues, or **any other issue whose body
-still carries unchecked deliverable boxes** (#37) — so closing with open
-deliverables requires the argued, durable exception, never a silent close
+still carries unchecked deliverable boxes (#37) — or none at all (#41)**
+(`note`-labeled issues excepted: their completion semantics are the triage
+verbs) — so closing with open or unstated deliverables requires the
+argued, durable exception, never a silent close
 (decision logic: `scripts/issue_link_decision.sh`; suite:
 `scripts/test_issue_link_guard.sh`; deliberate exception:
 `Skip-Issue-Link-Guard: <reason>` trailer). It runs on `edited` and

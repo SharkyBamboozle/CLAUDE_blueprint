@@ -9,7 +9,9 @@
      completes-it claim for ordinary issues is layout + review.
      See docs/process/contributing.md → PR ↔ issue linking. -->
 
-Closes #___ (epic: #___)          <!-- fully completes that issue; drop "(epic: #___)" if it has no epic -->
+Closes #___ (epic: #___)          <!-- fully completes that issue — its deliverable boxes all ticked
+                                       (state the tally in What/why: "deliverables n/n"); drop
+                                       "(epic: #___)" if it has no epic -->
 
 Closes — · Part of #___ (epic)    <!-- advances work, completes no issue: closes nothing.
                                        Before picking this line, check the target's deliverable

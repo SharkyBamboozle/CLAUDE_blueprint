@@ -70,6 +70,27 @@ export MOCK_BODY_70="## Deliverables
   - [ ] nested follow-through"
 export MOCK_BODY_72="Switch plain bullets to task-list items (\`- [ ]\`) per the template.
 - [x] shipped"
+# #73 box-less prose, #74 a note (checklist-exempt), #75 fenced-sample-only
+# (a sample is not a checkbox), #76 fenced sample + one real ticked box.
+export MOCK_ISSUE_73="- 0 0"
+export MOCK_BODY_73="Prose only — deliverables described in sentences, no checklist anywhere."
+export MOCK_ISSUE_74="note 0 0"
+export MOCK_ISSUE_75="- 0 0"
+export MOCK_BODY_75='Template snippet for illustration:
+
+```
+- [ ] sample box inside a fence
+- [ ] another sample line
+```
+'
+export MOCK_ISSUE_76="- 0 0"
+export MOCK_BODY_76='Fenced sample:
+
+```
+- [ ] sample box inside a fence
+```
+
+- [x] the real deliverable, ticked'
 
 check() { # check <want_rc> <label> — uses the currently-exported case vars
   PATH="$TMP:$PATH" REPO="org/repo" PR_NUMBER=1 \
@@ -100,6 +121,24 @@ check 1 "ordinary issue with unchecked deliverable boxes (incl. nested) -> block
 
 export PR_BODY="Closes #72"
 check 0 "body only QUOTES checkbox syntax mid-line, boxes ticked -> allow (the #37 false-positive regression)"
+
+export PR_BODY="Closes #73"
+check 1 "box-less ordinary issue -> block (faith-based close, #41)"
+
+export PR_BODY="Closes #73"
+export COMMITS="fix: tiny thing
+
+Skip-Issue-Link-Guard: trivial one-line fix, no deliverable structure"
+check 0 "box-less issue + declared trailer -> allow (argued exception)"
+
+export PR_BODY="Closes #74"
+check 0 "note-labeled issue without boxes -> allow (notes are checklist-exempt, #41)"
+
+export PR_BODY="Closes #75"
+check 1 "only fenced checkbox SAMPLES in the body -> block as box-less (fences stripped, #41)"
+
+export PR_BODY="Closes #76"
+check 0 "fenced sample plus one real ticked box -> allow (fence stripped, presence satisfied)"
 
 export PR_BODY="Closes #70 (deliverables re-homed)"
 export COMMITS="fix: final slice
