@@ -12,9 +12,10 @@ fails=0
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 # Mock gh, dispatching on the call shape:
-#   api graphql …            -> $MOCK_LINKED numbers (one per line), rc $MOCK_LINKED_RC
-#   api repos/*/issues/N …   -> $MOCK_ISSUE_<N> ("<epic|-> <total> <completed> <unchecked>"),
-#                               rc $MOCK_ISSUE_<N>_RC, stderr $MOCK_ISSUE_<N>_ERR
+#   api graphql …                     -> $MOCK_LINKED numbers (one per line), rc $MOCK_LINKED_RC
+#   api repos/*/issues/N (counters)   -> $MOCK_ISSUE_<N> ("<epic|-> <total> <completed>"),
+#                                        rc $MOCK_ISSUE_<N>_RC, stderr $MOCK_ISSUE_<N>_ERR
+#   api repos/*/issues/N --jq .body   -> $MOCK_BODY_<N> (raw multi-line body)
 cat >"$TMP/gh" <<'MOCK'
 #!/usr/bin/env bash
 args="$*"
@@ -28,13 +29,18 @@ case "$args" in
     exit 0 ;;
   *issues/*)
     num=$(printf '%s' "$args" | sed -n 's|.*issues/\([0-9][0-9]*\).*|\1|p')
-    rc_var="MOCK_ISSUE_${num}_RC"; out_var="MOCK_ISSUE_${num}"; err_var="MOCK_ISSUE_${num}_ERR"
-    if [ "${!rc_var:-0}" -ne 0 ]; then
-      printf '%s\n' "${!err_var:-gh: Not Found (HTTP 404)}" >&2
-      exit "${!rc_var}"
+    if printf '%s' "$args" | grep -q 'sub_issues_summary'; then
+      rc_var="MOCK_ISSUE_${num}_RC"; out_var="MOCK_ISSUE_${num}"; err_var="MOCK_ISSUE_${num}_ERR"
+      if [ "${!rc_var:-0}" -ne 0 ]; then
+        printf '%s\n' "${!err_var:-gh: Not Found (HTTP 404)}" >&2
+        exit "${!rc_var}"
+      fi
+      out="${!out_var:-}"; [ -z "$out" ] && out="- 0 0"
+      printf '%s\n' "$out"
+    else
+      bvar="MOCK_BODY_${num}"
+      printf '%s\n' "${!bvar:-}"
     fi
-    out="${!out_var:-}"; [ -z "$out" ] && out="- 0 0 0"
-    printf '%s\n' "$out"
     exit 0 ;;
 esac
 exit 0
@@ -43,13 +49,27 @@ chmod +x "$TMP/gh"
 
 # Standing fixtures: #61 an epic mid-flight, #45 an epic fully complete
 # (with leftover unchecked body boxes — the epic path judges sub-issues,
-# never boxes), #65 an ordinary issue with a clear checklist, #50 an epic
-# with no sub-issues yet, #70 an ordinary issue with unchecked deliverables.
-export MOCK_ISSUE_61="epic 16 4 0"
-export MOCK_ISSUE_45="epic 16 16 3"
-export MOCK_ISSUE_65="- 0 0 0"
-export MOCK_ISSUE_50="epic 0 0 0"
-export MOCK_ISSUE_70="- 0 0 2"
+# never boxes), #65 an ordinary issue with all boxes ticked, #50 an epic
+# with no sub-issues yet, #70 an ordinary issue with unchecked deliverables
+# (one indented/nested), #72 an ordinary issue whose body merely QUOTES the
+# checkbox syntax mid-line — the #37 false-positive regression shape.
+export MOCK_ISSUE_61="epic 16 4"
+export MOCK_ISSUE_45="epic 16 16"
+export MOCK_ISSUE_65="- 0 0"
+export MOCK_ISSUE_50="epic 0 0"
+export MOCK_ISSUE_70="- 0 0"
+export MOCK_ISSUE_72="- 0 0"
+export MOCK_BODY_45="## Exit criteria
+- [ ] leftover box the epic path must ignore"
+export MOCK_BODY_65="## Deliverables
+- [x] code landed
+* [x] readout posted"
+export MOCK_BODY_70="## Deliverables
+- [x] code landed
+- [ ] readout pending
+  - [ ] nested follow-through"
+export MOCK_BODY_72="Switch plain bullets to task-list items (\`- [ ]\`) per the template.
+- [x] shipped"
 
 check() { # check <want_rc> <label> — uses the currently-exported case vars
   PATH="$TMP:$PATH" REPO="org/repo" PR_NUMBER=1 \
@@ -76,7 +96,10 @@ export PR_BODY="Closes #45 (epic) — closes atomically when this retrospective 
 check 0 "closeout PR: epic with every sub-issue complete -> allow (body boxes ignored on the epic path)"
 
 export PR_BODY="Closes #70"
-check 1 "ordinary issue with unchecked deliverable boxes -> block (#37)"
+check 1 "ordinary issue with unchecked deliverable boxes (incl. nested) -> block (#37)"
+
+export PR_BODY="Closes #72"
+check 0 "body only QUOTES checkbox syntax mid-line, boxes ticked -> allow (the #37 false-positive regression)"
 
 export PR_BODY="Closes #70 (deliverables re-homed)"
 export COMMITS="fix: final slice

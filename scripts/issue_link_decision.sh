@@ -81,10 +81,9 @@ fi
 
 blocked=0
 for num in $candidates; do
-  # One line per issue: "<epic|-> <total> <completed> <unchecked>" —
-  # sub-issue counters + the count of unchecked task-list boxes in the body.
+  # One line per issue: "<epic|-> <total> <completed>" (sub-issue counters).
   info=$(gh api "repos/$REPO/issues/$num" \
-    --jq '([.labels[].name] | if index("epic") then "epic" else "-" end) + " " + ((.sub_issues_summary.total // 0) | tostring) + " " + ((.sub_issues_summary.completed // 0) | tostring) + " " + (((((.body // "") | split("- [ ]") | length) + ((.body // "") | split("* [ ]") | length)) - 2) | tostring)' 2>&1)
+    --jq '([.labels[].name] | if index("epic") then "epic" else "-" end) + " " + ((.sub_issues_summary.total // 0) | tostring) + " " + ((.sub_issues_summary.completed // 0) | tostring)' 2>&1)
   rc=$?
   if [ "$rc" -ne 0 ]; then
     if printf '%s' "$info" | grep -qiE 'HTTP 404|not found'; then
@@ -94,14 +93,31 @@ for num in $candidates; do
     echo "::error::issue-link-guard could not read issue #$num — 'gh api' failed (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $info"
     exit 1
   fi
-  read -r flag total completed unchecked <<<"$info"
-  unchecked="${unchecked:-0}"
+  read -r flag total completed <<<"$info"
   if [ "$flag" = "epic" ] && [ "${completed:-0}" -lt "${total:-0}" ]; then
     echo "::error::This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → PR ↔ issue linking (#18)."
     blocked=1
-  elif [ "$flag" = "epic" ]; then
+    continue
+  fi
+  if [ "$flag" = "epic" ]; then
     echo "OK: closing reference to epic #$num — all $total sub-issues complete (closeout)."
-  elif [ "$unchecked" -gt 0 ]; then
+    continue
+  fi
+  # Non-epic: count unchecked deliverable boxes LINE-ANCHORED, in the
+  # script (not jq), so the counting seam is covered by the mocked suite.
+  # GitHub renders a task item only at a list-item line start — prose
+  # QUOTING the syntax ("… task-list items (\`- [ ]\`) …") must not count;
+  # the gate's first live run false-positived on exactly that (#37's own
+  # spec body). Fenced code blocks containing real task-list lines still
+  # count — accepted, rare, and resolvable with the trailer.
+  body=$(gh api "repos/$REPO/issues/$num" --jq '.body // ""' 2>&1)
+  rc=$?
+  if [ "$rc" -ne 0 ]; then
+    echo "::error::issue-link-guard could not read issue #$num's body — 'gh api' failed (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $body"
+    exit 1
+  fi
+  unchecked=$(printf '%s\n' "$body" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[ \]')
+  if [ "$unchecked" -gt 0 ]; then
     echo "::error::This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done, re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes (#37)."
     blocked=1
   else
