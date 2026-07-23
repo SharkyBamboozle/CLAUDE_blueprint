@@ -3,13 +3,17 @@
 # A GitHub closing keyword (close/closes/closed/fix/fixes/fixed/resolve/
 # resolves/resolved) auto-closes its target when the PR merges into the
 # default branch — and GitHub ignores qualifiers: "Closes #7 (partial)" still
-# closes #7. The rule (#18; docs/process/contributing.md → PR ↔ issue
+# closes #7. The rule (#18, #37; docs/process/contributing.md → PR ↔ issue
 # linking): a closing keyword may only target an issue the PR fully
-# completes; for an epic that means its own closeout PR, once every
-# sub-issue is already closed. This script blocks any closing reference —
-# in the PR body, PR title, a commit message, or GitHub's own resolved link
-# set (which includes sidebar-linked issues) — to an `epic`-labeled issue
-# that still has open sub-issues.
+# completes. This script blocks any closing reference — in the PR body, PR
+# title, a commit message, or GitHub's own resolved link set (which
+# includes sidebar-linked issues) — whose target is not completion-ready:
+#   epic-labeled issue  -> blocked while it has open sub-issues (only its
+#                          closeout PR, every sub-issue closed, passes);
+#   any other issue     -> blocked while its body carries unchecked
+#                          task-list deliverable boxes (- [ ] / * [ ]) —
+#                          tick what is done, re-home what is deferred, or
+#                          declare the exception (#37).
 #
 # Extracted into a script so the decision is unit-testable with a mocked `gh`
 # (scripts/test_issue_link_guard.sh) — the workflow just supplies the inputs.
@@ -77,9 +81,10 @@ fi
 
 blocked=0
 for num in $candidates; do
-  # One line per issue: "<epic|-> <total> <completed>" (sub-issue counters).
+  # One line per issue: "<epic|-> <total> <completed> <unchecked>" —
+  # sub-issue counters + the count of unchecked task-list boxes in the body.
   info=$(gh api "repos/$REPO/issues/$num" \
-    --jq '([.labels[].name] | if index("epic") then "epic" else "-" end) + " " + ((.sub_issues_summary.total // 0) | tostring) + " " + ((.sub_issues_summary.completed // 0) | tostring)' 2>&1)
+    --jq '([.labels[].name] | if index("epic") then "epic" else "-" end) + " " + ((.sub_issues_summary.total // 0) | tostring) + " " + ((.sub_issues_summary.completed // 0) | tostring) + " " + (((((.body // "") | split("- [ ]") | length) + ((.body // "") | split("* [ ]") | length)) - 2) | tostring)' 2>&1)
   rc=$?
   if [ "$rc" -ne 0 ]; then
     if printf '%s' "$info" | grep -qiE 'HTTP 404|not found'; then
@@ -89,14 +94,18 @@ for num in $candidates; do
     echo "::error::issue-link-guard could not read issue #$num — 'gh api' failed (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $info"
     exit 1
   fi
-  read -r flag total completed <<<"$info"
+  read -r flag total completed unchecked <<<"$info"
+  unchecked="${unchecked:-0}"
   if [ "$flag" = "epic" ] && [ "${completed:-0}" -lt "${total:-0}" ]; then
     echo "::error::This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → PR ↔ issue linking (#18)."
     blocked=1
   elif [ "$flag" = "epic" ]; then
     echo "OK: closing reference to epic #$num — all $total sub-issues complete (closeout)."
+  elif [ "$unchecked" -gt 0 ]; then
+    echo "::error::This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done, re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes (#37)."
+    blocked=1
   else
-    echo "OK: closing reference to #$num (not an epic; completing it is this PR's claim to keep honest)."
+    echo "OK: closing reference to #$num (not an epic; deliverable checklist clear or absent)."
   fi
 done
 

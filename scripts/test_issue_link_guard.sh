@@ -13,7 +13,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 # Mock gh, dispatching on the call shape:
 #   api graphql …            -> $MOCK_LINKED numbers (one per line), rc $MOCK_LINKED_RC
-#   api repos/*/issues/N …   -> $MOCK_ISSUE_<N> ("<epic|-> <total> <completed>"),
+#   api repos/*/issues/N …   -> $MOCK_ISSUE_<N> ("<epic|-> <total> <completed> <unchecked>"),
 #                               rc $MOCK_ISSUE_<N>_RC, stderr $MOCK_ISSUE_<N>_ERR
 cat >"$TMP/gh" <<'MOCK'
 #!/usr/bin/env bash
@@ -33,7 +33,7 @@ case "$args" in
       printf '%s\n' "${!err_var:-gh: Not Found (HTTP 404)}" >&2
       exit "${!rc_var}"
     fi
-    out="${!out_var:-}"; [ -z "$out" ] && out="- 0 0"
+    out="${!out_var:-}"; [ -z "$out" ] && out="- 0 0 0"
     printf '%s\n' "$out"
     exit 0 ;;
 esac
@@ -41,12 +41,15 @@ exit 0
 MOCK
 chmod +x "$TMP/gh"
 
-# Standing fixtures: #61 an epic mid-flight, #45 an epic fully complete,
-# #65 an ordinary sub-issue, #50 an epic with no sub-issues yet.
-export MOCK_ISSUE_61="epic 16 4"
-export MOCK_ISSUE_45="epic 16 16"
-export MOCK_ISSUE_65="- 0 0"
-export MOCK_ISSUE_50="epic 0 0"
+# Standing fixtures: #61 an epic mid-flight, #45 an epic fully complete
+# (with leftover unchecked body boxes — the epic path judges sub-issues,
+# never boxes), #65 an ordinary issue with a clear checklist, #50 an epic
+# with no sub-issues yet, #70 an ordinary issue with unchecked deliverables.
+export MOCK_ISSUE_61="epic 16 4 0"
+export MOCK_ISSUE_45="epic 16 16 3"
+export MOCK_ISSUE_65="- 0 0 0"
+export MOCK_ISSUE_50="epic 0 0 0"
+export MOCK_ISSUE_70="- 0 0 2"
 
 check() { # check <want_rc> <label> — uses the currently-exported case vars
   PATH="$TMP:$PATH" REPO="org/repo" PR_NUMBER=1 \
@@ -70,7 +73,16 @@ export PR_BODY="Closes #65 (epic: #61)"
 check 0 "closes a non-epic sub-issue, epic referenced without keyword -> allow"
 
 export PR_BODY="Closes #45 (epic) — closes atomically when this retrospective lands"
-check 0 "closeout PR: epic with every sub-issue complete -> allow"
+check 0 "closeout PR: epic with every sub-issue complete -> allow (body boxes ignored on the epic path)"
+
+export PR_BODY="Closes #70"
+check 1 "ordinary issue with unchecked deliverable boxes -> block (#37)"
+
+export PR_BODY="Closes #70 (deliverables re-homed)"
+export COMMITS="fix: final slice
+
+Skip-Issue-Link-Guard: remaining deliverables deferred to a follow-up issue"
+check 0 "unchecked deliverables + declared trailer -> allow (argued exception)"
 
 export PR_BODY="closes #50"
 check 0 "epic with zero sub-issues -> allow (nothing open to orphan)"

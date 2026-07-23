@@ -150,6 +150,25 @@ them is deliberate:
 - **Sub-issues are build tasks** — concrete deliverables that count toward an
   epic's completion. Add them incrementally and reconcile the epic body as they
   land ("Living scope").
+- **An issue closes at the moment its deliverables are met — never batched
+  to session end or epic closeout.** This holds for standalone tasks and
+  epic sub-issues alike. The completing PR carries `Closes #NN` (plus
+  `(epic: #MM)` when it has a parent — see *PR ↔ issue linking*); an issue
+  no single PR completes (substrate growing across PRs) is closed manually
+  the moment its boxes are all ticked, with its **readout as the closing
+  comment**. Deliverables and acceptance criteria are task-list checkboxes
+  (`docs/.templates/task-issue-body.md`): GitHub renders the `n/m`
+  progress, the `issue-link-guard` blocks a `Closes` aimed at an issue with
+  unchecked boxes (declared exception: `Skip-Issue-Link-Guard: <reason>`
+  trailer), and the `/session-close` reconciliation step sweeps every issue
+  the session advanced — `n = m` means closed, or argued. The
+  `/epic-closeout` sub-issue check is a **backstop that should find
+  nothing**, and closeout triage is for *notes* — build issues never wait
+  for it. Two exceptions: **epics** close only via their closeout, and
+  **notes** are triaged, never "done". *(Checkbox counts are self-reported
+  — the boxes make deliverable state visible and gateable, not true;
+  honest ticking (D-006) is the substrate, and the reconciliation sweep is
+  where drift gets caught.)*
 - **Notes** (`note` label) are **observations, design considerations, or run
   findings that are *not* build tasks**. A note is filed as its own issue with
   `note` (+ the relevant `area:*`), cross-linked to its epic, and listed in
@@ -273,15 +292,19 @@ close surface. GitHub ignores qualifiers: `Closes #7 (partial)` still closes
 Enforcement (D-004): the PR template's forced-choice linking block, and the
 **issue-link guard** (`.github/workflows/issue-link-guard.yml`) — a required
 check that fails any PR whose body, title, commit messages, or resolved link
-set carry a closing reference to an `epic`-labeled issue with open
-sub-issues (decision logic: `scripts/issue_link_decision.sh`; suite:
+set carry a closing reference to a target that is not completion-ready: an
+`epic`-labeled issue with open sub-issues, or **any other issue whose body
+still carries unchecked deliverable boxes** (#37) — so closing with open
+deliverables requires the argued, durable exception, never a silent close
+(decision logic: `scripts/issue_link_decision.sh`; suite:
 `scripts/test_issue_link_guard.sh`; deliberate exception:
 `Skip-Issue-Link-Guard: <reason>` trailer). It runs on `edited` and
 `synchronize` too, so a keyword added to the body or a commit after the
-first CI run is re-checked; the meta-gate pins that event list. The general
-completes-it rule for non-epic issues is *advisory* — whether a PR
-"completes" an ordinary issue is judgment, upheld by the template's
-hard-rule checkbox and review (D-004).
+first CI run is re-checked; the meta-gate pins that event list. The forward
+direction — a PR that *should* have closed a now-complete issue but didn't
+— is *advisory*: no gate can know which PRs complete what; the
+`/session-close` reconciliation sweep, the template's two-sided checkbox,
+and review carry it (D-004).
 
 Two residual paths bypass the gate and are accepted, named (D-004): an
 issue linked via the PR's *Development* sidebar **after** the gate's last
