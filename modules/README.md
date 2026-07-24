@@ -46,5 +46,6 @@ per-case exception, and the posture can be revisited via a superseding ADR.
 
 Record the chosen posture by finalizing **ADR-0007 (binary hygiene)**:
 rewrite its Decision section to the chosen posture, flip its status to
-✅ Decided, and update its registry row — the page ships 🟡 Proposed
-precisely so this edit needs no ADR unlock.
+✅ Decided, and update its registry row — promotion to ✅ is hook-gated
+like every other path to Decided (`guard-adr.sh`): run
+`/unlock-adr adr-0007` first — see `BOOTSTRAP.md` step 4.

@@ -1,6 +1,6 @@
 # ADR-00NN — Run artifacts in a separate data repository
 
-- **Status:** ✅ Decided
+- **Status:** 🟡 Proposed
 - **Decision ID:** D-0NN
 - **Related requirements:** <!-- reproducibility R##, or "—" -->
 - **Related questions:** —
