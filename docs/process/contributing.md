@@ -173,7 +173,13 @@ them is deliberate:
   opens, and the open PR is the evidence), a readout box right after the
   readout posts. Editing the owner's issue body to tick a delivered box
   is expected tracker upkeep, not an intrusion; delivered work left
-  unticked is the process failure. The gate evaluates the boxes **before**
+  unticked is the process failure. The `/tick` ritual
+  (`.claude/commands/tick.md`) packages the edit **attestation-first**: per
+  box, *did I deliver this?* answered with named evidence (the PR, commit,
+  file, or posted readout) — no evidence, no tick — then the anchored flip
+  of exactly those lines, then a verify re-read; the attestation lines
+  travel into the PR body so review checks the ticks against them. The gate
+  evaluates the boxes **before**
   the trailer and announces a waiver-pass with a workflow warning quoting
   the reason — a run that passes on merits never consults the trailer, so
   a stale waiver ages out visibly instead of masking the rule, and the

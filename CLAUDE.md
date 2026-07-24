@@ -230,7 +230,9 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   owner's record. A box a PR delivers is ticked **at PR-open** (pre-merge
   ticking is the designed order: `issue-link-guard` counts the boxes from
   the moment the PR opens, and the open PR is the evidence); a readout box,
-  right after the readout comment is posted. The gate evaluates boxes
+  right after the readout comment is posted. Run `/tick` for the edit — it
+  front-loads the per-box question (*did I deliver this?* — named evidence,
+  or no tick) before the anchored body update. The gate evaluates boxes
   first and announces a `Skip-Issue-Link-Guard` waiver-pass loudly — the
   trailer is the argued exception (deferred / re-homed deliverables),
   never the cheap path past ticking (see `docs/process/contributing.md` →
@@ -270,7 +272,7 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   `docs/records/changelog.md` entry (dated, titled, IDs and issue numbers
   cited), prepended newest first.
 - **Ritual commands:** the multi-step conventions are packaged as slash
-  commands — `/adr-new`, `/note`, `/epic-kickoff`, `/epic-closeout`,
+  commands — `/adr-new`, `/note`, `/tick`, `/epic-kickoff`, `/epic-closeout`,
   `/promote`, `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`,
   `/lock-adr` (`.claude/commands/`). Use them instead of reconstructing the
   steps from memory.
