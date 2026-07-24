@@ -166,7 +166,20 @@ them is deliberate:
   **retroactively is sanctioned** (one ticked box per delivered artifact is
   a completion record, not busywork), fenced code samples never count (the
   counter strips them), and the declared exception is the
-  `Skip-Issue-Link-Guard: <reason>` trailer. The presence rule polices
+  `Skip-Issue-Link-Guard: <reason>` trailer. **Ticking is the completing
+  session's job (#47):** edit the issue body and tick each box the moment
+  its artifact lands — a box a PR delivers at PR-open (pre-merge ticking
+  is the designed order: the gate counts boxes from the moment the PR
+  opens, and the open PR is the evidence), a readout box right after the
+  readout posts. Editing the owner's issue body to tick a delivered box
+  is expected tracker upkeep, not an intrusion; delivered work left
+  unticked is the process failure. The gate evaluates the boxes **before**
+  the trailer and announces a waiver-pass with a workflow warning quoting
+  the reason — a run that passes on merits never consults the trailer, so
+  a stale waiver ages out visibly instead of masking the rule, and the
+  trailer stays what it is meant to be: the argued exception for
+  deferred or re-homed deliverables, never the cheap path past ticking.
+  The presence rule polices
   *form, not substance* — the same reasoning that rejected coverage
   thresholds (D-005) applies: a ritual box can satisfy it, and its
   guarantee is only that **no close is silently faith-based**; checklist
@@ -358,7 +371,11 @@ verbs) — so closing with open or unstated deliverables requires the
 argued, durable exception, never a silent close
 (decision logic: `scripts/issue_link_decision.sh`; suite:
 `scripts/test_issue_link_guard.sh`; deliberate exception:
-`Skip-Issue-Link-Guard: <reason>` trailer). It runs on `edited` and
+`Skip-Issue-Link-Guard: <reason>` trailer — consulted only **after** the
+merits check fails and announced as a workflow `::warning::` quoting the
+reason, so a waiver-pass is never visually identical to a merits pass and
+a re-run whose targets have become completion-ready passes on merits, #47).
+It runs on `edited` and
 `synchronize` too, so a keyword added to the body or a commit after the
 first CI run is re-checked; the meta-gate pins that event list. The forward
 direction — a PR that *should* have closed a now-complete issue but didn't

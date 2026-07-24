@@ -104,6 +104,28 @@ check() { # check <want_rc> <label> — uses the currently-exported case vars
     MOCK_ISSUE_999_RC MOCK_ISSUE_61_RC MOCK_ISSUE_61_ERR
 }
 
+# check_out <want_rc> <must_match_ERE> <must_NOT_match_ERE|-> <label> —
+# like check(), but also asserts the combined output, pinning WHICH path
+# decided the run (#47): "passed on merits" vs the ::warning:: waiver
+# annunciation must be distinguishable in the log, not just the exit code.
+check_out() {
+  local out rc ok=1 why=""
+  out=$(PATH="$TMP:$PATH" REPO="org/repo" PR_NUMBER=1 \
+    PR_BODY="${PR_BODY:-}" PR_TITLE="${PR_TITLE:-}" COMMITS="${COMMITS:-}" \
+    bash "$SCRIPT" 2>&1)
+  rc=$?
+  [ "$rc" -eq "$1" ] || { ok=0; why="rc=$rc want $1"; }
+  printf '%s\n' "$out" | grep -qE "$2" || { ok=0; why="$why; missing /$2/"; }
+  if [ "$3" != "-" ] && printf '%s\n' "$out" | grep -qE "$3"; then
+    ok=0; why="$why; forbidden /$3/ present"
+  fi
+  if [ "$ok" -eq 1 ]; then echo "PASS (rc=$rc): $4"
+  else echo "FAIL ($why): $4"; fails=$((fails + 1)); fi
+  unset PR_BODY PR_TITLE COMMITS \
+    MOCK_LINKED MOCK_LINKED_RC MOCK_LINKED_ERR \
+    MOCK_ISSUE_999_RC MOCK_ISSUE_61_RC MOCK_ISSUE_61_ERR
+}
+
 export PR_BODY="Closes #61 (partial — the qualifier changes nothing) (epic: #61)"
 check 1 "closing keyword on an epic with open sub-issues -> block"
 
@@ -188,6 +210,47 @@ check 1 "issue lookup transient error -> block (fail closed)"
 
 export PR_BODY="The unfixed #61 backlog and prefixes #61 must not trip the guard"
 check 0 "keyword substring inside a word -> allow (no false positive)"
+
+# ---- Merits-first, waiver-second, loud waiver (#47) — output-asserting
+# cases pinning WHICH path passed, both ways: the order (a trailer never
+# masks a merits pass), the annunciation (a waiver-pass is a ::warning::,
+# never silent), and the unchanged deny side (no trailer still blocks).
+
+export PR_BODY="Closes #65"
+check_out 0 "passed on merits" "passed on WAIVER" \
+  "all boxes ticked, no trailer -> logged as a merits pass (#47)"
+
+export PR_BODY="Closes #65"
+export COMMITS="chore: tidy
+
+Skip-Issue-Link-Guard: stale reason from an earlier state of the issue"
+check_out 0 "trailer is present but was not consulted" "passed on WAIVER" \
+  "ticked boxes + leftover trailer -> merits pass, trailer NOT consulted (the order pin, #47)"
+
+export PR_BODY="Closes #70"
+check_out 1 "::error::" "passed on" \
+  "unchecked boxes, no trailer -> still blocks with ::error:: annotations (#47)"
+
+export PR_BODY="Closes #70 (deliverables re-homed)"
+export COMMITS="fix: final slice
+
+Skip-Issue-Link-Guard: remaining deliverables deferred to a follow-up issue"
+check_out 0 "::warning::.*passed on WAIVER.*deferred to a follow-up issue" "::error::" \
+  "unchecked boxes + trailer -> loud ::warning:: quoting the reason, no ::error:: (#47)"
+
+export PR_BODY="Closes #70"
+export COMMITS="fix: x
+
+Skip-Issue-Link-Guard: argued reason"
+check_out 0 "waived: This PR would close #70" "-" \
+  "waiver-pass lists each waived finding in the job log (#47)"
+
+export MOCK_LINKED_RC=1
+export COMMITS="chore: y
+
+Skip-Issue-Link-Guard: gate outage, change reviewed by owner"
+check_out 0 "passed on WAIVER.*could not be fully evaluated" "::error::" \
+  "gh failure + trailer -> declared exception stands in, announced (#47)"
 
 [ "$fails" -eq 0 ] && echo "all asserted cases pass" || echo "$fails case(s) FAILED"
 exit "$fails"

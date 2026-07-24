@@ -224,6 +224,17 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   are met** — by the completing PR's `Closes` or a manual readout-close,
   never batched to closeout (close-direction gated by `issue-link-guard`;
   see `docs/process/contributing.md` → *Issues, sub-issues & notes*).
+- **Ticking deliverable boxes is the completing session's job — tick each
+  box the moment its artifact lands.** Editing the issue body to tick a
+  delivered box is expected tracker upkeep, never an intrusion into the
+  owner's record. A box a PR delivers is ticked **at PR-open** (pre-merge
+  ticking is the designed order: `issue-link-guard` counts the boxes from
+  the moment the PR opens, and the open PR is the evidence); a readout box,
+  right after the readout comment is posted. The gate evaluates boxes
+  first and announces a `Skip-Issue-Link-Guard` waiver-pass loudly — the
+  trailer is the argued exception (deferred / re-homed deliverables),
+  never the cheap path past ticking (see `docs/process/contributing.md` →
+  *Issues, sub-issues & notes*).
 - **Epic pages — the story.** Every epic gets a page under `docs/records/epics/`
   (stub at kickoff → retrospective at closeout: goal → built → found → decided
   → carried forward); the epic issue closes with a short pointer comment +
