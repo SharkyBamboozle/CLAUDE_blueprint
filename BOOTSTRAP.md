@@ -86,8 +86,16 @@ file both enforcement points (the `guard-git.sh` hook and the repo-hygiene
 CI) read, so they can never disagree; and **ADR-0007 (binary hygiene)**,
 which is *finalized* here: rewrite its Decision section to the chosen
 posture, flip its status to ✅ Decided, and update its registry row in the
-same commit. ADR-0007 ships 🟡 Proposed precisely so this edit needs no
-ADR unlock — no ✅ Decided page is touched at bootstrap.
+same commit. Flipping 🟡→✅ is itself a gated path to Decided — the
+`guard-adr.sh` hook blocks the promotion edit like any other. First run
+`/unlock-adr adr-0007` (mints a 1h token), then make the finalization
+edit, and give the step-8 init commit an
+`Unlock-ADR: adr-0007 — bootstrap binary-policy finalization` trailer in
+its **body** — the subject stays exactly
+`Initialize from Project Blueprint v<VERSION>` (step 8's version anchor).
+(`adr-gates.yml` runs only on pull requests, so the direct birth push is
+never CI-checked — the trailer keeps the birth commit consistent with the
+hook's own contract.)
 
 ## 5 · Gate — must pass before anything is deleted
 
@@ -148,7 +156,9 @@ re-run until green before committing.
 1. Commit everything as: `Initialize from Project Blueprint v<VERSION>`
    (plain text, never linked — this commit message is the format-proof
    version anchor `UPDATE.md` step 0 falls back to when the README footer is
-   absent or reworded).
+   absent or reworded). The `Unlock-ADR: adr-0007 — <reason>` trailer from
+   step 4 goes in the commit **body**, below this subject — never in the
+   subject itself.
 2. Push to `main` — **the one sanctioned direct push**: the guard hook
    permits it while the repo is demonstrably un-bootstrapped (remote `main`
    absent, or still the template's single initial commit carrying
