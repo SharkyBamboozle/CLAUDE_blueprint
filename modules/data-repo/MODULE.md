@@ -47,7 +47,9 @@ run outputs are not mutually exclusive.
    - fill the `{{DATA_REPO}}` token wherever it appears (CLAUDE.md hard
      rules, etc.);
    - create the split ADR: next free `D-0NN` from `adr-data-repository.md`
-     (this directory), registry row + nav entry per `/adr-new`.
+     (this directory), registry row + nav entry per `/adr-new` — the
+     payload ships 🟡 Proposed; promote to ✅ later via the normal
+     `/unlock-adr` ritual.
 6. Post-init checklist items: grant any CI/session integrations access to
    the data repo when runs start publishing.
 
