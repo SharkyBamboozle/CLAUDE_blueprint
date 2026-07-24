@@ -24,7 +24,8 @@ here while boxes are unchecked (declared exception: `Skip-Issue-Link-Guard:
 ## Deliverables
 
 *Tick each box the moment its artifact lands — ticking is the completing
-session's job (edit this body; sanctioned in `CLAUDE.md` → Repo workflow).
+session's job (edit this body via `/tick`: attest with evidence first, then
+the flip; sanctioned in `CLAUDE.md` → Repo workflow).
 A box a PR delivers is ticked at PR-open; the readout box, right after the
 readout posts. `issue-link-guard` blocks a `Closes` aimed here while boxes
 are unchecked.*

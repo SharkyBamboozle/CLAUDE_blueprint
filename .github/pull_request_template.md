@@ -10,8 +10,9 @@
      See docs/process/contributing.md → PR ↔ issue linking. -->
 
 **Tick before opening (#47):** on every issue this PR `Closes`, tick each
-deliverable box this PR completes — edit the issue body; that is the
-completing session's job (`CLAUDE.md` → Repo workflow). `issue-link-guard`
+deliverable box this PR completes — via `/tick`: per box, *did I deliver
+this?* with named evidence, then the body edit; that is the completing
+session's job (`CLAUDE.md` → Repo workflow). `issue-link-guard`
 counts the boxes from PR-open; readout boxes tick when the readout posts.
 
 Closes #___ (epic: #___)          <!-- fully completes that issue — its deliverable boxes all ticked
