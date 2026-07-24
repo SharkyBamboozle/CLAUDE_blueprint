@@ -34,8 +34,15 @@
 # branch-flow guard: a transient error must not silently drop the policy).
 # The one exception: a definitive 404 on a referenced issue number, which
 # nothing can close, is allowed through with a note.
-# Override: a `Skip-Issue-Link-Guard: <reason>` commit trailer (D-004 —
-# exceptions are declared trailers, never silent).
+#
+# Override — evaluated SECOND, announced loudly (#47): a
+# `Skip-Issue-Link-Guard: <reason>` commit trailer (D-004 — exceptions are
+# declared, never silent). The merits path always runs first; the trailer is
+# consulted only when merits fail (or cannot be evaluated), so a re-run of a
+# PR whose targets have since become completion-ready passes on merits and a
+# stale waiver never masks the real rule. A waiver-pass emits a ::warning::
+# annotation quoting the reason — an exception must not be visually
+# identical to a genuine pass.
 set -uo pipefail
 
 REPO="${REPO:-}"
@@ -44,10 +51,44 @@ PR_TITLE="${PR_TITLE:-}"
 PR_BODY="${PR_BODY:-}"
 COMMITS="${COMMITS:-}"
 
-if printf '%s\n' "$COMMITS" | grep -qE '^Skip-Issue-Link-Guard:[[:space:]]*[^[:space:]]'; then
-  echo "Skip-Issue-Link-Guard trailer present — OK."
+# The waiver trailer is parsed up front but consulted only at the exit
+# points below — merits first, waiver second (#47). Same acceptance as the
+# old presence grep: the reason must be non-empty.
+WAIVER_REASON="$(printf '%s\n' "$COMMITS" \
+  | sed -n 's/^Skip-Issue-Link-Guard:[[:space:]]*\([^[:space:]].*\)$/\1/p' \
+  | head -n1)"
+
+# Blocking findings are collected during the merits evaluation and flushed
+# at the exits — as ::error:: when the run blocks, as plain "waived:" lines
+# when a trailer overrides them: an annotation's severity must match the
+# run's outcome (#47).
+problems=()
+
+# Single allow exit for a run the real rule permits. A present-but-unneeded
+# trailer is noted, never consulted — the job log stays honest about WHICH
+# rule passed the PR, and a stale waiver ages out visibly (#47).
+pass_on_merits() {
+  if [ -n "$WAIVER_REASON" ]; then
+    echo "note: a Skip-Issue-Link-Guard trailer is present but was not consulted — the merits path passed on its own (#47)."
+  fi
+  echo "issue-link-guard: passed on merits."
   exit 0
-fi
+}
+
+# Single exit for a `gh` failure: the merits path could not be evaluated.
+# Without a trailer this fails CLOSED (house rule); with one, the declared
+# exception stands in for the unevaluable merits — loudly (#47).
+# $1 = what failed, $2 = captured gh output.
+infra_fail_or_waive() {
+  if [ -n "$WAIVER_REASON" ]; then
+    for p in ${problems[@]+"${problems[@]}"}; do echo "waived: $p"; done
+    echo "::warning::issue-link-guard: passed on WAIVER, not on merits — $1, so the merits path could not be fully evaluated. Declared exception (commit trailer): 'Skip-Issue-Link-Guard: ${WAIVER_REASON}'. Details: $2"
+    exit 0
+  fi
+  for p in ${problems[@]+"${problems[@]}"}; do echo "::error::$p"; done
+  echo "::error::issue-link-guard: $1 (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $2"
+  exit 1
+}
 
 # The nine closing keywords. (^|[^[:alnum:]_]) instead of \b so the pattern
 # is portable ERE ("unfixed #7" must not match).
@@ -77,17 +118,15 @@ linked=$(gh api graphql \
   --jq '.data.repository.pullRequest.closingIssuesReferences.nodes[].number' 2>&1)
 rc=$?
 if [ "$rc" -ne 0 ]; then
-  echo "::error::issue-link-guard could not list this PR's closing references — 'gh api graphql' failed (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $linked"
-  exit 1
+  infra_fail_or_waive "could not list this PR's closing references — 'gh api graphql' failed" "$linked"
 fi
 
 candidates=$(printf '%s\n%s\n' "$refs" "$linked" | grep -E '^[0-9]+$' | sort -un)
 if [ -z "$candidates" ]; then
   echo "OK: no closing references to this repo's issues."
-  exit 0
+  pass_on_merits
 fi
 
-blocked=0
 for num in $candidates; do
   # One line per issue: "<epic|note|-> <total> <completed>" (label class +
   # sub-issue counters; epic wins over note if ever both).
@@ -99,13 +138,11 @@ for num in $candidates; do
       echo "note: closing reference to #$num, which does not exist — nothing to close, not blocking."
       continue
     fi
-    echo "::error::issue-link-guard could not read issue #$num — 'gh api' failed (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $info"
-    exit 1
+    infra_fail_or_waive "could not read issue #$num — 'gh api' failed" "$info"
   fi
   read -r flag total completed <<<"$info"
   if [ "$flag" = "epic" ] && [ "${completed:-0}" -lt "${total:-0}" ]; then
-    echo "::error::This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → PR ↔ issue linking (#18)."
-    blocked=1
+    problems+=("This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → PR ↔ issue linking (#18).")
     continue
   fi
   if [ "$flag" = "epic" ]; then
@@ -127,21 +164,31 @@ for num in $candidates; do
   body=$(gh api "repos/$REPO/issues/$num" --jq '.body // ""' 2>&1)
   rc=$?
   if [ "$rc" -ne 0 ]; then
-    echo "::error::issue-link-guard could not read issue #$num's body — 'gh api' failed (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $body"
-    exit 1
+    infra_fail_or_waive "could not read issue #$num's body — 'gh api' failed" "$body"
   fi
   stripped=$(printf '%s\n' "$body" | awk '/^[[:space:]]*```/{f=!f; next} !f')
   unchecked=$(printf '%s\n' "$stripped" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[ \]')
   checked=$(printf '%s\n' "$stripped" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[[xX]\]')
   if [ "$unchecked" -gt 0 ]; then
-    echo "::error::This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done, re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes (#37)."
-    blocked=1
+    problems+=("This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done (ticking is the completing session's job — do it at PR-open), re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes (#37).")
   elif [ "$checked" -eq 0 ]; then
-    echo "::error::This PR would close #$num, which carries no deliverable checklist — a box-less close is a faith-based close (#41). State the issue's deliverables as task-list boxes (retroactively is sanctioned: one ticked box per delivered artifact is a completion record, not busywork), or declare the exception with a 'Skip-Issue-Link-Guard: <reason, e.g. trivial one-line fix>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes."
-    blocked=1
+    problems+=("This PR would close #$num, which carries no deliverable checklist — a box-less close is a faith-based close (#41). State the issue's deliverables as task-list boxes (retroactively is sanctioned: one ticked box per delivered artifact is a completion record, not busywork), or declare the exception with a 'Skip-Issue-Link-Guard: <reason, e.g. trivial one-line fix>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes.")
   else
     echo "OK: closing reference to #$num — deliverables $checked/$checked ticked."
   fi
 done
 
-exit "$blocked"
+if [ "${#problems[@]}" -eq 0 ]; then
+  pass_on_merits
+fi
+
+# The merits path failed — only NOW is the waiver consulted (#47), so the
+# trailer can never mask a rule that would have passed or hide WHY it did
+# not.
+if [ -n "$WAIVER_REASON" ]; then
+  for p in "${problems[@]}"; do echo "waived: $p"; done
+  echo "::warning::issue-link-guard: passed on WAIVER, not on merits — ${#problems[@]} blocking finding(s) waived (listed in the job log). Declared exception (commit trailer): 'Skip-Issue-Link-Guard: ${WAIVER_REASON}'"
+  exit 0
+fi
+for p in "${problems[@]}"; do echo "::error::$p"; done
+exit 1
