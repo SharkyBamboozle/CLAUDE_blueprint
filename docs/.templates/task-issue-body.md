@@ -23,10 +23,16 @@ here while boxes are unchecked (declared exception: `Skip-Issue-Link-Guard:
 
 ## Deliverables
 
-<!-- Task-list boxes are the machine-readable completion state: GitHub
-renders the n/m progress on the issue, and the issue-link guard counts the
-unchecked boxes. Tick each the moment its artifact lands — honest ticking
-(D-006): the boxes make state visible and gateable, not true. -->
+*Tick each box the moment its artifact lands — ticking is the completing
+session's job (edit this body via `/tick`: attest with evidence first, then
+the flip; sanctioned in `CLAUDE.md` → Repo workflow).
+A box a PR delivers is ticked at PR-open; the readout box, right after the
+readout posts. `issue-link-guard` blocks a `Closes` aimed here while boxes
+are unchecked.*
+
+<!-- The boxes are the machine-readable completion state: GitHub renders
+the n/m progress and the gate counts unchecked boxes. Honest ticking
+(D-006): boxes make state visible and gateable, not true. -->
 
 - [ ] <Concrete artifact/change.>
 - [ ] **Readout** posted on this issue, cross-linked to the epic — results

@@ -18,13 +18,24 @@ caught by the repo-hygiene CI check instead of being silently LFS'd.
 ## How to apply (the bootstrap session executes this)
 
 1. **Judgment (Tier 2):** pick the asset directories and file types from the
-   menu in `.gitattributes` (this directory) and append the chosen patterns
-   to the repo's `.gitattributes` — even if the directories don't exist yet.
-2. Reserve LFS for these authored assets only; keep the quota away from run
+   menu in `.gitattributes` (this directory). The menu ships every line
+   commented out — **uncomment the chosen lines** (strip the leading `# `)
+   and append them to the repo's **root** `.gitattributes`, **creating the
+   file if it does not exist** (the template ships none). Patterns may name
+   directories that don't exist yet. Start the created file with a one-line
+   comment citing D-007 (binary hygiene), per the config-cites-decision rule
+   (`.claude/rules/config-cites-decision.md`).
+2. **Verify (mandatory):** for one representative chosen pattern, run
+   `git check-attr filter -- <path matching it>` — e.g.
+   `git check-attr filter -- assets/example.glb` for the `.glb` line. It
+   must print `filter: lfs` before you continue; `filter: unspecified`
+   means the chosen lines are still comments, or the file is not at the
+   repo root.
+3. Reserve LFS for these authored assets only; keep the quota away from run
    outputs (data-repo module) and generated files (`.gitignore`).
-3. Post-init checklist items:
+4. Post-init checklist items:
    - `git lfs install` — once per machine, before touching LFS paths.
    - Watch the GitHub LFS quota (~1 GiB free storage/bandwidth); budget or
      escalate if asset volume approaches it.
-4. Add to `CLAUDE.md` → Repo layout: the asset directory bullet + the
+5. Add to `CLAUDE.md` → Repo layout: the asset directory bullet + the
    "Git LFS preconfigured, `git lfs install` once per machine" note.

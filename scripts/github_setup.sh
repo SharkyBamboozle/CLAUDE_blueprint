@@ -127,7 +127,7 @@ JSON
 
   # --- GitHub Pages via Actions: OPT-IN, default OFF (#3) ------------------
   # Publishing docs is an outward-facing act, so it is the owner's decision,
-  # not a default. A freshly-seeded project is still full of {{TOKEN}}
+  # not a default. A freshly-seeded project is still full of unresolved
   # placeholders and half-written vision; default-on would push all of that to
   # a public URL on the first merge to development/main, before the owner chose
   # to publish (CLAUDE.md's autonomy contract lists "publishes anything" as a

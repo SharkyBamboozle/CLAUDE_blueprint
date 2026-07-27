@@ -29,6 +29,12 @@ docs, not a duplicate of them. Extend over time.
   artifacts are never committed anywhere." -->
 - Never force-push, rewrite published history, or delete branches you did not
   create in this session.
+- Never manually close or delete a GitHub issue — close authority is the
+  operator's (#54). A close rides the completing PR's `Closes #N` (fired
+  when the operator merges) or is the operator's own click; your job ends at
+  the readout comment + ticked boxes + the close request. Enforced by the
+  `guard-issue-close.sh` hook (MCP + `gh` layers, no unlock by design) and
+  reverted server-side by `issue-close-guard.yml`.
 - Never change a ✅ Decided ADR's decision — propose a superseding ADR instead
   (see `docs/process/contributing.md` → *The ADR process*). Every path to a
   Decided page — maintenance edit (typo, annotation, supersession marker),
@@ -224,6 +230,19 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   are met** — by the completing PR's `Closes` or a manual readout-close,
   never batched to closeout (close-direction gated by `issue-link-guard`;
   see `docs/process/contributing.md` → *Issues, sub-issues & notes*).
+- **Ticking deliverable boxes is the completing session's job — tick each
+  box the moment its artifact lands.** Editing the issue body to tick a
+  delivered box is expected tracker upkeep, never an intrusion into the
+  owner's record. A box a PR delivers is ticked **at PR-open** (pre-merge
+  ticking is the designed order: `issue-link-guard` counts the boxes from
+  the moment the PR opens, and the open PR is the evidence); a readout box,
+  right after the readout comment is posted. Run `/tick` for the edit — it
+  front-loads the per-box question (*did I deliver this?* — named evidence,
+  or no tick) before the anchored body update. The gate evaluates boxes
+  first and announces a `Skip-Issue-Link-Guard` waiver-pass loudly — the
+  trailer is the argued exception (deferred / re-homed deliverables),
+  never the cheap path past ticking (see `docs/process/contributing.md` →
+  *Issues, sub-issues & notes*).
 - **Epic pages — the story.** Every epic gets a page under `docs/records/epics/`
   (stub at kickoff → retrospective at closeout: goal → built → found → decided
   → carried forward); the epic issue closes with a short pointer comment +
@@ -259,7 +278,7 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   `docs/records/changelog.md` entry (dated, titled, IDs and issue numbers
   cited), prepended newest first.
 - **Ritual commands:** the multi-step conventions are packaged as slash
-  commands — `/adr-new`, `/note`, `/epic-kickoff`, `/epic-closeout`,
+  commands — `/adr-new`, `/note`, `/tick`, `/epic-kickoff`, `/epic-closeout`,
   `/promote`, `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`,
   `/lock-adr` (`.claude/commands/`). Use them instead of reconstructing the
   steps from memory.

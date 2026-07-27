@@ -166,14 +166,34 @@ them is deliberate:
   **retroactively is sanctioned** (one ticked box per delivered artifact is
   a completion record, not busywork), fenced code samples never count (the
   counter strips them), and the declared exception is the
-  `Skip-Issue-Link-Guard: <reason>` trailer. The presence rule polices
+  `Skip-Issue-Link-Guard: <reason>` trailer. **Ticking is the completing
+  session's job (#47):** edit the issue body and tick each box the moment
+  its artifact lands — a box a PR delivers at PR-open (pre-merge ticking
+  is the designed order: the gate counts boxes from the moment the PR
+  opens, and the open PR is the evidence), a readout box right after the
+  readout posts. Editing the owner's issue body to tick a delivered box
+  is expected tracker upkeep, not an intrusion; delivered work left
+  unticked is the process failure. The `/tick` ritual
+  (`.claude/commands/tick.md`) packages the edit **attestation-first**: per
+  box, *did I deliver this?* answered with named evidence (the PR, commit,
+  file, or posted readout) — no evidence, no tick — then the anchored flip
+  of exactly those lines, then a verify re-read; the attestation lines
+  travel into the PR body so review checks the ticks against them. The gate
+  evaluates the boxes **before**
+  the trailer and announces a waiver-pass with a workflow warning quoting
+  the reason — a run that passes on merits never consults the trailer, so
+  a stale waiver ages out visibly instead of masking the rule, and the
+  trailer stays what it is meant to be: the argued exception for
+  deferred or re-homed deliverables, never the cheap path past ticking.
+  The presence rule polices
   *form, not substance* — the same reasoning that rejected coverage
   thresholds (D-005) applies: a ritual box can satisfy it, and its
   guarantee is only that **no close is silently faith-based**; checklist
-  honesty stays with D-006 ticking discipline and review, and manual
-  closes bypass CI by construction — the `/session-close` reconciliation
-  step is that path's net, sweeping every issue the session advanced:
-  `n = m` means closed, or argued. The
+  honesty stays with D-006 ticking discipline and review. Manual closes
+  fire no PR event, but the `issue-close-guard` workflow reverts
+  app-/bot-mediated ones server-side (#54), and the `/session-close`
+  reconciliation step remains that path's completeness net, sweeping every
+  issue the session advanced: `n = m` means closed, or argued. The
   `/epic-closeout` sub-issue check is a **backstop that should find
   nothing**, and closeout triage is for *notes* — build issues never wait
   for it. Two exceptions: **epics** close only via their closeout, and
@@ -195,6 +215,17 @@ them is deliberate:
 - **Outcomes get written back to the issue** — run/build results land as a
   readout comment on the build issue, cross-linked to the epic; heavy artifacts
   live elsewhere (the data repo, if the project has one).
+- **Manual closes are operator-only (#54).** An agent's completion duty ends
+  at the readout comment, the ticked boxes, and the close request — the close
+  itself is the completing PR's `Closes #N` (fired when the operator merges)
+  or the operator's own click, and this holds even when an operator asks an
+  agent in chat (at the GitHub layer an agent acts with the operator's own
+  identity via an app user-to-server token, so the app marker on the close
+  event is the only enforceable boundary). Enforced at the source by the
+  `guard-issue-close.sh` hook (suite: `scripts/test_guard_issue_close.sh`)
+  and server-side by the `issue-close-guard.yml` workflow reverting
+  app-mediated closes (logic: `scripts/issue_close_decision.sh`; suite:
+  `scripts/test_issue_close_guard.sh`).
 
 Issue-body skeletons live in `docs/.templates/` (`epic-issue-body.md`,
 `task-issue-body.md`, `note-issue-body.md`) — usable directly with
@@ -358,7 +389,11 @@ verbs) — so closing with open or unstated deliverables requires the
 argued, durable exception, never a silent close
 (decision logic: `scripts/issue_link_decision.sh`; suite:
 `scripts/test_issue_link_guard.sh`; deliberate exception:
-`Skip-Issue-Link-Guard: <reason>` trailer). It runs on `edited` and
+`Skip-Issue-Link-Guard: <reason>` trailer — consulted only **after** the
+merits check fails and announced as a workflow `::warning::` quoting the
+reason, so a waiver-pass is never visually identical to a merits pass and
+a re-run whose targets have become completion-ready passes on merits, #47).
+It runs on `edited` and
 `synchronize` too, so a keyword added to the body or a commit after the
 first CI run is re-checked; the meta-gate pins that event list. The forward
 direction — a PR that *should* have closed a now-complete issue but didn't

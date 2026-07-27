@@ -5,9 +5,15 @@
      closing keyword targets ONLY an issue this PR fully completes —
      normally a sub-issue; an epic ONLY in its own closeout PR, when every
      sub-issue is already closed. Enforcement (D-004): the issue-link-guard
-     CI gate blocks closing references to an epic with open sub-issues; the
-     completes-it claim for ordinary issues is layout + review.
+     CI gate blocks closing references to an epic with open sub-issues and
+     to any other issue with unchecked (or no) deliverable boxes (#41).
      See docs/process/contributing.md → PR ↔ issue linking. -->
+
+**Tick before opening (#47):** on every issue this PR `Closes`, tick each
+deliverable box this PR completes — via `/tick`: per box, *did I deliver
+this?* with named evidence, then the body edit; that is the completing
+session's job (`CLAUDE.md` → Repo workflow). `issue-link-guard`
+counts the boxes from PR-open; readout boxes tick when the readout posts.
 
 Closes #___ (epic: #___)          <!-- fully completes that issue — its deliverable boxes all ticked
                                        (state the tally in What/why: "deliverables n/n"); drop
