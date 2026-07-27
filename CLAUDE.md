@@ -29,6 +29,12 @@ docs, not a duplicate of them. Extend over time.
   artifacts are never committed anywhere." -->
 - Never force-push, rewrite published history, or delete branches you did not
   create in this session.
+- Never manually close or delete a GitHub issue — close authority is the
+  operator's (#54). A close rides the completing PR's `Closes #N` (fired
+  when the operator merges) or is the operator's own click; your job ends at
+  the readout comment + ticked boxes + the close request. Enforced by the
+  `guard-issue-close.sh` hook (MCP + `gh` layers, no unlock by design) and
+  reverted server-side by `issue-close-guard.yml`.
 - Never change a ✅ Decided ADR's decision — propose a superseding ADR instead
   (see `docs/process/contributing.md` → *The ADR process*). Every path to a
   Decided page — maintenance edit (typo, annotation, supersession marker),

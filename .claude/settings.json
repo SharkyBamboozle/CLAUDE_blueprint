@@ -27,7 +27,9 @@
       "Bash(git push -f:*)",
       "Bash(git reset --hard:*)",
       "Bash(gh pr merge:*)",
-      "Bash(gh repo delete:*)"
+      "Bash(gh repo delete:*)",
+      "Bash(gh issue close:*)",
+      "Bash(gh issue delete:*)"
     ]
   },
   "hooks": {
@@ -47,6 +49,15 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-adr.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|mcp__.*issue_write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-issue-close.sh\""
           }
         ]
       }

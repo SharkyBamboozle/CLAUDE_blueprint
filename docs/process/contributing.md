@@ -189,10 +189,11 @@ them is deliberate:
   *form, not substance* — the same reasoning that rejected coverage
   thresholds (D-005) applies: a ritual box can satisfy it, and its
   guarantee is only that **no close is silently faith-based**; checklist
-  honesty stays with D-006 ticking discipline and review, and manual
-  closes bypass CI by construction — the `/session-close` reconciliation
-  step is that path's net, sweeping every issue the session advanced:
-  `n = m` means closed, or argued. The
+  honesty stays with D-006 ticking discipline and review. Manual closes
+  fire no PR event, but the `issue-close-guard` workflow reverts
+  app-/bot-mediated ones server-side (#54), and the `/session-close`
+  reconciliation step remains that path's completeness net, sweeping every
+  issue the session advanced: `n = m` means closed, or argued. The
   `/epic-closeout` sub-issue check is a **backstop that should find
   nothing**, and closeout triage is for *notes* — build issues never wait
   for it. Two exceptions: **epics** close only via their closeout, and
@@ -214,6 +215,17 @@ them is deliberate:
 - **Outcomes get written back to the issue** — run/build results land as a
   readout comment on the build issue, cross-linked to the epic; heavy artifacts
   live elsewhere (the data repo, if the project has one).
+- **Manual closes are operator-only (#54).** An agent's completion duty ends
+  at the readout comment, the ticked boxes, and the close request — the close
+  itself is the completing PR's `Closes #N` (fired when the operator merges)
+  or the operator's own click, and this holds even when an operator asks an
+  agent in chat (at the GitHub layer an agent acts with the operator's own
+  identity via an app user-to-server token, so the app marker on the close
+  event is the only enforceable boundary). Enforced at the source by the
+  `guard-issue-close.sh` hook (suite: `scripts/test_guard_issue_close.sh`)
+  and server-side by the `issue-close-guard.yml` workflow reverting
+  app-mediated closes (logic: `scripts/issue_close_decision.sh`; suite:
+  `scripts/test_issue_close_guard.sh`).
 
 Issue-body skeletons live in `docs/.templates/` (`epic-issue-body.md`,
 `task-issue-body.md`, `note-issue-body.md`) — usable directly with
