@@ -4,6 +4,53 @@ What each blueprint version changed. Bumped by the harvest ritual
 (`HARVEST.md`); each seeded project records the version it started from in
 its init commit.
 
+## v1.0.4 — Operator-only issue closing, the /tick ritual, gate & bootstrap fixes
+
+Seven backward-compatible changes since v1.0.3 — an enforcement pair making
+manual issue closes operator-only, a ritual command for deliverable-box
+ticking, a hardening pass on `issue-link-guard`, a fail-safe fix to the
+lfs-assets module, two bootstrap-hardening fixes from the epic #20 audit,
+and a dependency bump. A clean `UPDATE.md` pull for downstream projects: no
+breaking changes.
+
+- **Operator-only issue closing** (#54): agents can no longer manually close
+  or delete issues — the `guard-issue-close.sh` PreToolUse hook denies MCP
+  `state=closed` writes and `gh issue close`/`delete` at the source, and the
+  `issue-close-guard.yml` workflow reverts app-/bot-mediated manual closes
+  server-side (commit/PR-merge closes and the operator's own clicks stand;
+  allowlisted first-party apps; fail-open on read errors). Both suites wired
+  into `make verify`; new CLAUDE.md hard-rule bullet + contributing.md
+  paragraph. The `issues:`-triggered workflow arms on the default branch at
+  this promotion; the live-fire probe is tracked in #57.
+- **The `/tick` ritual** (#52): attestation-first deliverable box ticking —
+  per box, *did I deliver this?* answered with named evidence or no tick —
+  then the anchored body edit and a verify re-read; five pointer edits put
+  the affordance at the work-time sites (CLAUDE.md, contributing.md, the
+  task skeleton, the PR template). An affordance for the existing
+  `issue-link-guard` rule (#37, #41), not a new gate.
+- **`issue-link-guard` evaluates merits before waivers, loudly** (#47): the
+  decision script now counts deliverable boxes first, consults the
+  `Skip-Issue-Link-Guard` trailer only when merits fail, logs which path
+  passed, and announces waiver-passes with per-finding `waived:` lines plus
+  a `::warning::` quoting the reason; the tick-your-boxes duty becomes
+  visible work-time instruction text. Exit codes unchanged for every input.
+- **lfs-assets applies fail-safe** (#22): the module now instructs
+  uncommenting the chosen menu lines (not appending them as comments) into
+  the repo's root `.gitattributes`, creating the file if absent, with a
+  mandatory `git check-attr filter` proof step — verbatim application
+  previously yielded zero LFS coverage, silently.
+- **Bootstrap names the ADR unlock it triggers** (#21): the three sites
+  claiming ADR-0007's 🟡→✅ finalization "needs no ADR unlock" now instruct
+  `/unlock-adr adr-0007` plus the `Unlock-ADR:` trailer in the birth
+  commit's body, and the data-repo module's ADR payload ships 🟡 Proposed —
+  the hook and gates themselves are untouched.
+- **Tier-1 gate false positive removed** (#23): the illustrative literal
+  `{{TOKEN}}` in a `scripts/github_setup.sh` comment — a pre-baked
+  completion-gate failure shipped to every seed — reworded to "unresolved
+  placeholders".
+- **Dependency bump** (#55): `actions/setup-python` 6 → 7 in the GitHub
+  Actions group (Dependabot).
+
 ## v1.0.3 — Lifecycle guardrails: issue-link guard, promotion train, zombie-push
 
 Five changes hardening how issues close and how releases are cut, plus
