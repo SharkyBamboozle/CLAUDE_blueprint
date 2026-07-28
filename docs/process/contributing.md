@@ -209,9 +209,10 @@ them is deliberate:
   perpetually unfinished and quietly distort "progress."
 - **The `note` label is the durable index.** `label:note` returns every finding
   regardless of which epic it came from or whether that epic is still open.
-- **Epic closeout triage.** Before closing an epic, sweep its `note` set: close
-  the accepted or moot ones, and re-home the still-live ones under the
-  successor epic, so no finding goes stale.
+- **Epic closeout triage.** Before closing an epic, sweep its `note` set:
+  request closure of the accepted or moot ones (resolution comment +
+  operator close), and re-home the still-live ones under the successor
+  epic, so no finding goes stale.
 - **Outcomes get written back to the issue** — run/build results land as a
   readout comment on the build issue, cross-linked to the epic; heavy artifacts
   live elsewhere (the data repo, if the project has one).

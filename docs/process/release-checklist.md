@@ -73,8 +73,9 @@ CLAUDE.md → "Where to read, by task") and declare `mode: off <reason>` in
 
 ## 7. Post-check
 
-- [ ] Every restated issue verified closed; stragglers closed with a
-      one-line pointer comment.
+- [ ] Every restated issue verified closed; stragglers have a one-line
+      pointer comment + an operator close request (the close itself is
+      operator-only — CLAUDE.md hard rule).
 - [ ] Session changelog entry for the release
       ([changelog](../records/changelog.md)).
 

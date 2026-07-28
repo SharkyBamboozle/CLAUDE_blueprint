@@ -6,12 +6,13 @@ completable deliverables; sub-issues count toward epic completion. Title
 convention for epic work: prefix with the epic short-name
 ("Env-gen — Phase 2B: ...").
 
-Close at completion (#37): the moment every box below is ticked, CLOSE this
-issue — via the completing PR's `Closes #NN (epic: #MM)`, or manually with
-the readout comment when no single PR completes it. Never batch closes to
-session end or epic closeout. The issue-link guard blocks a `Closes` aimed
-here while boxes are unchecked (declared exception: `Skip-Issue-Link-Guard:
-<reason>` trailer). -->
+Close at completion: the moment every box below is ticked, this issue
+CLOSES — via the completing PR's `Closes #NN (epic: #MM)`, or, when no
+single PR completes it, via a readout comment + operator close request
+(the close click is operator-only — CLAUDE.md hard rule). Never batch
+closes to session end or epic closeout. The issue-link guard blocks a
+`Closes` aimed here while boxes are unchecked (declared exception:
+`Skip-Issue-Link-Guard: <reason>` trailer). -->
 
 **<Bold thesis: the payoff of this task.>**
 
