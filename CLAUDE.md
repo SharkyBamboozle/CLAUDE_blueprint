@@ -224,12 +224,13 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   the **`note`** label, cross-linked to the epic, and listed in the epic's
   **Related notes** section — **never** as sub-issues (a note never reaches
   "done" and would leave the epic perpetually unfinished). `label:note` is the
-  durable index; **triage it at epic closeout** (close accepted/moot ones,
-  re-home live ones). Body skeletons: `docs/.templates/`. A build issue
-  (standalone or sub-issue) **closes at the moment its deliverable boxes
-  are met** — by the completing PR's `Closes` or a manual readout-close,
-  never batched to closeout (close-direction gated by `issue-link-guard`;
-  see `docs/process/contributing.md` → *Issues, sub-issues & notes*).
+  durable index; **triage it at epic closeout** (request close of
+  accepted/moot ones, re-home live ones). Body skeletons:
+  `docs/.templates/`. A build issue (standalone or sub-issue) **closes at
+  the moment its deliverable boxes are met** — by the completing PR's
+  `Closes` or an operator readout-close, never batched to closeout
+  (close-direction gated by `issue-link-guard`; see
+  `docs/process/contributing.md` → *Issues, sub-issues & notes*).
 - **Ticking deliverable boxes is the completing session's job — tick each
   box the moment its artifact lands.** Editing the issue body to tick a
   delivered box is expected tracker upkeep, never an intrusion into the

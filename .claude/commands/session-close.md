@@ -22,14 +22,14 @@ Close out this working session. Steps, in order:
    and move on. Never write to `docs/` without the approval.
 4. **Issue-state reconciliation** — for every issue this session's work
    advanced (standalone task or epic sub-issue alike), tally its
-   deliverable boxes `n/m`. If `n = m`: close it now with a readout
-   comment citing the merging PRs — or state why it stays open. If closing
-   with `n < m`: name each unmet deliverable's disposition (deferred →
-   where · moot → why); on the PR path the issue-link guard requires the
-   declared trailer. Report the tallies — epic progress counters must
-   match reality at session end. (Rule: `docs/process/contributing.md` →
-   *Issues, sub-issues & notes*. Epics themselves close only at
-   /epic-closeout; notes only at triage.)
+   deliverable boxes `n/m`. If `n = m`: post the readout comment citing
+   the merging PRs and request the operator close it now — or state why
+   it stays open. If requesting a close with `n < m`: name each unmet
+   deliverable's disposition (deferred → where · moot → why); on the PR
+   path the issue-link guard requires the declared trailer. Report the
+   tallies — epic progress counters must match reality at session end.
+   (Rule: `docs/process/contributing.md` → *Issues, sub-issues & notes*.
+   Epics themselves close only at /epic-closeout; notes only at triage.)
 5. **State check** — report honestly:
    - `git status`: any uncommitted work? (Report it; do not auto-commit.)
    - Current branch pushed? Any open PR and its CI state?

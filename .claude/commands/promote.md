@@ -43,5 +43,6 @@ Promote `development` into `main` as a release. Canonical path:
    ```
 
 6. **Post-check** — after the merge, confirm each restated issue is
-   closed; close any the keyword path missed with a one-line pointer
-   comment. Report: version, contents, closed issues, tag status.
+   closed; for any issue the keyword path missed, post a one-line
+   pointer comment and request the operator close it (CLAUDE.md hard
+   rule). Report: version, contents, closed issues, tag status.
