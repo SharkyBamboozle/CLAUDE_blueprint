@@ -3,14 +3,14 @@
 Work on {{PROJECT_NAME}} is organised into **epics** — coherent bodies of
 work, each tracked by a GitHub epic issue with build tasks as **sub-issues**
 and findings as **`note`** issues
-([contributing](../../process/contributing.md#issues-sub-issues-notes)). This section
+([Filing work](../../process/filing-work.md)). This section
 gives each epic a **page that tells its story**: what it set out to do, what
 was built, what was found, what was decided, and what it carried forward —
 curated to skip the intermediate steps that don't matter to the story.
 
 An epic page is deliberately a *different lens* from the other records, so
 nothing is duplicated (the full lens table lives in
-[contributing](../../process/contributing.md#the-record-lenses)):
+[Records & canon](../../process/records-and-canon.md#the-record-lenses)):
 
 | Surface | Lens |
 |---|---|
@@ -25,7 +25,7 @@ starts (template: `docs/.templates/epic-page-template.md`) and filled in as
 the epic progresses. At **closeout** it is finalised into the retrospective,
 and the epic issue is closed with a short pointer comment
 (`docs/.templates/epic-closeout-comment.md`) plus the note triage the
-[note convention](../../process/contributing.md#issues-sub-issues-notes) requires.
+[note convention](../../process/running-epics.md) requires.
 
 ## The epics
 
