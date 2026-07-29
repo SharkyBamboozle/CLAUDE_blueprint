@@ -5,7 +5,7 @@ The single canonical release path — a promotion of `development` into
 Every step is mandatory unless explicitly marked optional — the person (or
 agent) running this checklist **is** the release engineer; do not skip a
 step by deferring it to someone else. Conventions and enforcers:
-[Promotion & releases](contributing.md#promotion-releases).
+[Releases](releases.md).
 
 <!-- BLUEPRINT: the promotion skeleton below is the shipped standard —
 extend the placeholder steps (build/publish) with the project's real ones
