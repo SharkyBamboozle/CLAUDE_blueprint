@@ -26,7 +26,7 @@
 #                    the github-pages env branch policy, and DEPLOY_DOCS=true.
 #                    Default OFF — publishing is outward-facing, and on GitHub
 #                    Free a private repo's Pages site can be publicly reachable
-#                    (#3). The strict-build merge gate runs either way.
+#                    The strict-build merge gate runs either way.
 #
 # Requires: gh (authenticated with repo admin), python3 + PyYAML (labels).
 # Not scriptable here (do manually if wanted): secrets, Pages custom domain,
@@ -37,7 +37,7 @@ PROFILE=code
 AREAS=""
 CHECKS=()
 REPO=""
-DEPLOY_DOCS_OPT=false   # docs publishing is opt-in, default off (#3)
+DEPLOY_DOCS_OPT=false   # docs publishing is opt-in, default off
 while [ $# -gt 0 ]; do
   case "$1" in
     -R) REPO="$2"; shift 2 ;;
@@ -84,8 +84,8 @@ if [ "$PROFILE" = "code" ]; then
   # main: PRs only (0 approvals — solo-dev calibrated: require checks, not
   # reviews), no force-pushes, no deletion, required status checks.
   # Default contexts: the template's own shipped gates — docs.yml's `build`,
-  # branch-flow-guard.yml's `flow-guard` + `release-gate` (#35), and
-  # issue-link-guard.yml's `issue-link-guard` (#18) — so the prose rules are
+  # branch-flow-guard.yml's `flow-guard` + `release-gate`, and
+  # issue-link-guard.yml's `issue-link-guard` — so the prose rules are
   # backed by required checks out of the box (D-004; a required context that
   # never reports blocks merges forever, hence only jobs the template itself
   # ships). Override with --require-check.
@@ -111,7 +111,7 @@ JSON
   # development" was previously prose-only here; a required check makes
   # green-build the price of landing anything on the integration branch
   # (D-004), and development is the default branch where closing keywords
-  # fire, so the issue-link guard must be merge-blocking exactly here (#18).
+  # fire, so the issue-link guard must be merge-blocking exactly here.
   # strict=false: development PRs need green checks but not a rebase race.
   gh api -X PUT "repos/$REPO/branches/development/protection" --input - >/dev/null <<'JSON'
 {
@@ -125,7 +125,7 @@ JSON
 JSON
   echo "protected: development (no force-push; required checks: build, issue-link-guard)"
 
-  # --- GitHub Pages via Actions: OPT-IN, default OFF (#3) ------------------
+  # --- GitHub Pages via Actions: OPT-IN, default OFF -----------------------
   # Publishing docs is an outward-facing act, so it is the owner's decision,
   # not a default. A freshly-seeded project is still full of unresolved
   # placeholders and half-written vision; default-on would push all of that to
@@ -164,7 +164,7 @@ JSON
     echo "variable: DEPLOY_DOCS=false (docs publishing OFF — the default)"
     echo "  no Pages site created. Re-run with --deploy-docs to publish docs to"
     echo "  GitHub Pages on merges to development/main. Keep OFF for private"
-    echo "  projects: a Pages site can be publicly reachable (#3)."
+    echo "  projects: a Pages site can be publicly reachable."
   fi
 
   # --- Merge settings ------------------------------------------------------

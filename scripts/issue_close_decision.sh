@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Decision logic for the issue-close guard (.github/workflows/issue-close-guard.yml).
-# #54 / CLAUDE.md hard rule: manual issue closes are operator-only. GitHub
+# CLAUDE.md hard rule: manual issue closes are operator-only. GitHub
 # cannot express that as a role — closing needs only Triage, and coding
 # agents act with the OPERATOR'S OWN identity via a GitHub App
 # user-to-server token — so the one structural boundary GitHub records is
@@ -24,7 +24,7 @@
 # auto-reopening legitimately-closed issues on transient errors would be
 # worse. Every run logs the raw event line it judged, so live runs
 # self-document the payloads (the authoring sandbox could not read live
-# event data — #54 carries the live-fire probe owed after activation).
+# event data — a live-fire probe is owed after activation).
 #
 # Exit 0 = close stands (incl. fail-open) or revert succeeded ·
 # exit 1 = a revert was required but could not be completed (loud red run).
@@ -92,8 +92,8 @@ if [ -z "$mediated" ]; then
   exit 0
 fi
 
-echo "issue-close-guard: manual close was $mediated — operator-only rule violated (#54). Reverting."
-comment="**Reopened by the issue-close-guard** (CLAUDE.md hard rule — #54): this issue was closed manually via \`$mediated\`, and manual closes are **operator-only** — at the GitHub layer an agent acts with the operator's own identity, so the app marker on the close event is the only enforceable boundary.
+echo "issue-close-guard: manual close was $mediated — operator-only rule violated. Reverting."
+comment="**Reopened by the issue-close-guard** (CLAUDE.md hard rule): this issue was closed manually via \`$mediated\`, and manual closes are **operator-only** — at the GitHub layer an agent acts with the operator's own identity, so the app marker on the close event is the only enforceable boundary.
 
 Sanctioned close paths:
 - the completing PR carries \`Closes #$ISSUE_NUMBER\` and the close fires when the **operator merges** it, or

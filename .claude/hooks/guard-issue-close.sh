@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse guard for issue-close authority (#54). Registered in
+# PreToolUse guard for issue-close authority. Registered in
 # .claude/settings.json for Bash AND the GitHub MCP issue-write tools
 # (matcher: Bash|mcp__.*issue_write) — one home for all close-gating logic.
 # Exit 0 = allow · exit 2 = block (stderr is fed back to the agent).
@@ -45,7 +45,7 @@ except Exception:
     sys.exit(0)  # never brick tool calls on parse failure
 
 MSG = (
-    "BLOCKED (CLAUDE.md hard rule, #54): manually closing or deleting an "
+    "BLOCKED (CLAUDE.md hard rule): manually closing or deleting an "
     "issue is operator-only. The sanctioned paths: (1) the completing PR "
     "carries `Closes #N` and the close fires when the OPERATOR merges it; "
     "(2) for a readout-close, post the readout comment, tick the delivered "
