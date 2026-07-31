@@ -14,7 +14,7 @@ template.
 
 ## The repo is its own working skeleton
 
-Core files live at their real destinations, so the blueprint self-tests. Two
+Core files live at their real destinations, so the blueprint self-tests. Three
 consequences:
 
 - **`make verify` is the gate for this repo, not just seeded ones.** Keep it
@@ -24,6 +24,23 @@ consequences:
   lock all apply here. Work on a feature branch → PR into `development`; never
   merge your own PR. Changing a ✅ Decided ADR means a *superseding* ADR (or
   `/unlock-adr` for a maintenance edit).
+- **Your scratch stays out of the tree.** `.claude/archive/` is gitignored in
+  *this* repo only — seeded projects track theirs, so the `BLUEPRINT:` marker in
+  `.gitignore` removes the block at bootstrap. Committing session notes here
+  ships blueprint-internal history into every seed (#70). One visible
+  consequence: a `/handoff` that follows an already-committed working doc lands
+  as a **deletion**, not a rename. That is the intended shape.
+
+Durable findings therefore need a permanent home other than an archive file. A
+reproduced bug in the machinery becomes a case in the matching
+`scripts/test_*.sh` suite, where `make verify` keeps it honest. The #21
+reproduction is the cautionary example: the 🟡→✅ block it demonstrated was
+already asserted by `scripts/test_guard_adr.sh`, which shipped in v1.0.0 — the
+archive file was redundant the day it was written, and still reached every seed.
+A module's instructions are proved the same way, by executing them verbatim in a
+throwaway `git init` repo and asserting the result (`git check-attr filter --
+<path>` for lfs-assets, per #22), with the assertion folded back into the
+module's own steps.
 
 ## Know which tier a file is before you touch it
 
