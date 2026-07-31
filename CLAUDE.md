@@ -8,7 +8,28 @@ docs, not a duplicate of them. Extend over time.
 > blueprint machinery), `{{TOKEN}}` placeholders and `<!-- BLUEPRINT: ... -->`
 > comments mark unfinished sections — see `blueprint/TOKENS.md`. In the
 > blueprint repo itself, this file doubles as the template every new project
-> starts from. <!-- BLUEPRINT: delete this whole admonition at bootstrap. -->
+> starts from.
+>
+> **While this admonition is here, you are authoring the template, not working
+> in a seeded project.** The per-session *records* instructions below (*Repo
+> workflow* → session changelog; `.claude/commands/session-close.md`) are
+> shipped furniture addressed to seeded projects. Three rules override them
+> here; reasoning and scope: `CONTRIBUTING.md` → *Two hats*.
+>
+> 1. **No tracker IDs in seed-shipped content** — an issue or PR number from
+>    this repo points at nothing downstream. Cite them in commits, PR bodies,
+>    and the machinery deleted at bootstrap; in `docs/`, `.claude/`, and this
+>    file, describe the change instead.
+> 2. **No session records during regular work** — `docs/records/changelog.md`
+>    and `docs/records/lessons.md` ship to seeded projects and stay at their
+>    stub state here; an entry written here reaches every seed as false
+>    history. Durable findings go where they stay true downstream (a
+>    regression case, a ritual card, a `docs/process/` page).
+> 3. **`blueprint/CHANGELOG.md` is written exactly once per release**, in the
+>    caboose of the promotion PR that bumps `blueprint/VERSION`. It is the
+>    blueprint's only log.
+>
+> <!-- BLUEPRINT: delete this whole admonition, rules included, at bootstrap. -->
 
 ## Hard rules (never, without an explicit user request in THIS session)
 

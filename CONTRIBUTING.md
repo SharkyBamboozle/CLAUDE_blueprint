@@ -12,6 +12,60 @@ changelog, commit conventions — the blueprint follows its own manual,
 applies here too. This page only covers what's **different** about working on a
 template.
 
+## Two hats — the shipped records instructions are addressed to seeded projects
+
+The blueprint wears two hats: it is a **template under development** and the
+**worked example** of the process it ships. Nearly all of
+`docs/process/contributing.md` holds under both hats. The per-session
+**records** instructions do not — `CLAUDE.md` → *Repo workflow* ("every working
+session ends with a `docs/records/changelog.md` entry"), the changelog and
+lessons steps of `.claude/commands/session-close.md`, and the page headers under
+`docs/records/` are **shipped furniture**: correct downstream, inapplicable
+here, because in this repo those files are the *stub* of a downstream project's
+diary, not a diary. Leave that text exactly as it is — the exception is declared
+here, never by weakening the instructions a seeded project needs.
+
+Three rules follow. They reach every blueprint session through the
+blueprint-state admonition at the top of `CLAUDE.md`, and die with it at
+bootstrap.
+
+**1 · No tracker IDs in seed-shipped content.** An issue or PR number from this
+repo becomes a dangling pointer the moment a project is seeded: downstream it
+reads as *that* project's tracker, pointing at work nobody there did. Cite them
+freely in commits, PR bodies, and the machinery that never ships (this file, the
+lifecycle rituals, `blueprint/` — which is why the examples further down this
+page carry issue numbers); in `docs/`, `CLAUDE.md`, `.claude/`, `.github/`,
+`scripts/`, and `modules/`, describe the change instead of citing its ticket.
+*Overrides:* nothing — citing issues in a changelog or an epic page is correct
+downstream and stays correct; the rule is about which *repo's* tracker the
+number belongs to. *Enforcement:* advisory (D-004) — a checker needs a
+keep/sweep classification as its exemption ledger, so it waits on the sweep that
+produces one; review is the backstop until then.
+
+**2 · No session records during regular work.** `docs/records/changelog.md` and
+`docs/records/lessons.md` ship to seeded projects. Here they are the stubs a
+seeded project fills in, so anything written into them arrives downstream as
+false history — a diary of a project the reader never worked on, which
+`scripts/check_bootstrap_complete.sh` cannot catch (no `{{TOKEN}}`, no
+`BLUEPRINT:` marker). Leave both at their stub state. *Overrides:* `CLAUDE.md` →
+*Repo workflow* (the session-changelog rule) and steps 1 and 3 of
+`.claude/commands/session-close.md` — both correct downstream. *Where the
+content goes instead:* whatever will still be true in a seeded project — a
+regression case in the matching `scripts/test_*.sh` suite, a rule on a ritual
+card under `.claude/commands/`, a page under `docs/process/` — plus the release
+line of rule 3. *Enforcement:* the blueprint-records lane of
+`scripts/check_docs_truth.py`, which runs in `make verify` and self-disarms when
+`blueprint/` is deleted at bootstrap.
+
+**3 · `blueprint/CHANGELOG.md` is written exactly once per release.** It is the
+blueprint's only log, and it is written in the caboose commit of the promotion
+PR that bumps `blueprint/VERSION` (`/promote`) — not incrementally as work
+lands, where entries accumulate for a release that has not happened and drift
+from what the tag actually shipped. *Enforcement:* the `release-gate` CI check
+fails a promotion whose release log has no entry for the new version, so the
+entry cannot be forgotten; "no mid-work edits" is advisory (D-004) — no check
+can tell an early entry from a timely one.
+
 ## The repo is its own working skeleton
 
 Core files live at their real destinations, so the blueprint self-tests. Three
@@ -76,7 +130,8 @@ entry, a size ceiling, stale entries fail loud, itemized matching only.
 ## Changes are versioned and tagged
 
 - `blueprint/VERSION` and `blueprint/CHANGELOG.md` record what each release
-  changed — bump the version and add a changelog line naming your change.
+  changed. Both are written **once per release**, in the promotion caboose
+  (`/promote`, rule 3 above) — not on your feature branch as the work lands.
 - Releases are **tagged** `v<VERSION>` on `main`; `UPDATE.md` reads those tags to
   find a seeded project's merge base, so downstream sync depends on them. The tag
   is cut when the change lands on `main` (the `HARVEST` / release step) — not on
