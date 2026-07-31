@@ -79,6 +79,8 @@ outputs captured.
 - **One workaround per problem.** If the same failure returns after a
   workaround, the diagnosis is wrong — escalate; don't bump the workaround
   again.
+- **Three strikes on the same check.** After three failed attempts on the
+  same failing check, stop and report what was tried, with logs.
 - **Identical symptom ≠ identical root cause.** Re-diagnose every recurrence
   from a fresh reproduction.
 

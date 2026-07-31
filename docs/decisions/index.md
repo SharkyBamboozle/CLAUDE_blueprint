@@ -9,7 +9,7 @@ Alternatives where meaningful / Reversibility / References), reached from
 the **ADR** column. This registry
 holds the canonical statement + status; the topic pages hold the reasoning —
 each fact has exactly one canonical home
-(see [contributing](../process/contributing.md#canonicality-convention)).
+(see [Records & canon](../process/records-and-canon.md#canonicality-convention)).
 
 When a decision's status changes, update its ADR **and** this registry row
 together. New decision → next free ID, page from

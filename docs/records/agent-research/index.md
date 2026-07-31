@@ -9,7 +9,7 @@ prior art, or triage a set of directions — curated into a single durable
 reference.
 
 These pages are a distinct lens from the other records, so nothing is
-duplicated (see [contributing](../../process/contributing.md#the-record-lenses)): this
+duplicated (see [Records & canon](../../process/records-and-canon.md#the-record-lenses)): this
 section holds the **map or survey**; the [epics](../epics/index.md) hold build
 stories; the [changelog](../changelog.md) is the diary; the
 [decisions registry](../../decisions/index.md) and topic docs hold canonical
