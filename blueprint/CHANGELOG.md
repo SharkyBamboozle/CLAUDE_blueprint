@@ -4,6 +4,124 @@ What each blueprint version changed. Bumped by the harvest ritual
 (`HARVEST.md`); each seeded project records the version it started from in
 its init commit.
 
+## v1.0.5 — Act-shaped process docs, a leaner CLAUDE.md, seed-hygiene fixes
+
+Seven backward-compatible changes since v1.0.4 — the process manual split into
+act-shaped pages behind a dispatch hub, a deduplication pass on the
+always-loaded `CLAUDE.md`, the two-hats authoring contract with a checker lane
+behind its records rule, a faithful-read protocol for `/tick`, and three
+hygiene fixes to what a seeded project inherits. A clean `UPDATE.md` pull for
+downstream projects: no breaking changes, and the one new checker lane is
+blueprint-only — it self-disarms permanently at bootstrap.
+
+- **`contributing.md` split into act-shaped pages** (#66): the 636-line process
+  manual becomes a 126-line dispatch hub plus thirteen pages named for the act
+  they govern — filing work, committing, pushing, opening a PR, closing issues,
+  running epics, writing ADRs, adding docs pages, testing changes, releases,
+  records and canon, ending a session, enforcement — each wired into the nav
+  and reachable from the hub. Anchor-preserving: content moved, not rewritten,
+  so existing citations still resolve.
+- **`CLAUDE.md` diet — slice 1** (#59): 2,702 → 2,351 words (`wc -w`; 351
+  removed) by cutting standing instruction text whose substance already reaches
+  the agent at its moment of need — the honest-reporting and
+  adversarial-verification paragraphs (both skills' triggers are always
+  loaded), reproduce-before-you-fix and know-when-to-stop (the
+  `reproduce-first` card), the config-cites-decision bullet (its path-scoped
+  rule), and per-rule detail the guard hooks' block messages already teach at
+  the blocked call. Two enabling moves landed first: the three-strikes
+  escalation rule into `reproduce-first` → *Hard rules*, and
+  `config-cites-decision.md`'s canonical pointer re-aimed at the act pages.
+  Pure deduplication — no new machinery, and zero words added to any
+  always-loaded surface.
+- **The two-hats authoring contract, and a lane behind its records rule**
+  (#75): `CONTRIBUTING.md` gains *Two hats* — authoring the template is not
+  working in a seeded project, so the blueprint's own session records must
+  never land in the stubs it ships — restated as three rules in `CLAUDE.md`'s
+  blueprint admonition. Lane G of `check_docs_truth.py` enforces the records
+  half: a session entry in `docs/records/changelog.md` or a dated lesson in
+  `docs/records/lessons.md` fails `make verify` while `blueprint/` exists, with
+  four both-ways self-test scenarios. The lane arms on the machinery's
+  presence and disarms forever once bootstrap deletes it — a seeded project's
+  records are its own.
+- **`/tick` composes its write from a faithful read** (#72): a tick is a
+  full-body rewrite, and issue-body reads are not equally faithful — the GitHub
+  MCP `issue_read`/`list_issues` tools strip HTML comments and `<angle-tokens>`
+  (even inside code fences) and escape quotes, so a body composed from one
+  silently and permanently deletes content. Step 1 of the card is now a channel
+  choice (`gh api`, or MCP `search_issues` with a number assertion — never the
+  lossy pair), followed by an `updated_at` staleness check so a write never
+  lands across a newer edit. The tick also moves to PR-open, where
+  `issue-link-guard` counts the boxes, so the guard starts green instead of
+  being waived.
+- **Blueprint session scratch stops shipping into seeded projects** (#70, epic
+  #20): `.claude/archive/` carried two dated reproduction entries from this
+  repo's own sessions into every seed — issue IDs and citations to machinery
+  bootstrap deletes. Both are removed, `.gitignore` keeps this repo's agent
+  scratch untracked (a bootstrap-deleted block: seeded projects *do* track
+  their archive, which `HARVEST.md` scans), and `CONTRIBUTING.md` states the
+  rule.
+- **Tracker IDs swept out of seed-inherited content** (#74): an issue or PR
+  number from this repo points at nothing downstream — in a seeded project it
+  resolves to an unrelated issue. Twenty-three files lose their `(#NN)`
+  citations: the guard hooks and their block messages, the gate workflows and
+  decision scripts, the issue and PR templates, the labels manifest, the
+  Makefile, and the release seam. Comments and messages only — no behavior
+  change, and every test suite's assertions are untouched.
+- **Close instructions reworded to the operator-close protocol** (#63, #60):
+  eight shipped process texts still instructed an agent-performed manual close
+  — against the v1.0.4 hard rule, denied at the source by
+  `guard-issue-close.sh` and reverted server-side by `issue-close-guard.yml`.
+  Every manual branch now reads *post the comment → tick → request the operator
+  close*, citing portable homes rather than this repo's tracker IDs; the
+  PR-carried `Closes #N` branches are byte-identical.
+
+## v1.0.4 — Operator-only issue closing, the /tick ritual, gate & bootstrap fixes
+
+Seven backward-compatible changes since v1.0.3 — an enforcement pair making
+manual issue closes operator-only, a ritual command for deliverable-box
+ticking, a hardening pass on `issue-link-guard`, a fail-safe fix to the
+lfs-assets module, two bootstrap-hardening fixes from the epic #20 audit,
+and a dependency bump. A clean `UPDATE.md` pull for downstream projects: no
+breaking changes.
+
+- **Operator-only issue closing** (#54): agents can no longer manually close
+  or delete issues — the `guard-issue-close.sh` PreToolUse hook denies MCP
+  `state=closed` writes and `gh issue close`/`delete` at the source, and the
+  `issue-close-guard.yml` workflow reverts app-/bot-mediated manual closes
+  server-side (commit/PR-merge closes and the operator's own clicks stand;
+  allowlisted first-party apps; fail-open on read errors). Both suites wired
+  into `make verify`; new CLAUDE.md hard-rule bullet + contributing.md
+  paragraph. The `issues:`-triggered workflow arms on the default branch at
+  this promotion; the live-fire probe is tracked in #57.
+- **The `/tick` ritual** (#52): attestation-first deliverable box ticking —
+  per box, *did I deliver this?* answered with named evidence or no tick —
+  then the anchored body edit and a verify re-read; five pointer edits put
+  the affordance at the work-time sites (CLAUDE.md, contributing.md, the
+  task skeleton, the PR template). An affordance for the existing
+  `issue-link-guard` rule (#37, #41), not a new gate.
+- **`issue-link-guard` evaluates merits before waivers, loudly** (#47): the
+  decision script now counts deliverable boxes first, consults the
+  `Skip-Issue-Link-Guard` trailer only when merits fail, logs which path
+  passed, and announces waiver-passes with per-finding `waived:` lines plus
+  a `::warning::` quoting the reason; the tick-your-boxes duty becomes
+  visible work-time instruction text. Exit codes unchanged for every input.
+- **lfs-assets applies fail-safe** (#22): the module now instructs
+  uncommenting the chosen menu lines (not appending them as comments) into
+  the repo's root `.gitattributes`, creating the file if absent, with a
+  mandatory `git check-attr filter` proof step — verbatim application
+  previously yielded zero LFS coverage, silently.
+- **Bootstrap names the ADR unlock it triggers** (#21): the three sites
+  claiming ADR-0007's 🟡→✅ finalization "needs no ADR unlock" now instruct
+  `/unlock-adr adr-0007` plus the `Unlock-ADR:` trailer in the birth
+  commit's body, and the data-repo module's ADR payload ships 🟡 Proposed —
+  the hook and gates themselves are untouched.
+- **Tier-1 gate false positive removed** (#23): the illustrative literal
+  `{{TOKEN}}` in a `scripts/github_setup.sh` comment — a pre-baked
+  completion-gate failure shipped to every seed — reworded to "unresolved
+  placeholders".
+- **Dependency bump** (#55): `actions/setup-python` 6 → 7 in the GitHub
+  Actions group (Dependabot).
+
 ## v1.0.3 — Lifecycle guardrails: issue-link guard, promotion train, zombie-push
 
 Five changes hardening how issues close and how releases are cut, plus

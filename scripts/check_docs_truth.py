@@ -3,7 +3,7 @@
 
 Part of `make verify` (D-004; the no-silent-lanes doctrine — a dormant lane owns its
 activation condition). The strict mkdocs build validates markdown *links*; this checks
-the mechanically verifiable *claims* docs make, in six lanes:
+the mechanically verifiable *claims* docs make, in seven lanes:
 
   A. Dead path citations (always on) — a backtick-cited repo path in the
      docs must exist on disk. Docs rot is usually introduced by NON-doc
@@ -32,7 +32,7 @@ the mechanically verifiable *claims* docs make, in six lanes:
      Deliberately mechanical-only: whether a claim is still semantically
      true is judgment work and stays out of the merge gate. HTML comments
      are stripped before parsing (templates embed example rows in them).
-  E. Epic-page status vs issue state (#18; same reachability posture as
+  E. Epic-page status vs issue state (same reachability posture as
      lane B — NEVER guesses) — an epic page under docs/records/epics/
      whose status line says in-progress (🟡/🔴) must cite an OPEN epic
      issue. A closed issue behind an in-progress page means the epic was
@@ -40,13 +40,26 @@ the mechanically verifiable *claims* docs make, in six lanes:
      issue-link guard via a path no PR event covers — a sidebar link added
      after CI, a direct push) or the page went stale; either way the docs
      no longer tell the truth, and this lane surfaces it on the next run.
-  F. Built-but-open sub-issues (#37; same posture — NEVER guesses) — a
+  F. Built-but-open sub-issues (same posture — NEVER guesses) — a
      bullet under an epic page's "What has been built" section leads with
      its sub-issue number (epic-page-template); a bullet-leading #N whose
      issue is still OPEN means the page claims done work the tracker
      denies — the mirror of lane E, catching the under-closing direction
      (close the issue with its readout, or don't list it as built yet).
      Bullet-leading refs only: mid-line refs may legitimately cite PRs.
+  G. Blueprint-only: session records written into shipped stubs (armed
+     only while blueprint/ exists — i.e. in the template repo, and in a
+     seed until bootstrap deletes the machinery). docs/records/changelog.md
+     and docs/records/lessons.md ship to seeded projects as EMPTY STUBS;
+     while the template is being authored they are not its diary, so a
+     session entry or a dated lesson written there reaches every seed as
+     false history — a diary of a project the reader never worked on. The
+     bootstrap gate cannot see it (the text carries neither an unfilled
+     placeholder token nor an unresolved judgment marker), hence this lane.
+     Same posture as lane C: the lane owns its activation condition, and it
+     self-disarms permanently once blueprint/ is deleted — a bootstrapped
+     project's records are its own. Rule + rationale: CONTRIBUTING.md ->
+     Two hats.
 
 Exemptions live in KNOWN_EXEMPT below and follow the ledger rules (D-004):
 a reason per entry, a ceiling, itemized matching, and STALE ENTRIES FAIL —
@@ -452,6 +465,64 @@ def lane_d_consistency(root: str, issues: list):
             )
 
 
+# -------------------------------------- lane G: blueprint-only records rule
+
+# The blueprint machinery, deleted wholesale at bootstrap. Its presence is
+# what arms this lane; its absence disarms it forever.
+BLUEPRINT_DIR = "blueprint"
+
+# A changelog entry per the grammar the stub documents:
+#   ### Session N (YYYY-MM-DD) — title
+SESSION_HEADING_RE = re.compile(r"^###\s+Session\b.*$", re.M)
+# A lessons entry: a dated H2. The skeleton in the stub lives inside an HTML
+# comment (stripped before matching) and carries no real date anyway.
+DATED_LESSON_RE = re.compile(r"^##\s+\d{4}-\d{2}-\d{2}\b.*$", re.M)
+
+
+def lane_g_blueprint_records(root: str, issues: list):
+    """While the blueprint machinery is present, docs/records/ holds the
+    SHIPPED STUBS of a downstream project's diary, not this repo's records."""
+    if not os.path.isdir(os.path.join(root, BLUEPRINT_DIR)):
+        return  # dormant: bootstrapped project — its records are its own
+
+    changelog = os.path.join(root, "docs", "records", "changelog.md")
+    if os.path.isfile(changelog):
+        with open(changelog, encoding="utf-8") as f:
+            text = f.read()
+        for m in SESSION_HEADING_RE.finditer(text):
+            head = m.group(0).strip()
+            # The shipped stub's heading still carries its unresolved
+            # placeholder comment where the date goes; a real entry never
+            # does. (Matched as a bare comment opener on purpose: spelling
+            # the judgment-block marker out here would make this file trip
+            # the bootstrap gate's own Tier-2 grep.)
+            if "<!--" in head:
+                continue
+            issues.append(
+                f"[blueprint-records] docs/records/changelog.md: '{head}' is a "
+                "real session entry, but the blueprint keeps no per-session "
+                "records — this file ships to seeded projects as a stub, so "
+                "the entry reaches every seed as false history. Remove it; "
+                "the blueprint's only log is blueprint/CHANGELOG.md, written "
+                "once per release in the promotion caboose (CONTRIBUTING.md "
+                "-> Two hats)."
+            )
+
+    lessons = os.path.join(root, "docs", "records", "lessons.md")
+    if os.path.isfile(lessons):
+        for m in DATED_LESSON_RE.finditer(_read_stripped(lessons)):
+            issues.append(
+                f"[blueprint-records] docs/records/lessons.md: '{m.group(0).strip()}' "
+                "is a dated lesson entry, but this file ships to seeded "
+                "projects as a stub — a blueprint-internal incident recorded "
+                "here becomes false history in every seed. Put the durable "
+                "form where it stays true downstream (a regression case in "
+                "the matching scripts/test_*.sh suite, a rule on a ritual "
+                "card, a docs/process/ page) and drop the entry "
+                "(CONTRIBUTING.md -> Two hats)."
+            )
+
+
 # ------------------------------------------------------------- the checks
 
 def run_checks(root: str, seam=None):
@@ -505,7 +576,7 @@ def run_checks(root: str, seam=None):
     if lane_b_skipped:
         notes.append("issue-state lane: no verifiable open-claims (or GitHub unreachable — skipped, never guessed).")
 
-    # Lane E — epic-page status vs issue state (#18). Reuses lane B's
+    # Lane E — epic-page status vs issue state. Reuses lane B's
     # resolver: offline / unknown skips, never guesses.
     epics_dir = os.path.join(root, "docs", "records", "epics")
     for p, text in texts.items():
@@ -528,7 +599,7 @@ def run_checks(root: str, seam=None):
                 "(/epic-closeout)."
             )
 
-    # Lane F — built-but-open sub-issues (#37). Bullet-leading #N under
+    # Lane F — built-but-open sub-issues. Bullet-leading #N under
     # "What has been built" only; same resolver: offline/unknown skips.
     for p, text in texts.items():
         rel = os.path.relpath(p, root)
@@ -544,7 +615,7 @@ def run_checks(root: str, seam=None):
                 issues.append(
                     f"[built-state] {rel}: lists #{ref.group(1)} under 'What "
                     "has been built' but the issue is still OPEN — close it "
-                    "with its readout comment (close-at-completion, #37), or "
+                    "with its readout comment (close-at-completion), or "
                     "don't list it as built yet."
                 )
 
@@ -614,6 +685,13 @@ def run_checks(root: str, seam=None):
 
     # Lane D — cross-artifact registry consistency.
     lane_d_consistency(root, issues)
+
+    # Lane G — blueprint-only: no session records in the shipped stubs.
+    # Silent when disarmed on purpose: unlike lane C's dormancy (a temporary
+    # state that must self-arm), no-blueprint/ is this lane's terminal and
+    # correct state, and a seeded project has no use for a note about
+    # machinery it no longer carries.
+    lane_g_blueprint_records(root, issues)
 
     return issues, notes, used
 
@@ -793,6 +871,28 @@ def self_test() -> int:
         td, questions="| ID | Status | Summary | Pointers |\n"
                       "|----|--------|---------|----------|\n"
                       "| Q1 | ✅ | fast enough? yes | no pointer here |\n"))
+
+    # Lane G: while blueprint/ is present the shipped records stubs must
+    # stay stubs; once bootstrap deletes it, the same tree passes (a
+    # bootstrapped project's records are its own). The stub heading keeps
+    # its unresolved placeholder comment where a real entry carries a date.
+    stub_changelog = ("# Changelog\n\n### Session 1 (<!-- fill: date -->) "
+                      "— Project start\n")
+    real_changelog = "# Changelog\n\n### Session 2 (2026-01-02) — Did a thing\n"
+    stub_lessons = "# Lessons\n\n<!--\n## YYYY-MM-DD — skeleton entry\n-->\n"
+    real_lessons = "# Lessons\n\n## 2026-01-02 — A lesson\n\nWhat happened.\n"
+    def records(td, changelog, lessons, seeded=False):
+        if not seeded:
+            write(td, "blueprint/VERSION", "1.0.0\n")
+        write(td, "docs/records/changelog.md", changelog)
+        write(td, "docs/records/lessons.md", lessons)
+    scenario("G-stubs-pass", [], lambda td: records(td, stub_changelog, stub_lessons))
+    scenario("G-session-entry", ["[blueprint-records] docs/records/changelog.md"],
+             lambda td: records(td, real_changelog, stub_lessons))
+    scenario("G-dated-lesson", ["[blueprint-records] docs/records/lessons.md"],
+             lambda td: records(td, stub_changelog, real_lessons))
+    scenario("G-disarmed-after-bootstrap", [], lambda td: records(
+        td, real_changelog, real_lessons, seeded=True))
 
     # D-004 ledger rules on the exemption list itself: a reason per
     # entry, itemized (no empty/blanket scope), a ceiling, and staleness.

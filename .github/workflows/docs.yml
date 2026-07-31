@@ -8,7 +8,7 @@ name: Documentation
 # DEPLOY = publish the built site to GitHub Pages. Runs on pushes to
 #          `development` and `main` — a merge into EITHER updates the live
 #          site — and only when the repository variable DEPLOY_DOCS is "true".
-#          Publishing is OPT-IN and default-OFF (#3): DEPLOY_DOCS is set true
+#          Publishing is OPT-IN and default-OFF: DEPLOY_DOCS is set true
 #          only when scripts/github_setup.sh is run with --deploy-docs.
 #
 # One-time setup — scripts/github_setup.sh does all of this, but ONLY under its
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip

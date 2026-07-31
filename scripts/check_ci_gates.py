@@ -53,15 +53,23 @@ MAKEFILE_PATH = os.path.join(ROOT, "Makefile")
 # renames or adds gates updates this list in the same diff — it IS the pin.
 REQUIRED_GATES = (
     "docs.yml", "repo-hygiene.yml", "adr-gates.yml", "security.yml",
-    "issue-link-guard.yml", "branch-flow-guard.yml",
+    "issue-link-guard.yml", "branch-flow-guard.yml", "issue-close-guard.yml",
 )
 
-# Workflows whose pull_request `types:` list is load-bearing (#18): GitHub's
+# Workflows whose pull_request `types:` list is load-bearing: GitHub's
 # default types omit `edited`, so a gate that must re-check PR-body edits
 # (a closing keyword can be added after the first CI run) silently stops
 # firing on them if its list is narrowed — or never written.
 REQUIRED_PR_TYPES = {
     "issue-link-guard.yml": ("opened", "edited", "reopened", "synchronize"),
+}
+
+# Workflows whose `issues:` trigger types are load-bearing: the
+# issue-close guard only sees a close if `closed` is in its list — a
+# narrowed list (or a dropped trigger) silently kills the gate. An absent
+# `types:` means GitHub's default (all types), which includes `closed`.
+REQUIRED_ISSUE_TYPES = {
+    "issue-close-guard.yml": ("closed",),
 }
 
 # (workflow, job) allowed to carry continue-on-error — a first-class D-003
@@ -124,7 +132,7 @@ def check_fires_on_integration(name: str, wf: dict) -> None:
 def check_pr_types(name: str, wf: dict) -> None:
     """A workflow in REQUIRED_PR_TYPES must list every required pull_request
     event type — absence of `types:` means GitHub's default set, which drops
-    `edited` (#18)."""
+    `edited`."""
     required = REQUIRED_PR_TYPES.get(name)
     if not required:
         return
@@ -136,7 +144,33 @@ def check_pr_types(name: str, wf: dict) -> None:
             f"{name}: pull_request 'types:' must include {list(required)} — "
             f"missing {missing}. GitHub's default types omit 'edited', so a "
             "narrowed (or absent) list silently stops re-checking PR-body "
-            "edits (#18)."
+            "edits."
+        )
+
+
+def check_issue_types(name: str, wf: dict) -> None:
+    """A workflow in REQUIRED_ISSUE_TYPES must trigger on `issues` and, if it
+    narrows `types:`, keep every required type — else the gate never
+    fires. No `types:` list = GitHub's default = all types = fine."""
+    required = REQUIRED_ISSUE_TYPES.get(name)
+    if not required:
+        return
+    trig = triggers(wf)
+    if "issues" not in trig:
+        fail(
+            f"{name}: no `issues:` trigger — the issue-close gate never runs. "
+            "Restore `on: issues: types: [closed]`."
+        )
+        return
+    iss = trig.get("issues")
+    types = iss.get("types") if isinstance(iss, dict) else None
+    if types is None:
+        return  # default types include every required one
+    missing = [t for t in required if t not in types]
+    if missing:
+        fail(
+            f"{name}: `issues:` 'types:' must include {list(required)} — "
+            f"missing {missing}; a narrowed list silently kills the gate."
         )
 
 
@@ -327,6 +361,22 @@ def self_test() -> int:
     scenario("types/allow: unpinned workflow ignored", False,
              lambda: check_pr_types("docs.yml", {"on": {"pull_request": None}}))
 
+    scenario("issue-types/deny: pinned workflow with no issues trigger", True,
+             lambda: check_issue_types(
+                 "issue-close-guard.yml", {"on": {"push": None}}))
+    scenario("issue-types/deny: types list missing 'closed'", True,
+             lambda: check_issue_types(
+                 "issue-close-guard.yml",
+                 {"on": {"issues": {"types": ["opened", "labeled"]}}}))
+    scenario("issue-types/allow: types list carries 'closed'", False,
+             lambda: check_issue_types(
+                 "issue-close-guard.yml", {"on": {"issues": {"types": ["closed"]}}}))
+    scenario("issue-types/allow: bare issues trigger (default types)", False,
+             lambda: check_issue_types(
+                 "issue-close-guard.yml", {"on": {"issues": None}}))
+    scenario("issue-types/allow: unpinned workflow ignored", False,
+             lambda: check_issue_types("docs.yml", {"on": {"push": None}}))
+
     scenario("coe/deny: job-level continue-on-error", True,
              lambda: check_no_continue_on_error(
                  "t.yml", {"jobs": {"j": {"continue-on-error": True}}}))
@@ -390,6 +440,8 @@ def self_test() -> int:
            "jobs:\n  j:\n    steps:\n      - run: 'true'\n")
     ilg = ("on:\n  pull_request:\n    types: [opened, edited, reopened, synchronize]\n"
            "jobs:\n  j:\n    steps:\n      - run: 'true'\n")
+    icg = ("on:\n  issues:\n    types: [closed]\n"
+           "jobs:\n  j:\n    steps:\n      - run: 'true'\n")
     # docs.yml carries the exempted deploy job so the ledger entry isn't stale.
     docs = ("on:\n  pull_request:\njobs:\n  build:\n    steps:\n      - run: 'true'\n"
             "  deploy:\n    continue-on-error: true\n    steps:\n      - run: 'true'\n")
@@ -401,10 +453,17 @@ def self_test() -> int:
                 fh.write(c)
         w("docs.yml", docs); w("repo-hygiene.yml", ok); w("adr-gates.yml", ok)
         w("security.yml", sec); w("branch-flow-guard.yml", bfg)
-        w("issue-link-guard.yml", ilg)
+        w("issue-link-guard.yml", ilg); w("issue-close-guard.yml", icg)
         failures.clear(); scan(wfd)
         if failures:
             problems.append(f"scan/allow: clean fixture set failed: {list(failures)}")
+        # A narrowed issues-types pinned gate must fail the live scan too.
+        w("issue-close-guard.yml", "on:\n  issues:\n    types: [opened]\n"
+          "jobs:\n  j:\n    steps:\n      - run: 'true'\n")
+        failures.clear(); scan(wfd)
+        if not any("issues" in f and "types" in f for f in failures):
+            problems.append("scan/deny: a types-narrowed issue-close gate escaped")
+        w("issue-close-guard.yml", icg)
         # A types-narrowed pinned gate must fail the live scan, not just the
         # unit check.
         w("issue-link-guard.yml", "on:\n  pull_request:\n    types: [opened]\n"
@@ -480,6 +539,7 @@ def scan(wf_dir: str) -> int:
         if "pull_request" in triggers(wf):
             check_fires_on_integration(name, wf)
         check_pr_types(name, wf)
+        check_issue_types(name, wf)
         if name in REQUIRED_GATES:
             check_not_paths_neutered(name, wf)
         if name == "security.yml" and "schedule" not in triggers(wf):

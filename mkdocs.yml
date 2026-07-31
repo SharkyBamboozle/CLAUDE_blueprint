@@ -115,6 +115,21 @@ nav:
           - Changelog: records/changelog.md
           - Lessons: records/lessons.md
       - Process:
+          # Hub first, then act pages in workflow order, then doctrine —
+          # the act-based split of the contributing guide (D-001, D-004).
           - Contributing: process/contributing.md
+          - Filing work: process/filing-work.md
+          - Committing: process/committing.md
+          - Pushing: process/pushing.md
+          - Opening a PR: process/opening-a-pr.md
+          - Closing issues: process/closing-issues.md
+          - Running epics: process/running-epics.md
+          - Writing ADRs: process/writing-adrs.md
+          - Adding docs pages: process/adding-docs-pages.md
+          - Testing changes: process/testing-changes.md
+          - Ending a session: process/ending-a-session.md
+          - Releases: process/releases.md
           - Release checklist: process/release-checklist.md
+          - Enforcement: process/enforcement.md
+          - Records & canon: process/records-and-canon.md
           - Glossary: process/glossary.md

@@ -4,7 +4,7 @@
 #
 # Guards CLAUDE.md's hard rules at the Bash layer — push to main, force-push,
 # remote branch deletion, staging un-LFS'd binaries, self-merging PRs, and
-# zombie pushes to a branch whose PR is already merged/closed (#39). It
+# zombie pushes to a branch whose PR is already merged/closed. It
 # normalizes each command to its INTENT before matching (refspec forms,
 # quoting, bulk adds) rather than pattern-matching one literal form, and
 # FAILS CLOSED when repo state is inconclusive (D-004) — except the
@@ -122,7 +122,7 @@ def norm_branch(ref, cur):
     return dst.rsplit("/", 1)[-1]
 
 def dead_pr(branch, src_ref):
-    """Zombie-push detection (#39): returns (state, number) when the branch's
+    """Zombie-push detection: returns (state, number) when the branch's
     PR history is terminal (latest PR MERGED/CLOSED, none open) AND the
     commits being pushed still sit on the old pre-merge line; None otherwise.
     A branch legitimately RESTARTED from the integration line (its history
@@ -248,7 +248,7 @@ for seg in re.split(r"&&|\|\||;|\|", cmd):
                     block(PUSH_MAIN_MSG)
                 if any(a in ("--force", "-f", "--force-with-lease") for a in flags):
                     block(FORCE_MSG)
-                # R3 — zombie push (#39): git happily pushes to a branch whose
+                # R3 — zombie push: git happily pushes to a branch whose
                 # PR was already merged or closed (delete-on-merge even
                 # recreates the pruned branch) and GitHub attaches the commits
                 # to nothing; the agent then reports "landed on the PR" off a
@@ -264,7 +264,7 @@ for seg in re.split(r"&&|\|\||;|\|", cmd):
                     hit = dead_pr(dest, src)
                     if hit and hit[0] == "MERGED":
                         block(
-                            f"BLOCKED (PR lifecycle, #39): PR #{hit[1]} for "
+                            f"BLOCKED (PR lifecycle): PR #{hit[1]} for "
                             f"branch '{dest}' is MERGED — this branch is dead "
                             "history; pushing would strand commits on a zombie "
                             "branch that no PR will ever merge. Instead: "
@@ -276,7 +276,7 @@ for seg in re.split(r"&&|\|\||;|\|", cmd):
                         )
                     if hit and hit[0] == "CLOSED":
                         block(
-                            f"BLOCKED (PR lifecycle, #39): PR #{hit[1]} for "
+                            f"BLOCKED (PR lifecycle): PR #{hit[1]} for "
                             f"branch '{dest}' was CLOSED without merging — the "
                             "operator rejected that line of work; more commits "
                             "do not reverse the decision. Ask the user how to "

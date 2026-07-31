@@ -5,7 +5,7 @@ The single canonical release path — a promotion of `development` into
 Every step is mandatory unless explicitly marked optional — the person (or
 agent) running this checklist **is** the release engineer; do not skip a
 step by deferring it to someone else. Conventions and enforcers:
-[Promotion & releases](contributing.md#promotion-releases).
+[Releases](releases.md).
 
 <!-- BLUEPRINT: the promotion skeleton below is the shipped standard —
 extend the placeholder steps (build/publish) with the project's real ones
@@ -73,8 +73,9 @@ CLAUDE.md → "Where to read, by task") and declare `mode: off <reason>` in
 
 ## 7. Post-check
 
-- [ ] Every restated issue verified closed; stragglers closed with a
-      one-line pointer comment.
+- [ ] Every restated issue verified closed; stragglers have a one-line
+      pointer comment + an operator close request (the close itself is
+      operator-only — CLAUDE.md hard rule).
 - [ ] Session changelog entry for the release
       ([changelog](../records/changelog.md)).
 

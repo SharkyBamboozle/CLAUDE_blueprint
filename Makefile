@@ -13,8 +13,8 @@
 # the self-arming seam in .claude/docs-truth.txt, cross-artifact
 # registry consistency: status drift, page/row/nav bijection, duplicate
 # D-### IDs, dead ID cross-refs, in-progress epic pages whose epic
-# issue is closed — a wrongly-closed epic surfaces here, #18 — and
-# built-listed sub-issues still open, the under-closing mirror, #37) —
+# issue is closed — a wrongly-closed epic surfaces here — and
+# built-listed sub-issues still open, the under-closing mirror) —
 # ADR-0004.
 # Each checker's --self-test
 # runs first so the checker itself stays pinned both ways (D-005).
@@ -26,6 +26,8 @@ verify:
 	bash scripts/test_adr_unlock_decision.sh
 	bash scripts/test_issue_link_guard.sh
 	bash scripts/test_release_gate.sh
+	bash scripts/test_guard_issue_close.sh
+	bash scripts/test_issue_close_guard.sh
 	@# Blueprint-only gate: deleted at bootstrap, so no-op in seeded projects.
 	@# Only the hermetic --self-test runs here — the live gate always trips in
 	@# the blueprint itself (tokens present by design), so it belongs in CI's
