@@ -12,12 +12,15 @@ docs, not a duplicate of them. Extend over time.
 
 ## Hard rules (never, without an explicit user request in THIS session)
 
+*Each rule is hook- and CI-enforced (`guard-git.sh`, `guard-adr.sh`,
+branch protection, the CI gates); every block message names the recovery
+path.*
+
 - Never push to `main`, and never commit directly to `main` or `development`.
   All work: feature branch → PR into `development`. Never merge your own PR.
-- Never commit binary files (images, video, model weights, archives, notebooks
-  with outputs) — D-007. Durable run artifacts go to the data repo
-  ({{DATA_REPO}}, if this project has one). If a task seems to need a committed
-  binary, stop and name the file + size.
+- Never commit binary files — D-007. Durable run artifacts go to the data
+  repo ({{DATA_REPO}}, if this project has one); if a task seems to need a
+  committed binary, stop and name the file + size.
   <!-- BLUEPRINT: binary policy is a per-project decision — this bullet states
   the default (strict/split) posture. At bootstrap, pick a posture per
   modules/README.md → "Binary policy", finalize ADR-0007 (rewrite its Decision
@@ -30,17 +33,10 @@ docs, not a duplicate of them. Extend over time.
 - Never force-push, rewrite published history, or delete branches you did not
   create in this session.
 - Never manually close or delete a GitHub issue — close authority is the
-  operator's (#54). A close rides the completing PR's `Closes #N` (fired
-  when the operator merges) or is the operator's own click; your job ends at
-  the readout comment + ticked boxes + the close request. Enforced by the
-  `guard-issue-close.sh` hook (MCP + `gh` layers, no unlock by design) and
-  reverted server-side by `issue-close-guard.yml`.
-- Never change a ✅ Decided ADR's decision — propose a superseding ADR instead
-  (see `docs/process/contributing.md` → *The ADR process*). Every path to a
-  Decided page — maintenance edit (typo, annotation, supersession marker),
-  creating one already ✅, promoting 🟡→✅, deleting or renaming it — requires
-  `/unlock-adr` first, enforced by the `guard-adr.sh` hook (Edit/Write **and**
-  `git rm`/`git mv`) and the `adr-gates.yml` CI trailer check.
+  operator's (`guard-issue-close.sh` hook + `issue-close-guard.yml`).
+- Never change a ✅ Decided ADR — a changed decision is a NEW superseding
+  ADR (`/adr-new`); every path to a Decided page requires `/unlock-adr`
+  first (`guard-adr.sh` hook + `adr-gates.yml` CI trailer check).
 
 ## Autonomy contract
 
@@ -72,16 +68,13 @@ interruption), do not proceed on an assumed answer — not even the recommended
 option. Retry the question; if it still fails, stop that line of work and wait
 for explicit instructions from the user.
 
-**Reproduce before you fix.** Diagnose from the repository's current state,
-not from the task description: first exercise the unmodified project and
-confirm the problem is what the brief says it is. If the reproduction
-contradicts the brief, stop and report the evidence — an approved plan built
-on a premise the first measurement disproved is not approved.
+**Reproduce before you fix** — the `reproduce-first` skill is the
+protocol: diagnose from a reproduction of the unmodified project, and
+**HALT** if the reproduction contradicts the brief.
 
-**Know when to stop.** One workaround per problem: if the same failure comes
-back after a workaround, the diagnosis is wrong — escalate rather than bump
-the workaround again. After three failed attempts on the same failing check,
-stop and report what was tried, with logs.
+**Know when to stop.** One workaround per problem; three failed attempts
+on the same failing check → stop and escalate (full rules:
+`reproduce-first` → *Hard rules*).
 
 **Never ask about** anything this file or `docs/` already answers — read first.
 
@@ -186,10 +179,6 @@ Decision / Consequences / Reversibility) before code lands. -->
 - **New significant decision?** Create the next `adr-00##-*.md` from
   `docs/.templates/adr-template.md` and add the registry row. See
   `docs/process/contributing.md`.
-- **Config files cite their governing decision** — non-obvious lines in CI,
-  `.gitignore`, `.gitattributes`, and dependency files get a rationale comment
-  cross-referencing the `D-###` or `#issue` that put them there. *(Advisory —
-  salience via `.claude/rules/config-cites-decision.md`; practiced, not gated.)*
 - **Rule exceptions are commit trailers** — a deliberate bypass of a
   convention is declared in the commit message as a trailer with a reason
   (`Skip-<Rule>: <one-line reason>`), never a silent skip or a chat-only
@@ -286,31 +275,14 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
 
 ## Definition of done
 
-"Done" means: `make verify` passes (run it — see *Commands* — and fix
+"Done" means `make verify` passes (run it — see *Commands* — and fix
 failures in the order they surface), **and** for behavior changes you
-exercised the change itself (ran the script, hit the endpoint, opened the
-page) and looked at the output. Include the verification commands + results in your
-summary. If something could not be run in this environment, say so explicitly —
-never imply a check passed that you didn't run.
-
-**Honest reporting (D-006).** A checked box is something you actually ran in this
-session — unchecked plus an honest sentence beats an optimistic tick. A number
-you did not measure is reported as "not measured", never as a plausible value;
-every reported number names its source and sample size (`n=`), and two numbers
-are compared only when they are counted over the same base. State how real a
-capability is with exactly one of: on `main` / on `development` only / behind
-a flag (name the flag and its default) / built but not wired in — backed by a
-file reference. *(Advisory — no gate can catch a dishonest or unmeasured
-number; PR review and this habit are the enforcers, per D-004.)*
-
-**Adversarial verification (D-006).** A load-bearing claim — a research finding, an
-audit result, a diagnosis about to drive work, any "safe / done / faster" —
-gets a check that tries to *refute* it before it ships. Propose the grade
-proportional to the risk (self-check, always on / independent verify / full
-sweep — see `.claude/skills/adversarial-verify/SKILL.md`) with a rough cost,
-and let the user scale up, down, or skip; a skipped pass is stated in the
-deliverable, never silent. *(Advisory — genuine adversarialness isn't
-mechanically checkable; the disclosure habit is the enforcer, per D-004.)*
+exercised the change itself and looked at the output. Report the
+verification commands + results in your summary; anything that could not
+be run in this environment is said explicitly — never implied green.
+Reporting and claims follow D-006 (ADR-0006): run the `honest-numbers`
+skill before publishing any number or capability claim, and
+`adversarial-verify` before shipping any load-bearing claim.
 
 ## Extending this file
 
