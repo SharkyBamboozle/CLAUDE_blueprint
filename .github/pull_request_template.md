@@ -9,11 +9,15 @@
      to any other issue with unchecked (or no) deliverable boxes (#41).
      See docs/process/contributing.md → PR ↔ issue linking. -->
 
-**Tick before opening (#47):** on every issue this PR `Closes`, tick each
+**Tick before opening:** on every issue this PR `Closes`, tick each
 deliverable box this PR completes — via `/tick`: per box, *did I deliver
 this?* with named evidence, then the body edit; that is the completing
-session's job (`CLAUDE.md` → Repo workflow). `issue-link-guard`
-counts the boxes from PR-open; readout boxes tick when the readout posts.
+session's job (`CLAUDE.md` → Repo workflow). `issue-link-guard` counts the
+boxes from PR-open and an issue-body edit fires no PR event, so post the
+**readout comment before opening this PR** — then every box, readout
+included, is tickable while the count still matters. A box whose evidence
+is this PR itself: tick it after opening, then edit this body to add its
+attestation line — that edit re-runs the gate.
 
 Closes #___ (epic: #___)          <!-- fully completes that issue — its deliverable boxes all ticked
                                        (state the tally in What/why: "deliverables n/n"); drop
