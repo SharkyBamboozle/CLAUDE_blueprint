@@ -1,6 +1,6 @@
 name: Issue close guard
 
-# #54 (CLAUDE.md hard rule): manual issue closes are operator-only. The
+# CLAUDE.md hard rule: manual issue closes are operator-only. The
 # client-side guard-issue-close.sh hook blocks agent closes at the source,
 # but hooks bind only sessions running this repo's harness config — this
 # workflow is the server-side backstop that binds every path (D-004
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Manual closes are operator-only (#54)
+      - name: Manual closes are operator-only
         env:
           REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}

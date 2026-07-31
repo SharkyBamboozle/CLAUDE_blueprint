@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regression cases for scripts/release_gate_decision.sh (the release-gate
-# logic, #35). Runs inside `make verify`, so it binds in CI (D-004).
+# logic). Runs inside `make verify`, so it binds in CI (D-004).
 # Hermetic: drives throwaway fixture git repos (the check_bootstrap pattern)
 # — no network. Asserts BOTH sides (block and allow) so a fix can't
 # silently over/under-tighten.

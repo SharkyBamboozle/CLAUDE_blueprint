@@ -32,7 +32,7 @@ the mechanically verifiable *claims* docs make, in seven lanes:
      Deliberately mechanical-only: whether a claim is still semantically
      true is judgment work and stays out of the merge gate. HTML comments
      are stripped before parsing (templates embed example rows in them).
-  E. Epic-page status vs issue state (#18; same reachability posture as
+  E. Epic-page status vs issue state (same reachability posture as
      lane B — NEVER guesses) — an epic page under docs/records/epics/
      whose status line says in-progress (🟡/🔴) must cite an OPEN epic
      issue. A closed issue behind an in-progress page means the epic was
@@ -40,7 +40,7 @@ the mechanically verifiable *claims* docs make, in seven lanes:
      issue-link guard via a path no PR event covers — a sidebar link added
      after CI, a direct push) or the page went stale; either way the docs
      no longer tell the truth, and this lane surfaces it on the next run.
-  F. Built-but-open sub-issues (#37; same posture — NEVER guesses) — a
+  F. Built-but-open sub-issues (same posture — NEVER guesses) — a
      bullet under an epic page's "What has been built" section leads with
      its sub-issue number (epic-page-template); a bullet-leading #N whose
      issue is still OPEN means the page claims done work the tracker
@@ -576,7 +576,7 @@ def run_checks(root: str, seam=None):
     if lane_b_skipped:
         notes.append("issue-state lane: no verifiable open-claims (or GitHub unreachable — skipped, never guessed).")
 
-    # Lane E — epic-page status vs issue state (#18). Reuses lane B's
+    # Lane E — epic-page status vs issue state. Reuses lane B's
     # resolver: offline / unknown skips, never guesses.
     epics_dir = os.path.join(root, "docs", "records", "epics")
     for p, text in texts.items():
@@ -599,7 +599,7 @@ def run_checks(root: str, seam=None):
                 "(/epic-closeout)."
             )
 
-    # Lane F — built-but-open sub-issues (#37). Bullet-leading #N under
+    # Lane F — built-but-open sub-issues. Bullet-leading #N under
     # "What has been built" only; same resolver: offline/unknown skips.
     for p, text in texts.items():
         rel = os.path.relpath(p, root)
@@ -615,7 +615,7 @@ def run_checks(root: str, seam=None):
                 issues.append(
                     f"[built-state] {rel}: lists #{ref.group(1)} under 'What "
                     "has been built' but the issue is still OPEN — close it "
-                    "with its readout comment (close-at-completion, #37), or "
+                    "with its readout comment (close-at-completion), or "
                     "don't list it as built yet."
                 )
 

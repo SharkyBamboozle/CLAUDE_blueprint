@@ -18,7 +18,7 @@ emit() { # emit <command> -> PreToolUse JSON on stdout
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-# Hermetic gh for the zombie-push check (#39): the hook's `gh pr list` gets
+# Hermetic gh for the zombie-push check: the hook's `gh pr list` gets
 # $MOCK_PRS (JSON array; default: no PR history) at rc $MOCK_GH_RC — so the
 # suite never touches the network even on machines with a real gh.
 mkdir -p "$TMP/bin"
@@ -96,7 +96,7 @@ expect 2 "bulk add . with untracked binary -> blocked"  "git add ."  "$TMP/armed
 rm -f "$TMP/armed/pic.png"
 expect 0 "bulk add -A, no binaries -> allowed"          "git add -A" "$TMP/armed"
 
-# ---- zombie-push cases (#39): terminal-PR branches, mocked gh -----------
+# ---- zombie-push cases: terminal-PR branches, mocked gh -----------------
 # Fixture: feat branched from development@c1; development then moved to c3
 # (the "merge landed"), so feat's line no longer contains the integration
 # tip — the zombie shape. Restarting feat onto origin/development is the
@@ -122,7 +122,7 @@ expect 0 "open PR alongside an older merged one -> allowed (normal appending)" "
 MOCK_PRS='[]'
 expect 0 "no PR history -> allowed (first push)" "git push -u origin feat" "$TMP/z"
 MOCK_PRS='[{"number":9,"state":"MERGED"}]' MOCK_GH_RC=1
-expect 0 "gh unavailable/errors -> allowed (fail OPEN by design, #39)" "git push" "$TMP/z"
+expect 0 "gh unavailable/errors -> allowed (fail OPEN by design)" "git push" "$TMP/z"
 MOCK_GH_RC=0
 git -C "$TMP/z" checkout -q -B feat origin/development
 MOCK_PRS='[{"number":9,"state":"MERGED"}]'

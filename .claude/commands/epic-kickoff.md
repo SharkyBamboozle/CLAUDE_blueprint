@@ -34,4 +34,5 @@ Steps, in order:
    blocks it; `docs/process/contributing.md` → *PR ↔ issue linking*).
    And the mirror rule: each sub-issue **closes at the moment its
    deliverable boxes are all ticked** — by its completing PR or a manual
-   readout-close, never batched to closeout (#37).
+   readout-close, never batched to closeout
+   (`docs/process/closing-issues.md`).
