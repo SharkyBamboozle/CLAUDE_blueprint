@@ -15,7 +15,7 @@ name: Branch flow guard
 # unit-testable with a mocked gh (scripts/branch_flow_decision.sh,
 # scripts/test_branch_flow_guard.sh) — the workflow just supplies the inputs.
 #
-# The sibling release-gate job guards the promotion's OTHER rule (#35):
+# The sibling release-gate job guards the promotion's OTHER rule:
 # a PR into `main` carries its release caboose — the seam-named version
 # file (.claude/release.txt) bumped by exactly one semver step (the class
 # is the operator's decision at the /promote ritual's STOP; the gate

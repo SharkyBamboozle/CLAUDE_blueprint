@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Decision logic for the release-gate job (.github/workflows/branch-flow-guard.yml).
-# A promotion PR into `main` must carry its release caboose (#35;
-# docs/process/release-checklist.md): the seam-named version file bumped by
+# A promotion PR into `main` must carry its release caboose
+# (docs/process/release-checklist.md): the seam-named version file bumped by
 # exactly one semver step — patch, minor, or major; WHICH one is the
 # operator's decision, made at the /promote ritual's STOP, and this gate
 # checks only the arithmetic, never the approval (advisory per D-004) —
@@ -78,7 +78,7 @@ elif ! printf '%s' "$base_v" | grep -qE "$SEMVER"; then
   echo "::warning::release-gate: base version '$base_v' is not MAJOR.MINOR.PATCH — a state this PR cannot repair; checking the head side only."
 else
   if [ "$base_v" = "$head_v" ]; then
-    echo "::error::release-gate: version not bumped ($vfile reads '$head_v' on both sides). A promotion carries its release caboose — run /promote; the bump class is the operator's decision. See docs/process/release-checklist.md (#35)."
+    echo "::error::release-gate: version not bumped ($vfile reads '$head_v' on both sides). A promotion carries its release caboose — run /promote; the bump class is the operator's decision. See docs/process/release-checklist.md."
     exit 1
   fi
   IFS=. read -r bM bm bp <<<"$base_v"

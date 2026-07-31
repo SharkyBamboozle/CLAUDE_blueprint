@@ -56,7 +56,7 @@ REQUIRED_GATES = (
     "issue-link-guard.yml", "branch-flow-guard.yml", "issue-close-guard.yml",
 )
 
-# Workflows whose pull_request `types:` list is load-bearing (#18): GitHub's
+# Workflows whose pull_request `types:` list is load-bearing: GitHub's
 # default types omit `edited`, so a gate that must re-check PR-body edits
 # (a closing keyword can be added after the first CI run) silently stops
 # firing on them if its list is narrowed — or never written.
@@ -64,7 +64,7 @@ REQUIRED_PR_TYPES = {
     "issue-link-guard.yml": ("opened", "edited", "reopened", "synchronize"),
 }
 
-# Workflows whose `issues:` trigger types are load-bearing (#54): the
+# Workflows whose `issues:` trigger types are load-bearing: the
 # issue-close guard only sees a close if `closed` is in its list — a
 # narrowed list (or a dropped trigger) silently kills the gate. An absent
 # `types:` means GitHub's default (all types), which includes `closed`.
@@ -132,7 +132,7 @@ def check_fires_on_integration(name: str, wf: dict) -> None:
 def check_pr_types(name: str, wf: dict) -> None:
     """A workflow in REQUIRED_PR_TYPES must list every required pull_request
     event type — absence of `types:` means GitHub's default set, which drops
-    `edited` (#18)."""
+    `edited`."""
     required = REQUIRED_PR_TYPES.get(name)
     if not required:
         return
@@ -144,14 +144,14 @@ def check_pr_types(name: str, wf: dict) -> None:
             f"{name}: pull_request 'types:' must include {list(required)} — "
             f"missing {missing}. GitHub's default types omit 'edited', so a "
             "narrowed (or absent) list silently stops re-checking PR-body "
-            "edits (#18)."
+            "edits."
         )
 
 
 def check_issue_types(name: str, wf: dict) -> None:
     """A workflow in REQUIRED_ISSUE_TYPES must trigger on `issues` and, if it
-    narrows `types:`, keep every required type — else the gate never fires
-    (#54). No `types:` list = GitHub's default = all types = fine."""
+    narrows `types:`, keep every required type — else the gate never
+    fires. No `types:` list = GitHub's default = all types = fine."""
     required = REQUIRED_ISSUE_TYPES.get(name)
     if not required:
         return
@@ -159,7 +159,7 @@ def check_issue_types(name: str, wf: dict) -> None:
     if "issues" not in trig:
         fail(
             f"{name}: no `issues:` trigger — the issue-close gate never runs. "
-            "Restore `on: issues: types: [closed]` (#54)."
+            "Restore `on: issues: types: [closed]`."
         )
         return
     iss = trig.get("issues")
@@ -170,8 +170,7 @@ def check_issue_types(name: str, wf: dict) -> None:
     if missing:
         fail(
             f"{name}: `issues:` 'types:' must include {list(required)} — "
-            f"missing {missing}; a narrowed list silently kills the gate "
-            "(#54)."
+            f"missing {missing}; a narrowed list silently kills the gate."
         )
 
 

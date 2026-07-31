@@ -42,7 +42,7 @@ if [ -n "$lessons" ]; then
   echo "$lessons"
 fi
 if command -v gh >/dev/null 2>&1; then
-  # Current branch's PR verdict (#39): a fresh session resuming on a stale
+  # Current branch's PR verdict: a fresh session resuming on a stale
   # local branch is where zombie pushes are born — surface the terminal
   # state BEFORE any push. Prints only when the branch has PR history;
   # degrades silently offline (zero-noise discipline).

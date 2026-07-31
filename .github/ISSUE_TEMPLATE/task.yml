@@ -6,7 +6,7 @@ description: A concrete deliverable for an epic. Attach as a native sub-issue af
 title: "<Epic short-name> — <task>"
 # Auto-label for symmetry with epic.yml/note.yml (labels.yml carries the
 # taxonomy). NOT load-bearing for the issue-link-guard, which keys on
-# epic/note only (#41).
+# epic/note only.
 labels: [task]
 body:
   - type: input
@@ -34,7 +34,7 @@ body:
     id: deliverables
     attributes:
       label: Deliverables
-      description: Task-list boxes — tick each the moment its artifact lands; the issue-link-guard blocks a `Closes` while boxes are unchecked or absent (#41).
+      description: Task-list boxes — tick each the moment its artifact lands; the issue-link-guard blocks a `Closes` while boxes are unchecked or absent.
       value: |
         - [ ]
         - [ ] **Readout** posted on this issue, cross-linked to the epic — results live on the tracker; heavy artifacts live in the data repo.

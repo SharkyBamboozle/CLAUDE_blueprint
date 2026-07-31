@@ -15,7 +15,7 @@
   description: "Finding/observation — NOT a build task, never a sub-issue"
 - name: task
   color: "1D76DB"
-  description: "Build task — concrete deliverables tracked as checkboxes (#41)"
+  description: "Build task — concrete deliverables tracked as checkboxes"
 - name: spike
   color: "FBCA04"
   description: "Timeboxed validation — proves one claim / answers one question"
