@@ -31,7 +31,7 @@ Steps, in order:
    `Closes #<sub-issue> (epic: #NN)` when a PR completes a sub-issue,
    `Closes — · Part of #NN (epic)` otherwise — never a closing keyword on
    the epic itself before its closeout PR (the `issue-link-guard` gate
-   blocks it; `docs/process/contributing.md` → *PR ↔ issue linking*).
+   blocks it; `docs/process/opening-a-pr.md`).
    And the mirror rule: each sub-issue **closes at the moment its
    deliverable boxes are all ticked** — by its completing PR or a manual
    readout-close, never batched to closeout

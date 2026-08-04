@@ -15,8 +15,8 @@ template.
 ## Two hats — the shipped records instructions are addressed to seeded projects
 
 The blueprint wears two hats: it is a **template under development** and the
-**worked example** of the process it ships. Nearly all of
-`docs/process/contributing.md` holds under both hats. The per-session
+**worked example** of the process it ships. Nearly all of the
+`docs/process/` pages hold under both hats. The per-session
 **records** instructions do not — `CLAUDE.md` → *Repo workflow* ("every working
 session ends with a `docs/records/changelog.md` entry"), the changelog and
 lessons steps of `.claude/commands/session-close.md`, and the page headers under
@@ -102,7 +102,7 @@ Every file is one of three tiers (`blueprint/TOKENS.md`), and the tier sets the
 blast radius of your change:
 
 - **Literal** — byte-identical in every seeded project (hooks, workflows,
-  commands, skills, doc templates, `docs/process/contributing.md`). A change here
+  commands, skills, doc templates, the `docs/process/` pages). A change here
   reaches every downstream project through `HARVEST` / `UPDATE`. Highest
   scrutiny; keep it project-agnostic.
 - **Tokenized** — carries `{{TOKEN}}` placeholders filled at bootstrap. Never

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 Promote `development` into `main` as a release. Canonical path:
 `docs/process/release-checklist.md`; conventions:
-`docs/process/contributing.md` → *Promotion & releases*. Steps, in order:
+`docs/process/releases.md`. Steps, in order:
 
 1. **Preflight** — fetch; confirm `development` is green and ahead of
    `main`. List the release contents:
@@ -34,7 +34,7 @@ Promote `development` into `main` as a release. Canonical path:
 5. **Operator steps — never the agent's:** merge the promotion PR (never
    self-merge), then cut the annotated tag on the **`main` merge commit**
    (never a branch tip — see `docs/process/release-checklist.md` →
-   *Version & tag* for why placement is load-bearing):
+   *Merge, tag — operator-only* for why placement is load-bearing):
 
    ```
    git fetch origin main

@@ -29,7 +29,7 @@ theme:
     # Top-level groups become header TABS; deeper levels are collapsible
     # dropdowns in the sidebar. Keep the top level shallow — depth goes inside
     # a tab. Domain-area tabs are the sanctioned exception; any other new tab
-    # is an ADR-worthy structural decision (docs/process/contributing.md).
+    # is an ADR-worthy structural decision (docs/process/adding-docs-pages.md).
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.indexes
@@ -77,7 +77,7 @@ plugins:
   - search
 
 # Wires the shared status vocabulary into Material's per-page front-matter
-# `status:` feature — one legend everywhere (docs/process/contributing.md).
+# `status:` feature — one legend everywhere (docs/process/adding-docs-pages.md).
 extra:
   status:
     decided: Decided
@@ -88,7 +88,8 @@ extra:
 # The nav mirrors the directory layout under docs/ (one section = one
 # directory). Project holds the project-meta sections (Direction, Decisions,
 # Records, Process); each domain area (architecture, design, ...) is its own
-# top-level tab, a sibling of Home and Project (docs/process/contributing.md).
+# top-level tab, a sibling of Home and Project
+# (docs/process/adding-docs-pages.md).
 nav:
   - Home: index.md
   - Project:

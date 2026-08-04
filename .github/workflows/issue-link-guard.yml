@@ -6,7 +6,7 @@ name: Issue link guard
 # integration PR is a live close surface, and GitHub ignores qualifiers:
 # "Closes #7 (partial)" still closes #7. This required check enforces the
 # close-direction of the linking rule
-# (docs/process/contributing.md → PR ↔ issue linking): a closing reference
+# (docs/process/opening-a-pr.md): a closing reference
 # fails while its target is not completion-ready — an `epic`-labeled issue
 # with open sub-issues (only the closeout PR, every sub-issue closed, may
 # keyword-close it), or any other issue whose body still carries unchecked

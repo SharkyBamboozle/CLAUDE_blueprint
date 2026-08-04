@@ -1,4 +1,4 @@
-# Label taxonomy — the epic/note workflow (docs/process/contributing.md) depends on
+# Label taxonomy — the epic/note workflow (docs/process/filing-work.md) depends on
 # these existing per-repo. Labels are NOT copied by GitHub's template feature;
 # sync them with scripts/bootstrap_labels.sh (idempotent, safe to re-run —
 # also usable to roll taxonomy updates across existing repos).
