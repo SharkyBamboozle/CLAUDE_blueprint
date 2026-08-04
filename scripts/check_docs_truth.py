@@ -385,8 +385,8 @@ def lane_d_consistency(root: str, issues: list):
             issues.append(
                 f"[consistency] status drift: the registry says {rid} is "
                 f"{emoji} but docs/decisions/{link} says {p_emoji} — update the "
-                "ADR page AND the registry row together (contributing → The ADR "
-                "process)."
+                "ADR page AND the registry row together "
+                "(docs/process/writing-adrs.md)."
             )
         dm = re.search(r"^\s*-\s*\*\*Decision ID:\*\*\s*(D-\d+)", text, re.M)
         if dm and dm.group(1) != rid:
