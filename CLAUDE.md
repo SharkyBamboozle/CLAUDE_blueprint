@@ -150,9 +150,10 @@ go stale; link to the registry instead. -->
 - **Cutting a release:** `docs/process/release-checklist.md` (the canonical,
   checkbox-executable release path).
 - **Terminology:** `docs/process/glossary.md` (track new terms here).
-- **Testing policy:** `docs/process/contributing.md` → *Testing conventions*
-  (D-005) — when tests get written, where they live, scaffolding self-tests.
-- **Process & conventions:** `docs/process/contributing.md` (the process manual).
+- **Testing policy:** `docs/process/testing-changes.md` (D-005) — when tests
+  get written, where they live, scaffolding self-tests.
+- **Process & conventions:** `docs/process/contributing.md` — the router
+  whose *Find your act* table names the act page for the act at hand.
 
 ## Repo layout
 
@@ -199,15 +200,15 @@ Decision / Consequences / Reversibility) before code lands. -->
   advisory review discipline — D-004.)*
 - **New significant decision?** Create the next `adr-00##-*.md` from
   `docs/.templates/adr-template.md` and add the registry row. See
-  `docs/process/contributing.md`.
+  `docs/process/writing-adrs.md`.
 - **Rule exceptions are commit trailers** — a deliberate bypass of a
   convention is declared in the commit message as a trailer with a reason
   (`Skip-<Rule>: <one-line reason>`), never a silent skip or a chat-only
-  approval. See `docs/process/contributing.md` → *Commit conventions*.
+  approval. See `docs/process/committing.md`.
 - **New conventions name their enforcer** — every rule states what
   mechanically checks it (hook / CI gate / test / template section), or is
-  explicitly *advisory* with a reason. See `docs/process/contributing.md` →
-  *Enforcement layering* (D-004).
+  explicitly *advisory* with a reason. See `docs/process/enforcement.md`
+  (D-004).
 
 ## Code style
 
@@ -240,7 +241,7 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   the moment its deliverable boxes are met** — by the completing PR's
   `Closes` or an operator readout-close, never batched to closeout
   (close-direction gated by `issue-link-guard`; see
-  `docs/process/contributing.md` → *Issues, sub-issues & notes*).
+  `docs/process/closing-issues.md`).
 - **Ticking deliverable boxes is the completing session's job — tick each
   box the moment its artifact lands.** Editing the issue body to tick a
   delivered box is expected tracker upkeep, never an intrusion into the
@@ -252,12 +253,12 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   or no tick) before the anchored body update. The gate evaluates boxes
   first and announces a `Skip-Issue-Link-Guard` waiver-pass loudly — the
   trailer is the argued exception (deferred / re-homed deliverables),
-  never the cheap path past ticking (see `docs/process/contributing.md` →
-  *Issues, sub-issues & notes*).
+  never the cheap path past ticking (see
+  `docs/process/closing-issues.md`).
 - **Epic pages — the story.** Every epic gets a page under `docs/records/epics/`
   (stub at kickoff → retrospective at closeout: goal → built → found → decided
   → carried forward); the epic issue closes with a short pointer comment +
-  note triage. See `docs/process/contributing.md` → *Epic pages*.
+  note triage. See `docs/process/running-epics.md`.
 - **Agent-research reports.** Large fan-out research/analysis passes get a
   dated page under `docs/records/agent-research/` — a snapshot that proposes and
   rates; anything load-bearing graduates into an ADR, epic, or open question.
@@ -269,18 +270,18 @@ templates, and epic-closeout review — advisory, not gated (D-004).*
   and ask. Never claim "landed on PR #N" without reading the PR after the
   push — remote state is read, never recalled. Guarded at push time by
   `guard-git.sh` (fail-open) + the session-start verdict line; see
-  `docs/process/contributing.md` → *PR lifecycle*.
+  `docs/process/pushing.md`.
 - **Promotion is a release** — run `/promote`: operator-decided bump class
   (hard STOP), caboose PR (version + release log, seam:
   `.claude/release.txt`), promotion PR restating the train's `Closes #N`
   lines, operator merge + tag. Gated by `release-gate`; see
-  `docs/process/contributing.md` → *Promotion & releases*.
+  `docs/process/releases.md`.
 - **PR ↔ issue linking:** a closing keyword (`Closes`/`Fixes`/`Resolves`)
   targets only an issue the PR fully completes — GitHub ignores qualifiers,
   so `Closes #N (partial)` still closes #N. Progress PRs use
   `Closes — · Part of #NN (epic)`; an epic is keyword-closed only by its
   closeout PR. Epic rule enforced by the `issue-link-guard` CI gate; see
-  `docs/process/contributing.md` → *PR ↔ issue linking*.
+  `docs/process/opening-a-pr.md`.
 - **Agent working docs** live in `.claude/working/` — never under `docs/`
   (docs are human-curated). At task or session end, archive them to
   `.claude/archive/YYYY-MM-DD/<task-slug>/` via `/handoff` — archive, never

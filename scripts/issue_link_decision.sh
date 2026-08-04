@@ -3,9 +3,8 @@
 # A GitHub closing keyword (close/closes/closed/fix/fixes/fixed/resolve/
 # resolves/resolved) auto-closes its target when the PR merges into the
 # default branch — and GitHub ignores qualifiers: "Closes #7 (partial)" still
-# closes #7. The rule (docs/process/contributing.md → PR ↔ issue
-# linking): a closing keyword may only target an issue the PR fully
-# completes. This script blocks any closing reference — in the PR body, PR
+# closes #7. The rule (docs/process/opening-a-pr.md): a closing keyword
+# may only target an issue the PR fully completes. This script blocks any closing reference — in the PR body, PR
 # title, a commit message, or GitHub's own resolved link set (which
 # includes sidebar-linked issues) — whose target is not completion-ready:
 #   epic-labeled issue  -> blocked while it has open sub-issues (only its
@@ -142,7 +141,7 @@ for num in $candidates; do
   fi
   read -r flag total completed <<<"$info"
   if [ "$flag" = "epic" ] && [ "${completed:-0}" -lt "${total:-0}" ]; then
-    problems+=("This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → PR ↔ issue linking.")
+    problems+=("This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/opening-a-pr.md.")
     continue
   fi
   if [ "$flag" = "epic" ]; then
@@ -171,9 +170,9 @@ for num in $candidates; do
   unchecked=$(printf '%s\n' "$stripped" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[ \]')
   checked=$(printf '%s\n' "$stripped" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[[xX]\]')
   if [ "$unchecked" -gt 0 ]; then
-    problems+=("This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done (ticking is the completing session's job — do it at PR-open), re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes.")
+    problems+=("This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done (ticking is the completing session's job — do it at PR-open), re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/closing-issues.md.")
   elif [ "$checked" -eq 0 ]; then
-    problems+=("This PR would close #$num, which carries no deliverable checklist — a box-less close is a faith-based close. State the issue's deliverables as task-list boxes (retroactively is sanctioned: one ticked box per delivered artifact is a completion record, not busywork), or declare the exception with a 'Skip-Issue-Link-Guard: <reason, e.g. trivial one-line fix>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes.")
+    problems+=("This PR would close #$num, which carries no deliverable checklist — a box-less close is a faith-based close. State the issue's deliverables as task-list boxes (retroactively is sanctioned: one ticked box per delivered artifact is a completion record, not busywork), or declare the exception with a 'Skip-Issue-Link-Guard: <reason, e.g. trivial one-line fix>' commit trailer. See docs/process/closing-issues.md.")
   else
     echo "OK: closing reference to #$num — deliverables $checked/$checked ticked."
   fi
