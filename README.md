@@ -190,9 +190,9 @@ in owner-approved waves with `ADOPT.md` (invariants, not shape).
   reporting, the map into `docs/`.
 - `docs/` — the documentation skeleton: seeded registries (decisions,
   requirements, open questions, glossary), records (changelog, lessons,
-  epics, agent-research), process manuals (contributing, release
-  checklist), and `docs/.templates/`.
-- `.github/` — label taxonomy, issue forms, tri-state PR template, and the
+  epics, agent-research), process pages (contributing hub + act pages,
+  release checklist), and `docs/.templates/`.
+- `.github/` — label taxonomy, issue forms, tri-state PR template, and
   the gate workflows (docs build + Pages, repo hygiene, ADR gates, branch
   flow, security).
 - `.claude/` — harness policy: permissions, guard hooks with regression
@@ -212,7 +212,7 @@ in owner-approved waves with `ADOPT.md` (invariants, not shape).
   into a directory when a fifth ritual appears).
 - `CONTRIBUTING.md` — the front door for people improving the **template
   itself** (distinct from `docs/process/contributing.md`, the inherited
-  process manual). Not a lifecycle ritual — a human entry point GitHub
+  process router). Not a lifecycle ritual — a human entry point GitHub
   surfaces on the public repo; like the rituals, deleted at instantiation so
   a seeded project never inherits it.
 - `Makefile` — `make verify`, the single verification entrypoint.

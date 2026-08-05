@@ -1,6 +1,6 @@
 name: ADR gates
 
-# Enforcement for the ADR process (D-004; docs/process/contributing.md):
+# Enforcement for the ADR process (D-004; docs/process/writing-adrs.md):
 #
 #   registry-sync — an ADR page change must update the decisions registry
 #     (docs/decisions/index.md) in the same diff, mechanizing the existing

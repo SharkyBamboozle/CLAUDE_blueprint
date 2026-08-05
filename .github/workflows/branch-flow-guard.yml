@@ -3,7 +3,7 @@ name: Branch flow guard
 # GitHub branch protection cannot restrict a PR's SOURCE branch, so this
 # required check does it: only `development` may PR into `main` — the branch
 # model's promotion rule (CLAUDE.md → Repo workflow;
-# docs/process/contributing.md → Branch model). A server-side check binds
+# docs/process/pushing.md → Branch model). A server-side check binds
 # every contributor and agent, hooks installed or not (D-004).
 #
 # Pre-bootstrap grace: while the remote has no `development` branch yet

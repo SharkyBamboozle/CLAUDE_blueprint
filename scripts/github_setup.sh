@@ -68,7 +68,7 @@ DEFAULT_BRANCH=$(gh api "repos/$REPO" --jq .default_branch)
 if [ "$PROFILE" = "code" ]; then
   # --- development branch, made the default ------------------------------
   # Feature branches PR into development; main is the promoted branch
-  # (docs/process/contributing.md, CLAUDE.md → Repo workflow).
+  # (docs/process/pushing.md, CLAUDE.md → Repo workflow).
   if ! gh api "repos/$REPO/git/ref/heads/development" >/dev/null 2>&1; then
     SHA=$(gh api "repos/$REPO/git/ref/heads/$DEFAULT_BRANCH" --jq .object.sha)
     gh api -X POST "repos/$REPO/git/refs" \
