@@ -184,7 +184,7 @@ in owner-approved waves with `ADOPT.md` (invariants, not shape).
 
 ![Instantiating a new project](blueprint/assets/README_instantiating_a_new_project.png)
 
-## 🗺️ Layout
+## 📐 Layout
 
 - `CLAUDE.md` — agent guidance: hard rules, autonomy contract, honest
   reporting, the map into `docs/`.
