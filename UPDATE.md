@@ -42,7 +42,10 @@ body, its filled registries, its ADR contents, its history.
 - **Tokenized files** (mkdocs config, CI carrying branch names): three-way
   merge, then confirm no unfilled tokens re-entered —
   `git grep -nE '\{\{[A-Z_]+\}\}'` must stay clean (the bootstrap gate
-  script does not exist downstream).
+  script does not exist downstream). `mkdocs.yml`'s `validation:` is a
+  **single top-level key** — merge its sub-keys into the block already there.
+  Two `validation:` blocks merge without a conflict and the later one silently
+  wins, disabling the anchor and nav gates behind a green build.
 - **New files** from the blueprint (a new hook, gate, or skill card): copy
   in; resolve any `BLUEPRINT:` markers they carry as a mini-bootstrap —
   `git grep -n 'BLUEPRINT:'` must end clean.

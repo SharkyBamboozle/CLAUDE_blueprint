@@ -9,6 +9,22 @@ repo_name: "{{GITHUB_OWNER}}/{{PROJECT_SLUG}}"
 repo_url: "https://github.com/{{GITHUB_OWNER}}/{{PROJECT_SLUG}}"
 edit_uri: edit/development/docs/
 
+# Broken cross-references fail the build; they don't whisper (D-004). mkdocs
+# detects both of these by default but logs them at INFO, which --strict
+# ignores: `anchors` = a link to a #section that no heading on the target page
+# produces; `omitted_files` = a page under docs/ that no nav entry lists. Both
+# are already asserted as enforced in prose (docs/process/adding-docs-pages.md,
+# BOOTSTRAP.md step 3) — these lines are what make those claims true.
+# `warn` is the maximum legal level (`error` is rejected outright); --strict
+# promotes it to a build failure. Keep this block mid-file: appended at EOF it
+# collides with the domain-area nav tabs a seeded project is told to add,
+# conflicting on every UPDATE.md merge.
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    anchors: warn
+
 theme:
   name: material
   # Neutral light/dark toggle; restyle per project (extra_css) if wanted.
