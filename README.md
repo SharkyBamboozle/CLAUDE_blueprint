@@ -131,11 +131,12 @@ cards under `.claude/skills/`):
   (`docs/records/lessons.md`) every future session inherits.
 
 **🔧 GitHub wiring a template can't carry, scripted:** `scripts/github_setup.sh`
-idempotently creates the integration branch, branch protection with the
-shipped checks required, and the label taxonomy. Publishing the docs to
-GitHub Pages is opt-in (`--deploy-docs`, default off): a private repo's Pages
-site can be publicly reachable, so a seeded project doesn't publish until its
-owner asks.
+idempotently creates the integration branch, branch protection requiring the
+template's diff-scoped gates by default (the dependency audit runs as a weekly
+sweep, not a merge blocker, so a third-party disclosure can't freeze open PRs),
+and the label taxonomy. Publishing the docs to GitHub Pages is opt-in
+(`--deploy-docs`, default off): a private repo's Pages site can be publicly
+reachable, so a seeded project doesn't publish until its owner asks.
 
 ![What a seeded project gets](blueprint/assets/README_what_a_seeded_project_gets.png)
 

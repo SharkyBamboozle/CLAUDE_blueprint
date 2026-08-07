@@ -54,7 +54,8 @@ CLAUDE.md → "Where to read, by task") and declare `mode: off <reason>` in
       harmless manifest (the `issue-link-guard` gate vets the list either
       way).
 - [ ] Required checks green: `flow-guard` · `release-gate` ·
-      `issue-link-guard` · `build`.
+      `issue-link-guard` · `build` · `no-binaries` · `secret-scan` ·
+      `registry-sync` · `decided-adr-unlock`.
 
 ## 5. Merge, tag — operator-only
 
