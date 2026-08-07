@@ -209,6 +209,9 @@ Decision / Consequences / Reversibility) before code lands. -->
   mechanically checks it (hook / CI gate / test / template section), or is
   explicitly *advisory* with a reason. See `docs/process/enforcement.md`
   (D-004).
+- **Improved a process file (hooks, commands, workflows, templates, scripts)
+  in a project-agnostic way?** Flag it as a harvest candidate — see
+  `.claude/rules/harvest-candidates.md`.
 
 ## Code style
 
@@ -305,20 +308,3 @@ be run in this environment is said explicitly — never implied green.
 Reporting and claims follow D-006 (ADR-0006): run the `honest-numbers`
 skill before publishing any number or capability claim, and
 `adversarial-verify` before shipping any load-bearing claim.
-
-## Extending this file
-
-Add sections as the project grows — e.g. code layout, how to run the stack,
-test/lint commands, and service-specific notes — but keep each entry a
-**pointer** into `docs/` or a short convention, not a second copy of the docs.
-Two maintenance aids: Claude Code's `/doctor` can propose trims when this
-file grows (it cuts content derivable from the codebase; keep pitfalls,
-rationale, and conventions that differ from defaults). Prefer pointers over
-`@path` imports — imports load eagerly into every session; reserve them for
-rare, stable, always-needed blocks.
-
-When you improve a **process file** (contributing, templates, hooks,
-workflows, commands) in a way that isn't specific to this project, flag it as
-a **harvest candidate** — a `note` issue mentioning the blueprint — so the
-next blueprint harvest pass picks it up. *(Advisory — no gate detects a
-forgotten harvest note; upheld by review at harvest time, per D-004.)*

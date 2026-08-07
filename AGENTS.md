@@ -38,7 +38,8 @@ CI is the backstop — but note these conveniences won't fire for you:
 - `.claude/skills/` — on-demand protocol cards (still readable as plain
   Markdown if you want the detail);
 - `.claude/rules/` and `.claude/settings.json` — path-scoped rules and
-  permission wiring, specific to Claude Code.
+  permission wiring, specific to Claude Code (still readable as plain
+  Markdown).
 
 Everything else in the repo — `docs/`, `.github/`, `scripts/`, `modules/`,
 `blueprint/`, `Makefile` — is tool-neutral. When in doubt, start at `docs/`
