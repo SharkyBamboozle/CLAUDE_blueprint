@@ -183,32 +183,20 @@ Decision / Consequences / Reversibility) before code lands. -->
 ## Conventions
 
 - **Status legend:** ✅ Decided/Done · 🟡 Proposed/In progress · 🔴 Open ·
-  🧊 Deferred/Superseded. Used identically across docs, registries, issue
-  bodies, and epic pages. Every 🧊 entry names its reactivation trigger.
-  *(Advisory — legend consistency is a review/habit concern, not gated; D-004.)*
-- **Stable IDs are load-bearing** — preserve them and cross-reference:
-  `D-###` decisions, `R##` requirements, `Q##` open questions, `P#` principles,
-  `Session N` changelog entries. Never renumber or reuse; new items take the
-  next free number. Never hardcode ID ranges in prose. *(Duplicate `D-###`
-  IDs fail the docs-truth consistency lane; the cross-referencing and
-  range-hardcoding discipline is advisory — D-004.)*
-- **Canonicality:** the docs site is canonical; the decisions registry is the
-  authoritative `D-xxx` list; topic pages hold the detailed reasoning. Each
-  fact has exactly one canonical home. When a decision changes, update its ADR
-  **and** the registry row together. *(The ADR↔registry sync is gated by the
-  docs-truth consistency lane + registry-sync; "one canonical home" itself is
-  advisory review discipline — D-004.)*
+  🧊 Deferred/Superseded. Usage rules: `docs/process/adding-docs-pages.md`.
+- **Stable IDs are load-bearing** — preserve them; never renumber or reuse;
+  new items take the next free number. ID families + the no-hardcoded-ranges
+  rule: `docs/process/adding-docs-pages.md`.
+- **Canonicality:** the docs site is canonical; each fact has exactly one
+  canonical home. Doctrine: `docs/process/records-and-canon.md`.
 - **New significant decision?** Create the next `adr-00##-*.md` from
   `docs/.templates/adr-template.md` and add the registry row. See
   `docs/process/writing-adrs.md`.
-- **Rule exceptions are commit trailers** — a deliberate bypass of a
-  convention is declared in the commit message as a trailer with a reason
-  (`Skip-<Rule>: <one-line reason>`), never a silent skip or a chat-only
-  approval. See `docs/process/committing.md`.
-- **New conventions name their enforcer** — every rule states what
-  mechanically checks it (hook / CI gate / test / template section), or is
-  explicitly *advisory* with a reason. See `docs/process/enforcement.md`
-  (D-004).
+- **Rule exceptions are commit trailers** — a deliberate bypass is a declared
+  `Skip-<Rule>:` trailer, never a silent skip or a chat-only approval. See
+  `docs/process/committing.md`.
+- **New conventions name their enforcer** — or are explicitly *advisory* with
+  a reason. See `docs/process/enforcement.md` (D-004).
 - **Improved a process file (hooks, commands, workflows, templates, scripts)
   in a project-agnostic way?** Flag it as a harvest candidate — see
   `.claude/rules/harvest-candidates.md`.
