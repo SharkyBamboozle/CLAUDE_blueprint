@@ -12,8 +12,9 @@ docs, not a duplicate of them. Extend over time.
 >
 > **While this admonition is here, you are authoring the template, not working
 > in a seeded project.** The per-session *records* instructions below (*Repo
-> workflow* → session changelog; `.claude/commands/session-close.md`) are
-> shipped furniture addressed to seeded projects. Three rules override them
+> workflow* → session changelog; `.claude/commands/session-close.md`) — and
+> the expectation that merging an integration PR closes its issues — are
+> shipped furniture addressed to seeded projects. Four rules override them
 > here; reasoning and scope: `CONTRIBUTING.md` → *Two hats*.
 >
 > 1. **No tracker IDs in seed-shipped content** — an issue or PR number from
@@ -28,6 +29,12 @@ docs, not a duplicate of them. Extend over time.
 > 3. **`blueprint/CHANGELOG.md` is written exactly once per release**, in the
 >    caboose of the promotion PR that bumps `blueprint/VERSION`. It is the
 >    blueprint's only log.
+> 4. **Issues do not auto-close at integration here** — closing keywords fire
+>    only on PRs into the *default* branch, which stays `main` in this repo
+>    (projects seed from it; seeded repos flip theirs to `development`).
+>    Issues close at promotion via the restated `Closes` lines. A merged PR
+>    whose issue is still open is expected state — no anomaly to report,
+>    never a manual close.
 >
 > <!-- BLUEPRINT: delete this whole admonition, rules included, at bootstrap. -->
 
