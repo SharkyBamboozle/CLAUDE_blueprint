@@ -224,74 +224,51 @@ config — or state "none yet — linter defaults apply." -->
 
 ## Repo workflow
 
-*Except the branch model (server-side `branch-flow-guard`), backtick-cited
-paths (the docs-truth checker), the epic closing-keyword rule (the
-`issue-link-guard` gate), and the promotion caboose (the `release-gate`),
-these are process conventions upheld by the ritual commands, issue
-templates, and epic-closeout review — advisory, not gated (D-004).*
+*Mixed enforcement (D-004): the act pages below each open with their rule's
+exact gate-or-advisory note; the layering doctrine is
+`docs/process/enforcement.md`.*
 
-- **Docs are canonical; issues track work.** GitHub issues use `epic` +
-  area/status labels; epics group children as native sub-issues.
-- **Findings vs work — the `note` label.** *Build tasks* are **sub-issues**
-  (they feed an epic's completion). Observations, design considerations, and
-  run findings that are **not** build tasks are filed as their own issue with
-  the **`note`** label, cross-linked to the epic, and listed in the epic's
-  **Related notes** section — **never** as sub-issues (a note never reaches
-  "done" and would leave the epic perpetually unfinished). `label:note` is the
-  durable index; **triage it at epic closeout** (request close of
-  accepted/moot ones, re-home live ones). Body skeletons:
-  `docs/.templates/`. A build issue (standalone or sub-issue) **closes at
-  the moment its deliverable boxes are met** — by the completing PR's
-  `Closes` or an operator readout-close, never batched to closeout
-  (close-direction gated by `issue-link-guard`; see
-  `docs/process/closing-issues.md`).
+- **Docs are canonical; issues track work** (`epic` + area/status labels,
+  children as native sub-issues) — containers: `docs/process/filing-work.md`;
+  canonicality: `docs/process/records-and-canon.md`.
+- **Findings vs work:** build tasks are sub-issues; a finding that is not a
+  build task is a **`note`** issue (`/note`) — **never** a sub-issue. An
+  issue closes at the moment its deliverable boxes are met, never batched
+  to closeout (close-direction gated; `docs/process/closing-issues.md`).
+  Rationale + body skeletons: `docs/process/filing-work.md`.
 - **Ticking deliverable boxes is the completing session's job — tick each
-  box the moment its artifact lands.** Editing the issue body to tick a
-  delivered box is expected tracker upkeep, never an intrusion into the
-  owner's record. A box a PR delivers is ticked **at PR-open** (pre-merge
-  ticking is the designed order: `issue-link-guard` counts the boxes from
-  the moment the PR opens, and the open PR is the evidence); a readout box,
-  right after the readout comment is posted. Run `/tick` for the edit — it
-  front-loads the per-box question (*did I deliver this?* — named evidence,
-  or no tick) before the anchored body update. The gate evaluates boxes
-  first and announces a `Skip-Issue-Link-Guard` waiver-pass loudly — the
-  trailer is the argued exception (deferred / re-homed deliverables),
-  never the cheap path past ticking (see
-  `docs/process/closing-issues.md`).
-- **Epic pages — the story.** Every epic gets a page under `docs/records/epics/`
-  (stub at kickoff → retrospective at closeout: goal → built → found → decided
-  → carried forward); the epic issue closes with a short pointer comment +
-  note triage. See `docs/process/running-epics.md`.
-- **Agent-research reports.** Large fan-out research/analysis passes get a
-  dated page under `docs/records/agent-research/` — a snapshot that proposes and
-  rates; anything load-bearing graduates into an ADR, epic, or open question.
-- **Branches:** develop on a feature branch → PR into **`development`** (the
-  integration branch). `main` is the promoted branch.
+  box the moment its artifact lands** (a PR-delivered box at PR-open; a
+  readout box right after the readout posts), via `/tick`; the issue-body
+  edit is expected tracker upkeep, never an intrusion. Evidence rule + the
+  `Skip-Issue-Link-Guard` exception: `docs/process/closing-issues.md`.
+- **Epic pages:** every epic gets a story page under `docs/records/epics/` —
+  stub at kickoff, retrospective at closeout; lifecycle + closeout note
+  triage: `docs/process/running-epics.md`.
+- **Agent-research reports:** a large fan-out pass gets a dated page under
+  `docs/records/agent-research/` — conventions:
+  `docs/process/records-and-canon.md`.
+- **Branches:** feature branch → PR into **`development`** (the integration
+  branch); `main` is the promoted branch. Model: `docs/process/pushing.md`.
 - **PRs are append-only while OPEN** — before pushing to a branch with PR
   history, read the PR's state: merged → restart the branch from
   `development` (fresh PR — never stack on merged history); closed → stop
-  and ask. Never claim "landed on PR #N" without reading the PR after the
-  push — remote state is read, never recalled. Guarded at push time by
-  `guard-git.sh` (fail-open) + the session-start verdict line; see
+  and ask. Remote state is read, never recalled. The push guard fails open
+  by design — the rule, not the hook, is the net; see
   `docs/process/pushing.md`.
-- **Promotion is a release** — run `/promote`: operator-decided bump class
-  (hard STOP), caboose PR (version + release log, seam:
-  `.claude/release.txt`), promotion PR restating the train's `Closes #N`
-  lines, operator merge + tag. Gated by `release-gate`; see
+- **Promotion is a release** — run `/promote`: the two-PR train (caboose +
+  promotion), the operator's bump STOP, and the `release-gate`:
   `docs/process/releases.md`.
 - **PR ↔ issue linking:** a closing keyword (`Closes`/`Fixes`/`Resolves`)
-  targets only an issue the PR fully completes — GitHub ignores qualifiers,
-  so `Closes #N (partial)` still closes #N. Progress PRs use
-  `Closes — · Part of #NN (epic)`; an epic is keyword-closed only by its
-  closeout PR. Epic rule enforced by the `issue-link-guard` CI gate; see
-  `docs/process/opening-a-pr.md`.
-- **Agent working docs** live in `.claude/working/` — never under `docs/`
-  (docs are human-curated). At task or session end, archive them to
-  `.claude/archive/YYYY-MM-DD/<task-slug>/` via `/handoff` — archive, never
-  delete. Exception: never archive a still-running task's state files.
+  targets only an issue the PR fully completes — `Closes #N (partial)`
+  still closes #N; progress PRs use `Closes — · Part of #NN (epic)`; an
+  epic is keyword-closed only by its closeout PR. Grammar + the
+  `issue-link-guard` gate: `docs/process/opening-a-pr.md`.
+- **Agent working docs** live in `.claude/working/`, never under `docs/`;
+  archive at task end via `/handoff` — archive, never delete. Rules:
+  `.claude/working/README.md`.
 - **Session changelog:** every working session ends with a
-  `docs/records/changelog.md` entry (dated, titled, IDs and issue numbers
-  cited), prepended newest first.
+  `docs/records/changelog.md` entry, prepended newest first —
+  `/session-close` writes it.
 - **Ritual commands:** the multi-step conventions are packaged as slash
   commands — `/adr-new`, `/note`, `/tick`, `/epic-kickoff`, `/epic-closeout`,
   `/promote`, `/session-close`, `/handoff`, `/checkpoint`, `/unlock-adr`,
