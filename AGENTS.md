@@ -41,6 +41,5 @@ CI is the backstop — but note these conveniences won't fire for you:
   permission wiring, specific to Claude Code (still readable as plain
   Markdown).
 
-Everything else in the repo — `docs/`, `.github/`, `scripts/`, `modules/`,
-`blueprint/`, `Makefile` — is tool-neutral. When in doubt, start at `docs/`
-and `CLAUDE.md`.
+Everything else in the repo — `docs/`, `.github/`, `scripts/`, `Makefile` —
+is tool-neutral. When in doubt, start at `docs/` and `CLAUDE.md`.
