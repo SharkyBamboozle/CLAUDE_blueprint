@@ -168,24 +168,22 @@ go stale; link to the registry instead. -->
 the ADR that governs it. Record the layout decision itself as an ADR (Context /
 Decision / Consequences / Reversibility) before code lands. -->
 
-- `docs/` — canonical documentation (MkDocs); `docs/.templates/` holds the
-  reusable skeletons (ADR, epic page, issue bodies, research report).
-- `.github/` — labels manifest, issue forms, PR template, workflows (strict
-  docs build gate + repo-hygiene binary guard).
-- `.claude/` — harness policy: permissions allow/deny, hooks (git guard,
-  session start, stale-working-docs nudge), ritual slash commands, skills
-  (on-demand protocol cards), path-scoped rules (`rules/` — load only when
-  matching files are touched), and the agent scratch space (`working/` +
-  `archive/`).
-- `scripts/` — repo tooling (GitHub setup, label sync, bootstrap gate);
-  lasting product value never lives here.
-- `modules/` — optional per-project payloads (python-package, data-repo,
-  lfs-assets), each applied by executing its `MODULE.md`; deleted at
+- `docs/` — canonical documentation; `docs/.templates/` holds the reusable
+  skeletons.
+- `.github/` — the workflows are the CI gates.
+- `.claude/` — harness policy: hooks, commands, skills, path-scoped rules
+  (`rules/` — load only when matching files are touched), and agent scratch
+  space (`working/`).
+- `scripts/` — repo tooling (see `scripts/README.md`); lasting product value
+  never lives here.
+<!-- BLUEPRINT: delete the three bullets below at bootstrap — they describe
+machinery BOOTSTRAP.md → "Delete the machinery" removes (modules/, blueprint/,
+LICENSE). -->
+- `modules/` — optional payloads applied via `MODULE.md`; deleted at
   instantiation.
-- `blueprint/` — blueprint machinery (version, token conventions); deleted by
-  `BOOTSTRAP.md` at instantiation.
-- **LICENSE** — MIT with a template-use waiver; seeded projects delete it at
-  bootstrap and choose their own.
+- `blueprint/` — blueprint machinery; deleted by `BOOTSTRAP.md`.
+- **LICENSE** — MIT with a template-use waiver; seeded projects choose their
+  own.
 
 ## Conventions
 
