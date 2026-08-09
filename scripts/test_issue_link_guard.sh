@@ -252,5 +252,40 @@ Skip-Issue-Link-Guard: gate outage, change reviewed by owner"
 check_out 0 "passed on WAIVER.*could not be fully evaluated" "::error::" \
   "gh failure + trailer -> declared exception stands in, announced"
 
+# ---- Two-trailer regression: a promotion-shaped range holds every commit
+# since the last release, so several trailers can be in range at once — some
+# arguing findings that no longer exist. Selecting one and quoting it as THE
+# declared exception announced a false reason. The guard cannot match a
+# trailer to a finding, so a waiver-pass must carry EVERY reason inside the
+# ::warning:: annotation itself (the checks summary shows the annotation,
+# not the job log) and present none of them as the single reason.
+# check_out takes one must-match pattern, so each reason gets its own call;
+# the helper unsets the case env, hence the re-exports.
+
+TWO_TRAILER_COMMITS="fix: newest slice
+
+Skip-Issue-Link-Guard: newest trailer, argues an unrelated finding that is already fixed
+
+fix: older slice
+
+Skip-Issue-Link-Guard: older trailer, argues the real unchecked box"
+
+export PR_BODY="Closes #70"
+export COMMITS="$TWO_TRAILER_COMMITS"
+check_out 0 "::warning::.*newest trailer, argues an unrelated finding" \
+  "Declared exception \(commit trailer\):" \
+  "two trailers, live finding -> annotation carries the newest reason; none presented as THE reason"
+
+export PR_BODY="Closes #70"
+export COMMITS="$TWO_TRAILER_COMMITS"
+check_out 0 "::warning::.*older trailer, argues the real unchecked box" "-" \
+  "two trailers, live finding -> annotation carries the older reason too"
+
+export MOCK_LINKED_RC=1
+export COMMITS="$TWO_TRAILER_COMMITS"
+check_out 0 "::warning::.*could not be fully evaluated.*older trailer, argues the real unchecked box" \
+  "Declared exception \(commit trailer\):" \
+  "gh failure + two trailers -> the infra waiver exit announces every reason too"
+
 [ "$fails" -eq 0 ] && echo "all asserted cases pass" || echo "$fails case(s) FAILED"
 exit "$fails"
