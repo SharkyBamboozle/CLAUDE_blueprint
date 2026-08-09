@@ -57,6 +57,12 @@ in `docs/process/contributing.md`, and the release mention in CLAUDE.md →
 - [ ] Required checks green: `flow-guard` · `release-gate` ·
       `issue-link-guard` · `build` · `no-binaries` · `secret-scan` ·
       `registry-sync` · `decided-adr-unlock`.
+- [ ] If `issue-link-guard` passed on a **waiver** (a `::warning::` run,
+      not a merits pass): the PR body names each waived finding with its
+      true reason. *(Advisory per D-004 — nothing checks a promotion PR
+      body; the guard announces every `Skip-Issue-Link-Guard` trailer in
+      range but cannot match a trailer to a finding, so a human states
+      the match. Rule: [Releases](releases.md).)*
 
 ## 5. Merge, tag — operator-only
 
