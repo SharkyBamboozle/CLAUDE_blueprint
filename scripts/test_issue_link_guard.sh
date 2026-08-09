@@ -258,9 +258,16 @@ check_out 0 "passed on WAIVER.*could not be fully evaluated" "::error::" \
 # declared exception announced a false reason. The guard cannot match a
 # trailer to a finding, so a waiver-pass must carry EVERY reason inside the
 # ::warning:: annotation itself (the checks summary shows the annotation,
-# not the job log) and present none of them as the single reason.
-# check_out takes one must-match pattern, so each reason gets its own call;
-# the helper unsets the case env, hence the re-exports.
+# not the job log) and present none of them as the single reason — pinned
+# both negatively (the retired single-reason phrasing is forbidden) and
+# positively (the plural count framing must be on the annotation line).
+# check_out matches line-wise, so "::warning::.*<reason>" proves the reason
+# sits on the annotation line itself; each reason gets its own call, and
+# BOTH reasons are asserted at BOTH waiver exits (asserting only one lets a
+# single-reason fix from either end of the list pass). The infra cases use
+# a MULTI-LINE gh error: a raw newline in the interpolated details would
+# end the annotation early and evict every reason from it.
+# The helper unsets the case env, hence the re-exports.
 
 TWO_TRAILER_COMMITS="fix: newest slice
 
@@ -269,6 +276,7 @@ Skip-Issue-Link-Guard: newest trailer, argues an unrelated finding that is alrea
 fix: older slice
 
 Skip-Issue-Link-Guard: older trailer, argues the real unchecked box"
+MULTILINE_GH_ERR=$'gh: HTTP 502\nBad gateway from the GraphQL proxy'
 
 export PR_BODY="Closes #70"
 export COMMITS="$TWO_TRAILER_COMMITS"
@@ -278,14 +286,21 @@ check_out 0 "::warning::.*newest trailer, argues an unrelated finding" \
 
 export PR_BODY="Closes #70"
 export COMMITS="$TWO_TRAILER_COMMITS"
-check_out 0 "::warning::.*older trailer, argues the real unchecked box" "-" \
-  "two trailers, live finding -> annotation carries the older reason too"
+check_out 0 "::warning::.*2 declared exception\(s\) in range.*older trailer, argues the real unchecked box" "-" \
+  "two trailers, live finding -> annotation carries the older reason too, under the plural count framing"
 
 export MOCK_LINKED_RC=1
+export MOCK_LINKED_ERR="$MULTILINE_GH_ERR"
 export COMMITS="$TWO_TRAILER_COMMITS"
-check_out 0 "::warning::.*could not be fully evaluated.*older trailer, argues the real unchecked box" \
+check_out 0 "::warning::.*could not be fully evaluated.*newest trailer, argues an unrelated finding" \
   "Declared exception \(commit trailer\):" \
-  "gh failure + two trailers -> the infra waiver exit announces every reason too"
+  "gh failure (multi-line error) + two trailers -> infra annotation carries the newest reason"
+
+export MOCK_LINKED_RC=1
+export MOCK_LINKED_ERR="$MULTILINE_GH_ERR"
+export COMMITS="$TWO_TRAILER_COMMITS"
+check_out 0 "::warning::.*could not be fully evaluated.*older trailer, argues the real unchecked box" "-" \
+  "gh failure (multi-line error) + two trailers -> infra annotation carries the older reason too"
 
 [ "$fails" -eq 0 ] && echo "all asserted cases pass" || echo "$fails case(s) FAILED"
 exit "$fails"

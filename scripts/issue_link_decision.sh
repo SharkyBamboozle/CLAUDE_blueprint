@@ -100,7 +100,11 @@ pass_on_merits() {
 infra_fail_or_waive() {
   if [ -n "$WAIVER_REASONS" ]; then
     for p in ${problems[@]+"${problems[@]}"}; do echo "waived: $p"; done
-    echo "::warning::issue-link-guard: passed on WAIVER, not on merits — $1, so the merits path could not be fully evaluated. Details: $2. ${WAIVER_COUNT} declared exception(s) in range stand in — the guard does not match a trailer to a finding, so read them all:$(waiver_block)"
+    # $2 is raw gh output and routinely multi-line; a raw newline would end
+    # the annotation at that point and push every reason after it out into
+    # plain log lines — so its newlines are escaped like the reasons' (%0A).
+    local details="${2//$'\n'/%0A}"
+    echo "::warning::issue-link-guard: passed on WAIVER, not on merits — $1, so the merits path could not be fully evaluated. Details: ${details}. ${WAIVER_COUNT} declared exception(s) in range stand in — the guard does not match a trailer to a finding, so read them all:$(waiver_block)"
     exit 0
   fi
   for p in ${problems[@]+"${problems[@]}"}; do echo "::error::$p"; done
