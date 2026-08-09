@@ -402,8 +402,10 @@ def lane_d_consistency(root: str, issues: list):
                 "(ID · statement · status · link)."
             )
 
-    # Nav presence, both directions. (mkdocs --strict already fails on nav
-    # entries pointing nowhere; the file-without-nav direction is ours.)
+    # Nav presence, both directions. The strict build now gates both for
+    # every page (nav entries pointing nowhere; orphan pages, via
+    # validation.nav.omitted_files in mkdocs.yml) — this stays for the
+    # ADR-specific message that names the /adr-new step to fix it.
     mk = os.path.join(root, "mkdocs.yml")
     if os.path.isfile(mk) and adr_files:
         with open(mk, encoding="utf-8") as f:

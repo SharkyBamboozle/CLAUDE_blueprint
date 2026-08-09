@@ -85,6 +85,18 @@ extra:
     open: Open
     deferred: Deferred
 
+# A page under docs/ that no nav entry lists is unreachable on the site,
+# which breaks the docs-are-canonical promise (D-001). MkDocs reports that
+# at INFO by default, so the strict build lets it through; raising it to
+# warn is what makes `mkdocs build --strict` (make verify, docs.yml) the
+# enforcer of BOTH directions of the nav<->file pairing instead of only nav
+# entries pointing at files that do not exist (D-004 — a convention names
+# its gate). Dot-directories (docs/.templates/) are excluded by MkDocs
+# before this check, so the shipped skeletons need no exemption.
+validation:
+  nav:
+    omitted_files: warn
+
 # The nav mirrors the directory layout under docs/ (one section = one
 # directory). Project holds the project-meta sections (Direction, Decisions,
 # Records, Process); each domain area (architecture, design, ...) is its own
