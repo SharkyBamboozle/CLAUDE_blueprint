@@ -41,11 +41,13 @@ having an answer. The tracking system must keep the two questions separable:
   (stub at kickoff, retrospective at closeout); the epic issue closes with a
   pointer comment, not the narrative.
 
-**Enforcement** (per [D-004](adr-0004-enforcement-doctrine.md)): *advisory.*
-The issue-body templates and the ritual commands give the workflow its
-structural scaffolding, and epic-closeout review is the backstop — but no
-gate rejects a mis-filed issue, and none should: what counts as a "finding"
-versus a "task" is judgment.
+**Enforcement** (per [D-004](adr-0004-enforcement-doctrine.md)): *mixed.*
+Filing is advisory: the issue-body templates and the ritual commands give
+the workflow its structural scaffolding, and epic-closeout review is the
+backstop — no gate rejects a mis-filed issue, and none should: what counts
+as a "finding" versus a "task" is judgment. Closing is guarded: when an
+issue may close, and who may close it, are enforced mechanically, through
+the layers described in [Enforcement](../process/enforcement.md).
 
 ## Consequences
 
