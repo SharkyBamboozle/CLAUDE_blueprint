@@ -302,5 +302,16 @@ export COMMITS="$TWO_TRAILER_COMMITS"
 check_out 0 "::warning::.*could not be fully evaluated.*older trailer, argues the real unchecked box" "-" \
   "gh failure (multi-line error) + two trailers -> infra annotation carries the older reason too"
 
+# ---- The fail-closed exit keeps its details inside the annotation too:
+# with NO trailer, a multi-line gh error must not end the ::error::
+# annotation at its first newline — the checks summary would then show a
+# truncated policy message, with the rest of the details as plain log
+# lines (the same eviction the waiver exit guards against). The run still
+# blocks; the exit code is unchanged.
+export MOCK_LINKED_RC=1
+export MOCK_LINKED_ERR="$MULTILINE_GH_ERR"
+check_out 1 "::error::.*Failing CLOSED.*Bad gateway from the GraphQL proxy" "passed on" \
+  "gh failure (multi-line error), no trailer -> fail-closed ::error:: carries the full details"
+
 [ "$fails" -eq 0 ] && echo "all asserted cases pass" || echo "$fails case(s) FAILED"
 exit "$fails"
