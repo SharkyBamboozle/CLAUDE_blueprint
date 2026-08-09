@@ -98,17 +98,18 @@ pass_on_merits() {
 # exception stands in for the unevaluable merits — loudly.
 # $1 = what failed, $2 = captured gh output.
 infra_fail_or_waive() {
+  # $2 is raw gh output and routinely multi-line; a raw newline would end
+  # an annotation at that point and push everything after it — the waiver
+  # reasons, or the fail-closed details tail — out into plain log lines,
+  # so its newlines are escaped like the reasons' (%0A) on both exits.
+  local details="${2//$'\n'/%0A}"
   if [ -n "$WAIVER_REASONS" ]; then
     for p in ${problems[@]+"${problems[@]}"}; do echo "waived: $p"; done
-    # $2 is raw gh output and routinely multi-line; a raw newline would end
-    # the annotation at that point and push every reason after it out into
-    # plain log lines — so its newlines are escaped like the reasons' (%0A).
-    local details="${2//$'\n'/%0A}"
     echo "::warning::issue-link-guard: passed on WAIVER, not on merits — $1, so the merits path could not be fully evaluated. Details: ${details}. ${WAIVER_COUNT} declared exception(s) in range stand in — the guard does not match a trailer to a finding, so read them all:$(waiver_block)"
     exit 0
   fi
   for p in ${problems[@]+"${problems[@]}"}; do echo "::error::$p"; done
-  echo "::error::issue-link-guard: $1 (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: $2"
+  echo "::error::issue-link-guard: $1 (transient / auth / network). Failing CLOSED to avoid a silent policy bypass. Details: ${details}"
   exit 1
 }
 
