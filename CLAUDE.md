@@ -128,12 +128,7 @@ command an agent cannot guess belongs here; deeper how-tos stay in docs/. -->
 ## Canonical documentation lives in `docs/` (MkDocs Material)
 
 The `docs/` site is the **single source of truth**. Read it before acting.
-Build/preview locally:
-
-```bash
-pip install -r docs/requirements.txt
-mkdocs serve        # or: mkdocs build --strict
-```
+Build/preview: `docs/process/contributing.md` → *Building the docs locally*.
 
 ### Where to read, by task
 
@@ -152,14 +147,8 @@ go stale; link to the registry instead. -->
 - **Fan-out research passes:** `docs/records/agent-research/` — dated reports that
   propose and rate; they never decide.
 - **History:** `docs/records/changelog.md` (per-session narrative).
-- **Lessons — read before substantial work:** `docs/records/lessons.md` (the
-  "never again" list; append a dated entry when a session learns one).
-- **Cutting a release:** `docs/process/release-checklist.md` (the canonical,
-  checkbox-executable release path).
-- **Terminology:** `docs/process/glossary.md` (track new terms here).
-- **Testing policy:** `docs/process/testing-changes.md` (D-005) — when tests
-  get written, where they live, scaffolding self-tests.
-- **Process & conventions:** `docs/process/contributing.md` — the router
+- **Process & conventions — including cutting a release, testing policy
+  (D-005), and terminology:** `docs/process/contributing.md` — the router
   whose *Find your act* table names the act page for the act at hand.
 
 ## Repo layout
