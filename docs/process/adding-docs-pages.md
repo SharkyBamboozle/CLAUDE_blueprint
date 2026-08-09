@@ -28,6 +28,14 @@ is a structural decision**: it gets an ADR and a registry row like any other
 `D-xxx`. *(Advisory — no gate detects a new non-area nav tab that skipped its
 ADR; caught at review, per D-004.)*
 
+**Every page gets a `nav` entry.** A page no `nav` entry lists is unreachable
+on the site, so the pairing is gated in both directions: the strict build
+fails on a `nav` entry whose file is missing *and* on a page under `docs/`
+that the `nav` omits. Reusable skeletons that are deliberately not pages live
+under `docs/.templates/` — a dot-directory MkDocs skips, so it needs no
+exemption. *(Gated — `mkdocs build --strict` via `make verify` and
+`.github/workflows/docs.yml`, per D-004.)*
+
 ## Stable IDs & the status legend
 
 - IDs are **never renumbered or reused**; new items take the next free number.
