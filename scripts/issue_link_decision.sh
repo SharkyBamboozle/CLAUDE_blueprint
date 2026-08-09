@@ -40,8 +40,12 @@
 # consulted only when merits fail (or cannot be evaluated), so a re-run of a
 # PR whose targets have since become completion-ready passes on merits and a
 # stale waiver never masks the real rule. A waiver-pass emits a ::warning::
-# annotation quoting the reason — an exception must not be visually
-# identical to a genuine pass.
+# annotation quoting EVERY trailer in range — an exception must not be
+# visually identical to a genuine pass, and the guard cannot match a
+# trailer to a finding, so it never presents one trailer as THE reason: a
+# promotion PR's range is everything since the last release and can hold
+# several trailers, some arguing findings that no longer exist; quoting
+# only the newest announced a false reason.
 set -uo pipefail
 
 REPO="${REPO:-}"
@@ -50,12 +54,25 @@ PR_TITLE="${PR_TITLE:-}"
 PR_BODY="${PR_BODY:-}"
 COMMITS="${COMMITS:-}"
 
-# The waiver trailer is parsed up front but consulted only at the exit
-# points below — merits first, waiver second. Same acceptance as the
-# old presence grep: the reason must be non-empty.
-WAIVER_REASON="$(printf '%s\n' "$COMMITS" \
-  | sed -n 's/^Skip-Issue-Link-Guard:[[:space:]]*\([^[:space:]].*\)$/\1/p' \
-  | head -n1)"
+# Waiver trailers are parsed up front but consulted only at the exit
+# points below — merits first, waiver second. Same per-trailer acceptance
+# as the old presence grep: the reason must be non-empty. ALL reasons in
+# range are kept, one per line, in `git log` order (newest commit first) —
+# the guard cannot know which trailer argues which finding, so it
+# announces every one.
+WAIVER_REASONS="$(printf '%s\n' "$COMMITS" \
+  | sed -n 's/^Skip-Issue-Link-Guard:[[:space:]]*\([^[:space:]].*\)$/\1/p')"
+WAIVER_COUNT="$(printf '%s\n' "$WAIVER_REASONS" | grep -c '.')"
+
+# The reasons as one ::warning::-embeddable block. An annotation is a
+# single line and GitHub shows it in the checks summary, where a reviewer
+# may never open the job log — so the reasons travel inside the annotation,
+# newlines escaped as %0A (rendered as line breaks).
+waiver_block() {
+  printf '%s\n' "$WAIVER_REASONS" \
+    | sed 's/^/%0A  - Skip-Issue-Link-Guard: /' \
+    | tr -d '\n'
+}
 
 # Blocking findings are collected during the merits evaluation and flushed
 # at the exits — as ::error:: when the run blocks, as plain "waived:" lines
@@ -67,8 +84,10 @@ problems=()
 # trailer is noted, never consulted — the job log stays honest about WHICH
 # rule passed the PR, and a stale waiver ages out visibly.
 pass_on_merits() {
-  if [ -n "$WAIVER_REASON" ]; then
+  if [ "$WAIVER_COUNT" -eq 1 ]; then
     echo "note: a Skip-Issue-Link-Guard trailer is present but was not consulted — the merits path passed on its own."
+  elif [ "$WAIVER_COUNT" -gt 1 ]; then
+    echo "note: $WAIVER_COUNT Skip-Issue-Link-Guard trailers are present but were not consulted — the merits path passed on its own."
   fi
   echo "issue-link-guard: passed on merits."
   exit 0
@@ -79,9 +98,13 @@ pass_on_merits() {
 # exception stands in for the unevaluable merits — loudly.
 # $1 = what failed, $2 = captured gh output.
 infra_fail_or_waive() {
-  if [ -n "$WAIVER_REASON" ]; then
+  if [ -n "$WAIVER_REASONS" ]; then
     for p in ${problems[@]+"${problems[@]}"}; do echo "waived: $p"; done
-    echo "::warning::issue-link-guard: passed on WAIVER, not on merits — $1, so the merits path could not be fully evaluated. Declared exception (commit trailer): 'Skip-Issue-Link-Guard: ${WAIVER_REASON}'. Details: $2"
+    # $2 is raw gh output and routinely multi-line; a raw newline would end
+    # the annotation at that point and push every reason after it out into
+    # plain log lines — so its newlines are escaped like the reasons' (%0A).
+    local details="${2//$'\n'/%0A}"
+    echo "::warning::issue-link-guard: passed on WAIVER, not on merits — $1, so the merits path could not be fully evaluated. Details: ${details}. ${WAIVER_COUNT} declared exception(s) in range stand in — the guard does not match a trailer to a finding, so read them all:$(waiver_block)"
     exit 0
   fi
   for p in ${problems[@]+"${problems[@]}"}; do echo "::error::$p"; done
@@ -185,9 +208,9 @@ fi
 # The merits path failed — only NOW is the waiver consulted, so the
 # trailer can never mask a rule that would have passed or hide WHY it did
 # not.
-if [ -n "$WAIVER_REASON" ]; then
+if [ -n "$WAIVER_REASONS" ]; then
   for p in "${problems[@]}"; do echo "waived: $p"; done
-  echo "::warning::issue-link-guard: passed on WAIVER, not on merits — ${#problems[@]} blocking finding(s) waived (listed in the job log). Declared exception (commit trailer): 'Skip-Issue-Link-Guard: ${WAIVER_REASON}'"
+  echo "::warning::issue-link-guard: passed on WAIVER, not on merits — ${#problems[@]} blocking finding(s) waived (listed in the job log). ${WAIVER_COUNT} declared exception(s) in range. The guard does not match a trailer to a finding, so read them all:$(waiver_block)"
   exit 0
 fi
 for p in "${problems[@]}"; do echo "::error::$p"; done
