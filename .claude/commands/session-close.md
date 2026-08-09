@@ -28,8 +28,8 @@ Close out this working session. Steps, in order:
    deliverable's disposition (deferred → where · moot → why); on the PR
    path the issue-link guard requires the declared trailer. Report the
    tallies — epic progress counters must match reality at session end.
-   (Rule: `docs/process/contributing.md` → *Issues, sub-issues & notes*.
-   Epics themselves close only at /epic-closeout; notes only at triage.)
+   (Rule: `docs/process/closing-issues.md`. Epics themselves close only
+   at /epic-closeout; notes only at triage.)
 5. **State check** — report honestly:
    - `git status`: any uncommitted work? (Report it; do not auto-commit.)
    - Current branch pushed? Any open PR and its CI state?

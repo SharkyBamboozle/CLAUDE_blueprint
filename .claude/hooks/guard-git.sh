@@ -130,7 +130,7 @@ def dead_pr(branch, src_ref):
     a fresh PR — allowed. FAILS OPEN (None) on any gh/network error: see the
     header. MCP/API pushes bypass this hook entirely — the session-start
     PR verdict and the PR-lifecycle rule are that net
-    (docs/process/contributing.md → PR lifecycle)."""
+    (docs/process/pushing.md)."""
     try:
         r = subprocess.run(
             ["gh", "pr", "list", "--head", branch, "--state", "all",

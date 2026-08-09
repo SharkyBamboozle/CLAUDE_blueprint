@@ -15,17 +15,20 @@ template.
 ## Two hats — the shipped records instructions are addressed to seeded projects
 
 The blueprint wears two hats: it is a **template under development** and the
-**worked example** of the process it ships. Nearly all of
-`docs/process/contributing.md` holds under both hats. The per-session
+**worked example** of the process it ships. Nearly all of the
+`docs/process/` pages hold under both hats. The per-session
 **records** instructions do not — `CLAUDE.md` → *Repo workflow* ("every working
 session ends with a `docs/records/changelog.md` entry"), the changelog and
 lessons steps of `.claude/commands/session-close.md`, and the page headers under
 `docs/records/` are **shipped furniture**: correct downstream, inapplicable
 here, because in this repo those files are the *stub* of a downstream project's
-diary, not a diary. Leave that text exactly as it is — the exception is declared
-here, never by weakening the instructions a seeded project needs.
+diary, not a diary. Neither does one premise of the linking pages — that a
+`Closes` fires when its PR merges into `development` — because here the
+default branch must stay `main` (rule 4). Leave that text exactly as it is —
+the exception is declared here, never by weakening the instructions a seeded
+project needs.
 
-Three rules follow. They reach every blueprint session through the
+Four rules follow. They reach every blueprint session through the
 blueprint-state admonition at the top of `CLAUDE.md`, and die with it at
 bootstrap.
 
@@ -66,6 +69,28 @@ fails a promotion whose release log has no entry for the new version, so the
 entry cannot be forgotten; "no mid-work edits" is advisory (D-004) — no check
 can tell an early entry from a timely one.
 
+**4 · Issues do not auto-close at integration here.** GitHub fires closing
+keywords only on PRs merging into the repo's *default* branch. Seeded projects
+make `development` the default (`scripts/github_setup.sh`), so the shipped
+premise — "the integration branch is the repo default, so every integration PR
+is a live close surface" (`docs/process/opening-a-pr.md`) — holds downstream.
+It cannot hold here: a template is seeded from its default branch, so `main`,
+the released line, must stay the default, and a PR merging into `development`
+closes nothing in this repo, however correct its `Closes #NN` line. The issues
+close at promotion instead — the promotion PR restates `Closes #N` for every
+issue the train completed, and `docs/process/releases.md` step 3 exists
+precisely for this main-default case. A merged PR whose target issue is still
+open is therefore the *normal between-releases state*: not drift to flag in a
+summary, and never cause for a manual close. Write the closing-keyword grammar
+exactly as the manual says — the `issue-link-guard` vets it at integration,
+and the promotion restatement is what finally fires it. *Overrides:* nothing —
+the linking pages stay as written (true downstream), and `/session-close`
+step 4 already carries the branch this rule feeds: "state why it stays open" —
+*awaiting promotion* is the standing answer. *Enforcement:* the manual-close
+half is the hard rule's gate (`guard-issue-close.sh` hook +
+`issue-close-guard.yml`); the no-false-alarm half is advisory (D-004) — no
+check can read a session summary; review is the backstop.
+
 ## The repo is its own working skeleton
 
 Core files live at their real destinations, so the blueprint self-tests. Three
@@ -102,7 +127,7 @@ Every file is one of three tiers (`blueprint/TOKENS.md`), and the tier sets the
 blast radius of your change:
 
 - **Literal** — byte-identical in every seeded project (hooks, workflows,
-  commands, skills, doc templates, `docs/process/contributing.md`). A change here
+  commands, skills, doc templates, the `docs/process/` pages). A change here
   reaches every downstream project through `HARVEST` / `UPDATE`. Highest
   scrutiny; keep it project-agnostic.
 - **Tokenized** — carries `{{TOKEN}}` placeholders filled at bootstrap. Never

@@ -61,7 +61,8 @@ specific change by hand only when wanted.
   re-parameterize anything project-specific that leaked in).
 - **Placement of a harvested CLAUDE.md convention:** it lands in its
   canonical home, not verbatim where it grew downstream. A process rule
-  goes to `docs/process/contributing.md` with its enforcer named (D-004),
+  goes to its act page under `docs/process/` (routed via the contributing
+  hub's *Find your act* table) with its enforcer named (D-004),
   and `CLAUDE.md` gets only a thin pointer; a genuinely CLAUDE.md-shaped
   rule (a hard rule, an autonomy-contract line) joins the matching section
   of the blueprint's own `CLAUDE.md` template. One home per fact — never

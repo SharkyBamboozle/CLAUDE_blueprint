@@ -4,6 +4,122 @@ What each blueprint version changed. Bumped by the harvest ritual
 (`HARVEST.md`); each seeded project records the version it started from in
 its init commit.
 
+## v1.1.0 — Gates that block, path-scoped rules, a leaner CLAUDE.md
+
+Sixteen merged PRs since v1.0.5, in twelve changes. The first minor of the
+1.x line: three of them add machinery rather than fix it — a new
+strict-build gate on orphan docs pages, four shipped gate jobs promoted to
+merge-blocking in the provisioning script, and two new path-scoped rule files.
+Nothing is removed or renamed and every seam holds, so the `UPDATE.md` pull
+carries no breaking change — but two items are worth a look before you pull,
+both flagged in their bullets: the orphan-page gate can turn a project red on
+`make verify` that was green, and re-running `github_setup.sh` now requires
+four more status contexts on both protected branches.
+
+- **Orphan docs pages fail the strict build** (#25, epic #20): `mkdocs.yml`
+  gains `validation: nav: omitted_files: warn`, so a page under `docs/` that no
+  nav entry lists now fails `mkdocs build --strict` — `make verify` and
+  `docs.yml` gate **both** directions of the nav↔file pairing, where before
+  only nav entries pointing at missing files failed. BOOTSTRAP step 2.3 already
+  claimed this behavior; the config is what makes the claim true (D-004 — a
+  convention names its gate). Dot-directories (`docs/.templates/`) are excluded
+  by MkDocs before the check, so the shipped skeletons need no exemption.
+  **On update:** a project carrying an unlisted page under `docs/` goes red
+  until the page is added to the nav or removed.
+- **The diff-scoped gates block merges** (#87): `scripts/github_setup.sh`
+  required only 4 of 9 shipped gate jobs on `main` and 2 of 9 on `development`
+  — a leaked secret, a committed binary, an un-synced ADR registry row, or an
+  edit to a locked ✅ Decided ADR went red in CI yet stayed mergeable. The
+  defaults become 8 contexts on `main` (adding `no-binaries`, `secret-scan`,
+  `registry-sync`, `decided-adr-unlock`) and 6 on `development` (the same four,
+  minus the `main`-only promotion pair). The selection principle is now stated
+  where the list lives: a check may block merges only if it is a verdict on the
+  PR's own change. `dependency-audit` is excluded on purpose — its verdict
+  tracks external CVE feeds, so merge-blocking it would let a third-party
+  disclosure freeze every open PR, including the one bumping the vulnerable
+  pin; it stays the weekly sweep. `flow-guard`/`release-gate` stay `main`-only
+  because that workflow never reports on PRs into `development`, and a required
+  context that never reports blocks merges forever. `enforce_admins: false` now
+  says in the script why it is the template default. **On update:** re-running
+  the script applies the wider list, so a project that deleted
+  `repo-hygiene.yml`, `security.yml`, or `adr-gates.yml` must pass
+  `--require-check` explicitly or its merges will block on contexts that never
+  report.
+- **Instruction-file meta-docs demoted to path-scoped rules** (#88): guidance
+  that only applies while editing a particular file no longer sits in the
+  always-loaded `CLAUDE.md`. Two new rules ship — `claude-md-stays-thin.md`
+  (scoped to `CLAUDE.md`) and `harvest-candidates.md` (scoped to the process
+  surfaces: `.claude/`, `.github/`, `docs/process/`, `docs/.templates/`,
+  `scripts/`, `Makefile`) — and `.claude/rules/README.md` gains its own
+  `paths:` scope plus permission for a rule to *be* the canonical home of a
+  purely path-local convention, not only a pointer. The README's trigger
+  caveat is now measured rather than reported: on Claude Code v2.1.224, a
+  path-scoped rule fires when an existing match is read or edited, does **not**
+  fire when Claude creates a new matching file, and a rule created mid-session
+  does not fire in that session; one SDK-driven remote worker session type
+  injected nothing on touch. The stale claim that an `InstructionsLoaded` hook
+  reports rule loading is replaced by the check that actually works — inspect
+  the context.
+- **`issue-link-guard` announces every waiver trailer in range** (#82): a
+  waiver-pass quoted only the newest `Skip-Issue-Link-Guard` trailer as *the*
+  reason. The guard cannot match a trailer to a finding, and a promotion PR's
+  range is everything since the last release — several trailers, some arguing
+  findings that no longer exist — so quoting one announced a false reason. All
+  reasons in range now travel inside the `::warning::` annotation itself
+  (newlines escaped `%0A`, so they survive where a reviewer actually reads
+  them), the merits-path note counts them, and `/promote` step 4 plus
+  `docs/process/releases.md` require the promotion PR body to name each waived
+  finding with its true reason — advisory, and stated as such (D-004).
+- **Fail-closed guard details stop truncating** (#106): the `::error::` exit of
+  `infra_fail_or_waive` embedded raw `gh` output, and a workflow-command
+  annotation ends at its first newline — so a multi-line error showed one line
+  in the checks summary and spilled the rest into plain log lines. Both exits
+  now escape the details identically. Cosmetic only: exit codes and the
+  blocking behavior are unchanged.
+- **`check_docs_truth` exemptions match on Windows** (#109): `exempt()`
+  compared POSIX ledger fragments against `os.path.relpath` output, which
+  renders with `os.sep` — so on Windows no exemption ever applied and the
+  ledger falsely reported every entry stale. Paths are normalized
+  unconditionally (not via `os.sep`, which is `/` where CI runs and would make
+  the fix a no-op there), pinned by four self-test cases whose backslash paths
+  fail on POSIX if the normalization is ever removed.
+- **`CLAUDE.md` diet — slice 2** (#91, #93, #96, #99): 2,531 → 2,005 words
+  (`wc -w`; 526 removed, 323 → 269 lines) across the Repo workflow,
+  Conventions, Repo layout and docs-router sections, each bullet compressed to
+  its obligation core plus the pointer that carries the detail. The router's
+  gated-act bullets fold into the *Find your act* table, and the three bullets
+  bootstrap deletes are marked as such. Deduplication only — no rule weakened,
+  no new always-loaded text.
+- **Standing pointers aim at act pages, not redirect stubs** (#83, #84): the
+  v1.0.5 split left pointers landing on the dispatch hub and on section arrows
+  that no longer resolve. Hooks, commands, workflows, decision scripts, issue
+  and PR templates, the ADR pages and the module payloads now cite the act page
+  that answers them — `pushing.md`, `opening-a-pr.md`, `closing-issues.md`,
+  `writing-adrs.md`, `adding-docs-pages.md` — and the dead `→ section` arrows
+  are gone.
+- **Three stale enforcement statements corrected** (#100): ADR-0002, ADR-0003
+  and ADR-0004 described enforcement that had since changed. The pages are
+  rewritten to read as if always written that way — an ADR records the decision
+  that holds, not its edit history. Carries a
+  `Skip-Registry-Sync: registry rows carry none of the corrected claims`
+  trailer: the corrections touch page prose only, no registry row changes.
+- **Citations that outlive bootstrap dropped from the seed** (#24, epic #20):
+  `AGENTS.md` and the `docs/records/changelog.md` stub cited machinery that
+  `BOOTSTRAP.md` deletes, so a seeded project's docs-truth checker broke on
+  first run at pointers to files that no longer existed.
+- **Two hats gains rule 4 — issues do not auto-close at integration here**: a
+  closing keyword fires only on PRs into the repo's *default* branch. Seeded
+  projects make `development` the default, so the shipped premise holds
+  downstream; it cannot hold in this repo, where `main` must stay default
+  because a template is seeded from its default branch. The issues close at
+  promotion via the restated `Closes` lines instead, which makes a merged PR
+  whose target issue is still open the normal between-releases state here —
+  not drift to flag, and never cause for a manual close.
+- **Release checklist carries the waiver-reason rule** (#105): step 4 had only
+  a "required checks green" box while `/promote` and `docs/process/releases.md`
+  required the promotion PR body to name each waived finding — a release
+  engineer running the checklist alone had nothing to remind them.
+
 ## v1.0.5 — Act-shaped process docs, a leaner CLAUDE.md, seed-hygiene fixes
 
 Seven backward-compatible changes since v1.0.4 — the process manual split into

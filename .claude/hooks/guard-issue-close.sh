@@ -53,8 +53,7 @@ MSG = (
     "yourself and do not route around this guard via other tools (the "
     "server-side issue-close-guard reverts app-mediated closes). Creating, "
     "commenting, labeling, body edits (box-ticking), and reopening all "
-    "remain allowed. See docs/process/contributing.md → Issues, sub-issues "
-    "& notes."
+    "remain allowed. See docs/process/closing-issues.md."
 )
 
 def block():

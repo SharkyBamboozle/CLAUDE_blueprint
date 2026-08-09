@@ -42,8 +42,8 @@ def block(rel, short, action):
     print(
         f"BLOCKED (CLAUDE.md hard rule): {rel} is (or would become) a "
         f"✅ Decided ADR, and {action} a Decided decision is gated. A changed "
-        "decision is a NEW superseding ADR (docs/process/contributing.md → "
-        "The ADR process, /adr-new). For a legitimate governance action "
+        "decision is a NEW superseding ADR (docs/process/writing-adrs.md, "
+        "/adr-new). For a legitimate governance action "
         "(maintenance edit, create-as-Decided, 🟡→✅ promotion, delete, "
         f"rename), first run:\n\n    /unlock-adr {short or '<adr-id>'}\n\n"
         "(1h token; the commit must then carry an 'Unlock-ADR: "

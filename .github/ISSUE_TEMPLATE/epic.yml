@@ -1,5 +1,5 @@
-# Epic form — the form fields ARE the convention (docs/process/contributing.md →
-# "Issues, sub-issues & notes"). Agents using the CLI take the same structure
+# Epic form — the form fields ARE the convention
+# (docs/process/running-epics.md). Agents using the CLI take the same structure
 # from docs/.templates/epic-issue-body.md with `gh issue create --body-file`.
 name: Epic
 description: A coherent body of work. Build tasks attach as native sub-issues; findings become `note` issues.
