@@ -10,8 +10,9 @@ step by deferring it to someone else. Conventions and enforcers:
 <!-- BLUEPRINT: the promotion skeleton below is the shipped standard —
 extend the placeholder steps (build/publish) with the project's real ones
 as its release process takes shape. If this project never cuts releases,
-delete this page (plus its nav entry in mkdocs.yml and its row in
-CLAUDE.md → "Where to read, by task") and declare `mode: off <reason>` in
+delete this page (plus its nav entry in mkdocs.yml, its *Find your act* row
+in `docs/process/contributing.md`, and the release mention in CLAUDE.md →
+"Where to read, by task") and declare `mode: off <reason>` in
 `.claude/release.txt` — the release-gate then passes with a note. -->
 
 ## 0. Pre-flight

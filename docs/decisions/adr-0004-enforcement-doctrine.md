@@ -59,10 +59,9 @@ enforcement is layered; exceptions are reasoned and ledgered.**
   a directory or category. One boundary: honesty- and security-critical
   findings (a real secret, a fabricated claim) are **never ledgerable**.
 
-Current enforcers of this doctrine: the git and ADR guard hooks with their
-regression suites, the ADR gates and branch-flow guard workflows, the
-repo-hygiene and security gates, the CI meta-gate, and the docs-truth
-checker — all bound into `make verify` and the PR gates.
+The concrete enforcers of this doctrine — bound into `make verify` and the
+PR gates — are process-layer tooling, mapped in
+[Enforcement](../process/enforcement.md).
 
 ## Consequences
 

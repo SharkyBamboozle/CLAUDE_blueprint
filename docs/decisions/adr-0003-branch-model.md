@@ -49,8 +49,8 @@ review discipline.
 
 ## Consequences
 
-- Every change meets the gates exactly once, at the PR into `development` —
-  gate wiring stays simple and unambiguous.
+- Every change meets the gates at the PR into `development` — no path to
+  `main` skips the integration funnel.
 - `main` is always demo-able and releasable; promotion is a deliberate,
   reviewable act rather than a side effect.
 - Small integration latency (two PRs from feature to `main`) — accepted:
