@@ -20,6 +20,7 @@ behind them lives in [Enforcement](enforcement.md) and
 | Start, advance, or close out an epic | [Running epics](running-epics.md) |
 | Record a significant decision | [Writing ADRs](writing-adrs.md) |
 | Add or move a docs page | [Adding docs pages](adding-docs-pages.md) |
+| Coin or look up a project term | [Glossary](glossary.md) |
 | Decide whether/where a test is needed | [Testing changes](testing-changes.md) |
 | End the working session | [Ending a session](ending-a-session.md) |
 | Cut a release | [Release checklist](release-checklist.md) · doctrine: [Releases](releases.md) |
