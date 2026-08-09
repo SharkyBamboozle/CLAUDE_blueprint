@@ -13,8 +13,8 @@
 # the self-arming seam in .claude/docs-truth.txt, cross-artifact
 # registry consistency: status drift, page/row/nav bijection, duplicate
 # D-### IDs, dead ID cross-refs, in-progress epic pages whose epic
-# issue is closed — a wrongly-closed epic surfaces here, #18 — and
-# built-listed sub-issues still open, the under-closing mirror, #37) —
+# issue is closed — a wrongly-closed epic surfaces here — and
+# built-listed sub-issues still open, the under-closing mirror) —
 # ADR-0004.
 # Each checker's --self-test
 # runs first so the checker itself stays pinned both ways (D-005).

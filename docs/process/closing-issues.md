@@ -49,6 +49,21 @@ travel into the PR body so review checks the ticks against them.
 visible and gateable, not true; honest ticking (D-006) is the substrate,
 and the reconciliation sweep is where drift gets caught.)*
 
+**Ticking requires a faithful read of the body.** There is no
+per-checkbox write anywhere on GitHub: a tick replaces the *whole* body,
+so a body composed from a lossy read silently deletes whatever that read
+dropped. Not every channel is faithful — `gh api` (local shells and CI
+runners) and the GitHub MCP `search_issues` tool are; the MCP
+`issue_read` and `list_issues` tools are **not**, stripping HTML comments
+and `<angle-tokens>` and entity-escaping quotes and ampersands. Stripping
+leaves no trace, so the damage is invisible to the session causing it and
+to any verify re-read taken through the same channel. `/tick` step 1 is
+therefore a channel choice, and its rule is absolute: **no faithful
+channel, no body write** — attest, request an operator tick, and declare
+the exception. *(Advisory (D-004): no gate can see which tool a session
+read with; the ritual card and this page are the enforcers. The gate
+itself is unaffected — it reads bodies with `gh api` on the runner.)*
+
 ## Readouts
 
 **Outcomes get written back to the issue** — run/build results land as a

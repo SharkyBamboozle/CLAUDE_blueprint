@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regression cases for scripts/issue_close_decision.sh (the issue-close
-# guard logic, #54). Runs inside `make verify`, so it binds in CI (D-004).
+# guard logic). Runs inside `make verify`, so it binds in CI (D-004).
 # Hermetic: a mocked `gh` on PATH serves canned close-event lines and
 # records revert calls to files — no network. Asserts BOTH sides (revert
 # and close-stands) so a fix can't silently over/under-tighten, and asserts

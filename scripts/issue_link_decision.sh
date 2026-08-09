@@ -3,20 +3,19 @@
 # A GitHub closing keyword (close/closes/closed/fix/fixes/fixed/resolve/
 # resolves/resolved) auto-closes its target when the PR merges into the
 # default branch — and GitHub ignores qualifiers: "Closes #7 (partial)" still
-# closes #7. The rule (#18, #37; docs/process/contributing.md → PR ↔ issue
-# linking): a closing keyword may only target an issue the PR fully
-# completes. This script blocks any closing reference — in the PR body, PR
+# closes #7. The rule (docs/process/opening-a-pr.md): a closing keyword
+# may only target an issue the PR fully completes. This script blocks any closing reference — in the PR body, PR
 # title, a commit message, or GitHub's own resolved link set (which
 # includes sidebar-linked issues) — whose target is not completion-ready:
 #   epic-labeled issue  -> blocked while it has open sub-issues (only its
 #                          closeout PR, every sub-issue closed, passes);
-#   note-labeled issue  -> exempt (#41): a note never reaches "done" — its
+#   note-labeled issue  -> exempt: a note never reaches "done" — its
 #                          completion semantics are the triage verbs;
 #   any other issue     -> blocked while its body carries unchecked
 #                          task-list deliverable boxes (- [ ] / * [ ]) —
 #                          tick what is done, re-home what is deferred, or
-#                          declare the exception (#37) — AND blocked when it
-#                          carries no checklist at all (#41): a box-less
+#                          declare the exception — AND blocked when it
+#                          carries no checklist at all: a box-less
 #                          close is a faith-based close; state the
 #                          deliverables (retroactively is sanctioned: one
 #                          ticked box per delivered artifact) or declare
@@ -35,7 +34,7 @@
 # The one exception: a definitive 404 on a referenced issue number, which
 # nothing can close, is allowed through with a note.
 #
-# Override — evaluated SECOND, announced loudly (#47): a
+# Override — evaluated SECOND, announced loudly: a
 # `Skip-Issue-Link-Guard: <reason>` commit trailer (D-004 — exceptions are
 # declared, never silent). The merits path always runs first; the trailer is
 # consulted only when merits fail (or cannot be evaluated), so a re-run of a
@@ -52,7 +51,7 @@ PR_BODY="${PR_BODY:-}"
 COMMITS="${COMMITS:-}"
 
 # The waiver trailer is parsed up front but consulted only at the exit
-# points below — merits first, waiver second (#47). Same acceptance as the
+# points below — merits first, waiver second. Same acceptance as the
 # old presence grep: the reason must be non-empty.
 WAIVER_REASON="$(printf '%s\n' "$COMMITS" \
   | sed -n 's/^Skip-Issue-Link-Guard:[[:space:]]*\([^[:space:]].*\)$/\1/p' \
@@ -61,15 +60,15 @@ WAIVER_REASON="$(printf '%s\n' "$COMMITS" \
 # Blocking findings are collected during the merits evaluation and flushed
 # at the exits — as ::error:: when the run blocks, as plain "waived:" lines
 # when a trailer overrides them: an annotation's severity must match the
-# run's outcome (#47).
+# run's outcome.
 problems=()
 
 # Single allow exit for a run the real rule permits. A present-but-unneeded
 # trailer is noted, never consulted — the job log stays honest about WHICH
-# rule passed the PR, and a stale waiver ages out visibly (#47).
+# rule passed the PR, and a stale waiver ages out visibly.
 pass_on_merits() {
   if [ -n "$WAIVER_REASON" ]; then
-    echo "note: a Skip-Issue-Link-Guard trailer is present but was not consulted — the merits path passed on its own (#47)."
+    echo "note: a Skip-Issue-Link-Guard trailer is present but was not consulted — the merits path passed on its own."
   fi
   echo "issue-link-guard: passed on merits."
   exit 0
@@ -77,7 +76,7 @@ pass_on_merits() {
 
 # Single exit for a `gh` failure: the merits path could not be evaluated.
 # Without a trailer this fails CLOSED (house rule); with one, the declared
-# exception stands in for the unevaluable merits — loudly (#47).
+# exception stands in for the unevaluable merits — loudly.
 # $1 = what failed, $2 = captured gh output.
 infra_fail_or_waive() {
   if [ -n "$WAIVER_REASON" ]; then
@@ -142,7 +141,7 @@ for num in $candidates; do
   fi
   read -r flag total completed <<<"$info"
   if [ "$flag" = "epic" ] && [ "${completed:-0}" -lt "${total:-0}" ]; then
-    problems+=("This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → PR ↔ issue linking (#18).")
+    problems+=("This PR would close epic #$num, which has open sub-issues ($completed/$total complete). A closing keyword targets only an issue the PR fully completes; an epic closes only via its closeout PR. Reference progress as 'Closes — · Part of #$num (epic)' — or declare a deliberate exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/opening-a-pr.md.")
     continue
   fi
   if [ "$flag" = "epic" ]; then
@@ -150,17 +149,18 @@ for num in $candidates; do
     continue
   fi
   if [ "$flag" = "note" ]; then
-    echo "OK: closing reference to note #$num — notes are checklist-exempt (#41); triage verbs are their completion semantics."
+    echo "OK: closing reference to note #$num — notes are checklist-exempt; triage verbs are their completion semantics."
     continue
   fi
   # Non-epic, non-note: count deliverable boxes LINE-ANCHORED, in the
   # script (not jq), so the counting seam is covered by the mocked suite.
   # GitHub renders a task item only at a list-item line start — prose
   # QUOTING the syntax ("… task-list items (\`- [ ]\`) …") must not count;
-  # the gate's first live run false-positived on exactly that (#37's own
-  # spec body). Fenced code blocks are stripped first (#41) — a fenced
-  # SAMPLE of checkbox syntax is not a checkbox (the promotion PR restating
-  # 'Closes #18' would otherwise trip on #18's fenced template snippet).
+  # the gate's first live run false-positived on exactly that (an issue
+  # whose own spec body quoted the syntax). Fenced code blocks are stripped
+  # first — a fenced SAMPLE of checkbox syntax is not a checkbox (a
+  # promotion PR restating 'Closes #NN' would otherwise trip on that
+  # issue's fenced template snippet).
   body=$(gh api "repos/$REPO/issues/$num" --jq '.body // ""' 2>&1)
   rc=$?
   if [ "$rc" -ne 0 ]; then
@@ -170,9 +170,9 @@ for num in $candidates; do
   unchecked=$(printf '%s\n' "$stripped" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[ \]')
   checked=$(printf '%s\n' "$stripped" | grep -cE '^[[:space:]]*[-*][[:space:]]+\[[xX]\]')
   if [ "$unchecked" -gt 0 ]; then
-    problems+=("This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done (ticking is the completing session's job — do it at PR-open), re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes (#37).")
+    problems+=("This PR would close #$num, which still has $unchecked unchecked deliverable box(es). Close only what is complete: tick the boxes that are done (ticking is the completing session's job — do it at PR-open), re-home what is deferred (and say where), or declare the exception with a 'Skip-Issue-Link-Guard: <reason>' commit trailer. See docs/process/closing-issues.md.")
   elif [ "$checked" -eq 0 ]; then
-    problems+=("This PR would close #$num, which carries no deliverable checklist — a box-less close is a faith-based close (#41). State the issue's deliverables as task-list boxes (retroactively is sanctioned: one ticked box per delivered artifact is a completion record, not busywork), or declare the exception with a 'Skip-Issue-Link-Guard: <reason, e.g. trivial one-line fix>' commit trailer. See docs/process/contributing.md → Issues, sub-issues & notes.")
+    problems+=("This PR would close #$num, which carries no deliverable checklist — a box-less close is a faith-based close. State the issue's deliverables as task-list boxes (retroactively is sanctioned: one ticked box per delivered artifact is a completion record, not busywork), or declare the exception with a 'Skip-Issue-Link-Guard: <reason, e.g. trivial one-line fix>' commit trailer. See docs/process/closing-issues.md.")
   else
     echo "OK: closing reference to #$num — deliverables $checked/$checked ticked."
   fi
@@ -182,7 +182,7 @@ if [ "${#problems[@]}" -eq 0 ]; then
   pass_on_merits
 fi
 
-# The merits path failed — only NOW is the waiver consulted (#47), so the
+# The merits path failed — only NOW is the waiver consulted, so the
 # trailer can never mask a rule that would have passed or hide WHY it did
 # not.
 if [ -n "$WAIVER_REASON" ]; then

@@ -43,7 +43,9 @@ Ask the user (skip anything already answered in their invoking message):
 2. Resolve every **Tier-2 `<!-- BLUEPRINT: ... -->` block** with real
    content or an explicit "none yet" statement — never leave the marker.
    This includes: CLAUDE.md identity + commands/code-style slots + routing
-   rows + repo-layout bullets,
+   rows + repo-layout bullets (the three describing `modules/`, `blueprint/`,
+   and `LICENSE` resolve by deletion, marker and bullets together — step 7
+   removes the machinery they describe),
    `docs/index.md`, vision seeds (principles may legitimately start as
    "none recorded yet — add P1 when a recurring argument appears"),
    registry example comments, the changelog's Session 1 entry (today's

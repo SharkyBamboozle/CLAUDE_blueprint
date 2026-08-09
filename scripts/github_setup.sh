@@ -18,15 +18,17 @@
 #                    direct pushes from tooling).
 #   --areas          extra area:* labels to create, comma-separated
 #   --require-check  a status-check context required on main (repeatable);
-#                    default when omitted: build + flow-guard + release-gate
-#                    + issue-link-guard — the jobs the template itself ships
-#                    (docs.yml, branch-flow-guard.yml, issue-link-guard.yml)
+#                    default when omitted: every shipped gate whose verdict
+#                    is diff-scoped — build + flow-guard + release-gate +
+#                    issue-link-guard + no-binaries + secret-scan +
+#                    registry-sync + decided-adr-unlock (dependency-audit
+#                    stays a weekly sweep, never merge-blocking)
 #   --deploy-docs    (code profile) opt IN to publishing docs to GitHub Pages
 #                    on merges to development/main: provisions the Pages site,
 #                    the github-pages env branch policy, and DEPLOY_DOCS=true.
 #                    Default OFF — publishing is outward-facing, and on GitHub
 #                    Free a private repo's Pages site can be publicly reachable
-#                    (#3). The strict-build merge gate runs either way.
+#                    The strict-build merge gate runs either way.
 #
 # Requires: gh (authenticated with repo admin), python3 + PyYAML (labels).
 # Not scriptable here (do manually if wanted): secrets, Pages custom domain,
@@ -37,7 +39,7 @@ PROFILE=code
 AREAS=""
 CHECKS=()
 REPO=""
-DEPLOY_DOCS_OPT=false   # docs publishing is opt-in, default off (#3)
+DEPLOY_DOCS_OPT=false   # docs publishing is opt-in, default off
 while [ $# -gt 0 ]; do
   case "$1" in
     -R) REPO="$2"; shift 2 ;;
@@ -68,7 +70,7 @@ DEFAULT_BRANCH=$(gh api "repos/$REPO" --jq .default_branch)
 if [ "$PROFILE" = "code" ]; then
   # --- development branch, made the default ------------------------------
   # Feature branches PR into development; main is the promoted branch
-  # (docs/process/contributing.md, CLAUDE.md → Repo workflow).
+  # (docs/process/pushing.md, CLAUDE.md → Repo workflow).
   if ! gh api "repos/$REPO/git/ref/heads/development" >/dev/null 2>&1; then
     SHA=$(gh api "repos/$REPO/git/ref/heads/$DEFAULT_BRANCH" --jq .object.sha)
     gh api -X POST "repos/$REPO/git/refs" \
@@ -83,14 +85,27 @@ if [ "$PROFILE" = "code" ]; then
   # --- Branch protection --------------------------------------------------
   # main: PRs only (0 approvals — solo-dev calibrated: require checks, not
   # reviews), no force-pushes, no deletion, required status checks.
-  # Default contexts: the template's own shipped gates — docs.yml's `build`,
-  # branch-flow-guard.yml's `flow-guard` + `release-gate` (#35), and
-  # issue-link-guard.yml's `issue-link-guard` (#18) — so the prose rules are
-  # backed by required checks out of the box (D-004; a required context that
-  # never reports blocks merges forever, hence only jobs the template itself
-  # ships). Override with --require-check.
+  # enforce_admins stays false by design: admins bypass the required checks
+  # — the solo operator is the one reading red builds; flipping it on is a
+  # per-project hardening choice, not a template default.
+  #
+  # Default contexts — the selection principle (D-004): a check may block
+  # merges only if it is a verdict on the PR's OWN change; a check whose
+  # result external state can flip must never be able to freeze the repo.
+  #   - Diff-scoped, so required: docs.yml's `build`, issue-link-guard.yml's
+  #     `issue-link-guard`, repo-hygiene.yml's `no-binaries`, security.yml's
+  #     `secret-scan`, adr-gates.yml's `registry-sync` + `decided-adr-unlock`.
+  #   - `flow-guard` + `release-gate` (branch-flow-guard.yml): required on
+  #     main ONLY — that workflow triggers on PRs into main alone, and a
+  #     required context that never reports blocks merges forever.
+  #   - `dependency-audit` (security.yml): EXCLUDED on purpose. Its verdict
+  #     tracks external CVE feeds, not the PR's diff — merge-blocking, a
+  #     third-party disclosure would freeze every open PR, including the
+  #     one bumping the vulnerable pin. It stays the weekly sweep.
+  # Override with --require-check.
   if [ ${#CHECKS[@]} -eq 0 ]; then
-    CHECKS=(build flow-guard release-gate issue-link-guard)
+    CHECKS=(build flow-guard release-gate issue-link-guard
+            no-binaries secret-scan registry-sync decided-adr-unlock)
   fi
   CONTEXTS_JSON=$(printf '%s\n' "${CHECKS[@]:-}" | python3 -c \
     'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
@@ -106,16 +121,21 @@ if [ "$PROFILE" = "code" ]; then
 JSON
   echo "protected: main (PRs only, checks: $CONTEXTS_JSON)"
 
-  # development: block force-pushes/deletion AND require the docs build and
-  # the issue-link guard to pass — CLAUDE.md's "never commit directly to
-  # development" was previously prose-only here; a required check makes
-  # green-build the price of landing anything on the integration branch
+  # development: block force-pushes/deletion AND require the diff-scoped
+  # gates — the same selection principle as main, minus the promotion pair:
+  # green checks are the price of landing anything on the integration branch
   # (D-004), and development is the default branch where closing keywords
-  # fire, so the issue-link guard must be merge-blocking exactly here (#18).
+  # fire, so the issue-link guard must be merge-blocking exactly here.
+  # `flow-guard`/`release-gate` are absent BECAUSE they never report on PRs
+  # into development (branch-flow-guard.yml triggers on main only) —
+  # requiring them here would block every development PR forever;
+  # `dependency-audit` is absent as the deliberate sweep (see above).
   # strict=false: development PRs need green checks but not a rebase race.
   gh api -X PUT "repos/$REPO/branches/development/protection" --input - >/dev/null <<'JSON'
 {
-  "required_status_checks": {"strict": false, "contexts": ["build", "issue-link-guard"]},
+  "required_status_checks": {"strict": false, "contexts": [
+    "build", "issue-link-guard", "no-binaries", "secret-scan",
+    "registry-sync", "decided-adr-unlock"]},
   "enforce_admins": false,
   "required_pull_request_reviews": null,
   "restrictions": null,
@@ -123,9 +143,9 @@ JSON
   "allow_deletions": false
 }
 JSON
-  echo "protected: development (no force-push; required checks: build, issue-link-guard)"
+  echo "protected: development (no force-push; required checks: build, issue-link-guard, no-binaries, secret-scan, registry-sync, decided-adr-unlock)"
 
-  # --- GitHub Pages via Actions: OPT-IN, default OFF (#3) ------------------
+  # --- GitHub Pages via Actions: OPT-IN, default OFF -----------------------
   # Publishing docs is an outward-facing act, so it is the owner's decision,
   # not a default. A freshly-seeded project is still full of unresolved
   # placeholders and half-written vision; default-on would push all of that to
@@ -164,7 +184,7 @@ JSON
     echo "variable: DEPLOY_DOCS=false (docs publishing OFF — the default)"
     echo "  no Pages site created. Re-run with --deploy-docs to publish docs to"
     echo "  GitHub Pages on merges to development/main. Keep OFF for private"
-    echo "  projects: a Pages site can be publicly reachable (#3)."
+    echo "  projects: a Pages site can be publicly reachable."
   fi
 
   # --- Merge settings ------------------------------------------------------

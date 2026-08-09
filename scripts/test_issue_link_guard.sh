@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regression cases for scripts/issue_link_decision.sh (the issue-link guard
-# logic, #18). Runs inside `make verify`, so it binds in CI (D-004). Hermetic:
+# logic). Runs inside `make verify`, so it binds in CI (D-004). Hermetic:
 # a mocked `gh` on PATH serves canned issue records and closing-reference
 # lists — no network. Asserts BOTH sides (block and allow) so a fix can't
 # silently over/under-tighten.
@@ -52,7 +52,7 @@ chmod +x "$TMP/gh"
 # never boxes), #65 an ordinary issue with all boxes ticked, #50 an epic
 # with no sub-issues yet, #70 an ordinary issue with unchecked deliverables
 # (one indented/nested), #72 an ordinary issue whose body merely QUOTES the
-# checkbox syntax mid-line — the #37 false-positive regression shape.
+# checkbox syntax mid-line — the false-positive regression shape.
 export MOCK_ISSUE_61="epic 16 4"
 export MOCK_ISSUE_45="epic 16 16"
 export MOCK_ISSUE_65="- 0 0"
@@ -106,7 +106,7 @@ check() { # check <want_rc> <label> — uses the currently-exported case vars
 
 # check_out <want_rc> <must_match_ERE> <must_NOT_match_ERE|-> <label> —
 # like check(), but also asserts the combined output, pinning WHICH path
-# decided the run (#47): "passed on merits" vs the ::warning:: waiver
+# decided the run: "passed on merits" vs the ::warning:: waiver
 # annunciation must be distinguishable in the log, not just the exit code.
 check_out() {
   local out rc ok=1 why=""
@@ -139,13 +139,13 @@ export PR_BODY="Closes #45 (epic) — closes atomically when this retrospective 
 check 0 "closeout PR: epic with every sub-issue complete -> allow (body boxes ignored on the epic path)"
 
 export PR_BODY="Closes #70"
-check 1 "ordinary issue with unchecked deliverable boxes (incl. nested) -> block (#37)"
+check 1 "ordinary issue with unchecked deliverable boxes (incl. nested) -> block"
 
 export PR_BODY="Closes #72"
-check 0 "body only QUOTES checkbox syntax mid-line, boxes ticked -> allow (the #37 false-positive regression)"
+check 0 "body only QUOTES checkbox syntax mid-line, boxes ticked -> allow (the false-positive regression)"
 
 export PR_BODY="Closes #73"
-check 1 "box-less ordinary issue -> block (faith-based close, #41)"
+check 1 "box-less ordinary issue -> block (faith-based close)"
 
 export PR_BODY="Closes #73"
 export COMMITS="fix: tiny thing
@@ -154,10 +154,10 @@ Skip-Issue-Link-Guard: trivial one-line fix, no deliverable structure"
 check 0 "box-less issue + declared trailer -> allow (argued exception)"
 
 export PR_BODY="Closes #74"
-check 0 "note-labeled issue without boxes -> allow (notes are checklist-exempt, #41)"
+check 0 "note-labeled issue without boxes -> allow (notes are checklist-exempt)"
 
 export PR_BODY="Closes #75"
-check 1 "only fenced checkbox SAMPLES in the body -> block as box-less (fences stripped, #41)"
+check 1 "only fenced checkbox SAMPLES in the body -> block as box-less (fences stripped)"
 
 export PR_BODY="Closes #76"
 check 0 "fenced sample plus one real ticked box -> allow (fence stripped, presence satisfied)"
@@ -211,46 +211,46 @@ check 1 "issue lookup transient error -> block (fail closed)"
 export PR_BODY="The unfixed #61 backlog and prefixes #61 must not trip the guard"
 check 0 "keyword substring inside a word -> allow (no false positive)"
 
-# ---- Merits-first, waiver-second, loud waiver (#47) — output-asserting
+# ---- Merits-first, waiver-second, loud waiver — output-asserting
 # cases pinning WHICH path passed, both ways: the order (a trailer never
 # masks a merits pass), the annunciation (a waiver-pass is a ::warning::,
 # never silent), and the unchanged deny side (no trailer still blocks).
 
 export PR_BODY="Closes #65"
 check_out 0 "passed on merits" "passed on WAIVER" \
-  "all boxes ticked, no trailer -> logged as a merits pass (#47)"
+  "all boxes ticked, no trailer -> logged as a merits pass"
 
 export PR_BODY="Closes #65"
 export COMMITS="chore: tidy
 
 Skip-Issue-Link-Guard: stale reason from an earlier state of the issue"
 check_out 0 "trailer is present but was not consulted" "passed on WAIVER" \
-  "ticked boxes + leftover trailer -> merits pass, trailer NOT consulted (the order pin, #47)"
+  "ticked boxes + leftover trailer -> merits pass, trailer NOT consulted (the order pin)"
 
 export PR_BODY="Closes #70"
 check_out 1 "::error::" "passed on" \
-  "unchecked boxes, no trailer -> still blocks with ::error:: annotations (#47)"
+  "unchecked boxes, no trailer -> still blocks with ::error:: annotations"
 
 export PR_BODY="Closes #70 (deliverables re-homed)"
 export COMMITS="fix: final slice
 
 Skip-Issue-Link-Guard: remaining deliverables deferred to a follow-up issue"
 check_out 0 "::warning::.*passed on WAIVER.*deferred to a follow-up issue" "::error::" \
-  "unchecked boxes + trailer -> loud ::warning:: quoting the reason, no ::error:: (#47)"
+  "unchecked boxes + trailer -> loud ::warning:: quoting the reason, no ::error::"
 
 export PR_BODY="Closes #70"
 export COMMITS="fix: x
 
 Skip-Issue-Link-Guard: argued reason"
 check_out 0 "waived: This PR would close #70" "-" \
-  "waiver-pass lists each waived finding in the job log (#47)"
+  "waiver-pass lists each waived finding in the job log"
 
 export MOCK_LINKED_RC=1
 export COMMITS="chore: y
 
 Skip-Issue-Link-Guard: gate outage, change reviewed by owner"
 check_out 0 "passed on WAIVER.*could not be fully evaluated" "::error::" \
-  "gh failure + trailer -> declared exception stands in, announced (#47)"
+  "gh failure + trailer -> declared exception stands in, announced"
 
 [ "$fails" -eq 0 ] && echo "all asserted cases pass" || echo "$fails case(s) FAILED"
 exit "$fails"

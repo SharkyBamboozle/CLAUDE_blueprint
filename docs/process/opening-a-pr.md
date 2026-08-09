@@ -22,8 +22,22 @@ close surface. GitHub ignores qualifiers: `Closes #7 (partial)` still closes
   `/epic-closeout` ritual, every sub-issue already closed): `Closes #MM
   (epic)` then closes it atomically when the retrospective lands.
 
-**Tick at PR-open:** tick every deliverable box this PR delivers the
-moment it opens — the gate counts boxes from PR-open; the ticking
+**Tick *before* PR-open.** The gate counts boxes from PR-open, and an
+issue-body edit fires **no PR event** — so a box ticked after the PR opens
+leaves a red run that nothing re-triggers on its own. Order the work so
+the first run is green:
+
+1. Commit and push.
+2. **Post the readout comment on the issue** — before opening the PR, so
+   the readout box is tickable too. This is the step most often taken in
+   the wrong order, and it is the usual cause of an avoidable red run.
+3. `/tick` every box whose evidence now exists.
+4. Open the PR, attestation lines in the body.
+
+Only a box whose evidence *is* the open PR has to wait. Tick it after
+opening, then **edit the PR body** to add its attestation line: the edit
+fires `edited` and re-runs the gate, so the re-trigger is part of the
+ritual rather than a manual re-run someone must remember. The ticking
 discipline and its rationale live in [Closing issues](closing-issues.md).
 
 Enforcement (D-004): the PR template's forced-choice linking block, and the
