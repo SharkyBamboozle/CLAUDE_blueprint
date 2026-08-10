@@ -4,7 +4,8 @@
 # sides (forbidden blocks, allowed still succeeds) so a fix can't silently
 # over-tighten. State-dependent verdicts (push-to-main birth-vs-armed, bulk-add
 # worktree scan) are made HERMETIC by exercising the hook inside throwaway git
-# repos built here — no network, no dependence on this repo's mutable state.
+# repos built here, with gh mocked through the hook's GUARD_GH_BIN seam — no
+# network, no dependence on this repo's mutable state.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 HOOK="$HERE/../.claude/hooks/guard-git.sh"
@@ -20,20 +21,42 @@ trap 'rm -rf "$TMP"' EXIT
 
 # Hermetic gh for the zombie-push check: the hook's `gh pr list` gets
 # $MOCK_PRS (JSON array; default: no PR history) at rc $MOCK_GH_RC — so the
-# suite never touches the network even on machines with a real gh.
-mkdir -p "$TMP/bin"
-cat >"$TMP/bin/gh" <<'MOCK'
+# suite never touches the network even on machines with a real gh. The mock
+# is delivered through the hook's explicit GUARD_GH_BIN seam (exported in
+# expect below as a `bash <script>` argv), NOT via PATH: a Windows-native
+# Python resolves the hook's spawn through CreateProcess, which cannot
+# execute an extensionless shebang script and silently falls through to the
+# real gh — PATH-only delivery would test the live API there while staying
+# green on Linux.
+mkdir -p "$TMP/mock"
+cat >"$TMP/mock/gh" <<'MOCK'
 #!/usr/bin/env bash
 [ "${MOCK_GH_RC:-0}" -ne 0 ] && exit "${MOCK_GH_RC}"
 printf '%s\n' "${MOCK_PRS:-[]}"
 MOCK
+chmod +x "$TMP/mock/gh"
+
+# PATH still gets a gh, but it is a static DECOY that always answers "no
+# PRs" — never the mock above. The decoy keeps the seam revert-sensitive
+# where CI runs: if the hook's spawn ever regresses to bare ["gh", ...],
+# PATH resolution finds the decoy on Linux too, the terminal-PR zombie
+# cases see [] instead of their fixtures, fail open to "allowed", and go
+# red. (A marker-file canary could not pin this — with the seam reverted, a
+# PATH-delivered mock still answers on Linux; only divergent answers make
+# the regression visible where CI runs.)
+mkdir -p "$TMP/bin"
+cat >"$TMP/bin/gh" <<'DECOY'
+#!/usr/bin/env bash
+printf '[]\n'
+DECOY
 chmod +x "$TMP/bin/gh"
 
 expect() { # expect <rc> <label> <command> [cwd]
   local want="$1" label="$2" cmd="$3" dir="${4:-$HERE/..}"
   ( cd "$dir" && emit "$cmd" | env -u CLAUDE_PROJECT_DIR \
-      PATH="$TMP/bin:$PATH" MOCK_PRS="${MOCK_PRS:-[]}" \
-      MOCK_GH_RC="${MOCK_GH_RC:-0}" bash "$HOOK" >/dev/null 2>&1 )
+      PATH="$TMP/bin:$PATH" GUARD_GH_BIN="bash $TMP/mock/gh" \
+      MOCK_PRS="${MOCK_PRS:-[]}" MOCK_GH_RC="${MOCK_GH_RC:-0}" \
+      bash "$HOOK" >/dev/null 2>&1 )
   local rc=$?
   if [ "$rc" -eq "$want" ]; then echo "PASS (rc=$rc): $label"
   else echo "FAIL (rc=$rc, want $want): $label"; fails=$((fails + 1)); fi

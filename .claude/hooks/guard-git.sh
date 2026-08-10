@@ -132,9 +132,18 @@ def dead_pr(branch, src_ref):
     PR verdict and the PR-lifecycle rule are that net
     (docs/process/pushing.md)."""
     try:
+        # gh is reached through an explicit seam: GUARD_GH_BIN (POSIX
+        # shlex-split — forward-slash paths, e.g. "bash /path/to/mock")
+        # replaces the leading "gh" so the regression suite can substitute
+        # its hermetic mock on every platform. PATH interception alone
+        # cannot: a Windows-native Python resolves this spawn via
+        # CreateProcess, which cannot execute an extensionless shebang
+        # script and silently falls through to the real gh. Unset or
+        # empty -> exactly ["gh"], byte-identical production behavior.
+        gh_argv = shlex.split(os.environ.get("GUARD_GH_BIN", "")) or ["gh"]
         r = subprocess.run(
-            ["gh", "pr", "list", "--head", branch, "--state", "all",
-             "--json", "number,state", "--limit", "20"],
+            gh_argv + ["pr", "list", "--head", branch, "--state", "all",
+                       "--json", "number,state", "--limit", "20"],
             capture_output=True, text=True, timeout=15)
         if r.returncode != 0:
             return None
