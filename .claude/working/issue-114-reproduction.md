@@ -64,3 +64,36 @@ allow → both rc=2 zombie cases FAIL.
   docs/process/contributing.md (`pip install -r docs/requirements.txt`,
   with `--ignore-installed` to bypass the Debian-owned PyYAML) — an
   environment gap, not a repo defect.
+
+## Round 2 — Windows verification failed; second bare-name trap
+
+Windows pass (issue comment, 2026-08-10, MINGW64 + Python 3.13.1 via
+PATH shim): control 76e6c9f reproduced the defect exactly (2 zombie
+FAILs); fix branch 8822588 FAILED IDENTICALLY — 32/34, same two cases.
+
+Their diagnosis, accepted on measured evidence: the suite's seam value
+`bash $TMP/mock/gh` re-trips the same class of trap the seam was built
+to avoid — CreateProcess resolves the bare name `bash` through System32
+BEFORE PATH, finding the WSL launcher (rc=1 "no installed
+distributions" → dead_pr fail-open → allowed → red). Their probes:
+shutil.which (PATH-only) disagrees with CreateProcess; with an explicit
+absolute Git Bash path the mock answered `[{"number":9,"state":
+"MERGED"}]` rc=0 through the seam — hook-side seam confirmed sound.
+
+Fix (commit 1075cfe): suite resolves the RUNNING bash to an absolute
+path — `$BASH` + `.exe` probe + `cygpath -m` (Windows-mixed C:/ form),
+POSIX no-ops — and shlex-quotes both seam tokens ("C:/Program
+Files/..." has a space). New Linux-expressible FORM pin: seam program
+token must be absolute (bare-vs-absolute cannot diverge behaviorally on
+POSIX, so the form is what CI can hold). Hook + suite comments name the
+System32 trap.
+
+Evidence at 1075cfe (Linux): suite rc=0, 35 asserted (form pin + 34
+cases); revert check (hook → bare `["gh"]`, suite kept) → exactly the
+two zombie FAILs, rc=2, restored green; form-pin negative (SEAM_BASH
+forced to bare `bash`) → `FAIL (form)`, rc=1, restored green; seam
+value composes as `"/usr/bin/bash" "/tmp/.../mock/gh"`; make verify
+rc=0. Process note: round-2 edits were once wiped by `git checkout --`
+restores made before committing (restores pull from HEAD); re-applied,
+committed FIRST, all checks re-run against the committed tree. Windows
+re-verification: pending (round 2).
