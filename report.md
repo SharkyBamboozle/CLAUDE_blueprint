@@ -1,9 +1,14 @@
 # Framework audit — Project Blueprint
 
 **Repository:** `SharkyBamboozle/CLAUDE_blueprint`
-**Revision 2** — re-verified 2026-08-09 against **v1.0.5** (= `main` = `80c3800`) and
-**`development`** (`20c30a8`, 23 commits ahead of `main`).
-Revision 1 audited v1.0.4 (`28384a7`) on 2026-07-29.
+**Revision 2** — re-verified 2026-08-09 against v1.0.5 (`80c3800`).
+**Backlog refreshed 2026-08-14** against **v1.1.0** (= `main` = `0e961b3`) and `development`
+(`691b5f2`, 8 commits ahead). Revision 1 audited v1.0.4 (`28384a7`) on 2026-07-29.
+
+*Closed since revision 2:* `I-03` (promote — v1.1.0 shipped) and `I-23` (the `.gitignore` `#70`
+citation — fixed on `development`, still present on the released `main`). `I-17` half landed:
+`validation.nav.omitted_files` shipped in v1.1.0; the `anchors: warn` half is still open. The
+backlog in §8 is 33 items.
 
 ---
 
@@ -67,41 +72,33 @@ the new state of the second.
 
 ---
 
-## 2. Released versus current — the framing that changes conclusions
+## 2. Released versus current
 
-`main` and `v1.0.5` are the same commit (`80c3800`). A project created from the template today
-gets that tree. `development` is 23 commits ahead. Measured on both:
+**Updated 2026-08-14.** When revision 2 was written, `main` was v1.0.5 and 23 commits of fixes sat
+unreleased on `development`. **That gap has since been closed: v1.1.0 was promoted** (`main` =
+`0e961b3`, tagged `v1.1.0`, `blueprint/VERSION` = 1.1.0 on both branches). The required-check
+expansion, the `paths:` scoping and the CLAUDE.md diet are now released, so a project seeded today
+does get them. `development` is 8 commits ahead again — the normal post-release state.
 
-| | **v1.0.5 / `main`** (seeded today) | **`development`** |
-|---|---|---|
-| `CLAUDE.md` | 2,531 words | **2,005 words** |
-| `.claude/rules/` | 2 files, **1 without `paths:`** | 4 files, **0 without `paths:`** |
-| `.claude/archive/` session forensics | 1 file (README only) — **fixed** | 1 file — fixed |
-| Required-check expansion in `github_setup.sh` | **absent** | **present** |
-| CLAUDE.md blanket "hook- and CI-enforced" claim | **present** | **present** |
-| AGENTS.md "server-side by CI" overclaim | **present** | **present** |
-| ADR-0003 "required checks server-side" overclaim | **present** | **present** |
-| Blueprint tracker-ID citations inherited | 13 hits | 13 hits |
+The lesson the gap taught is worth keeping even though the instance is closed: **the release log
+is the only artifact a downstream maintainer reads before an `UPDATE.md` pull**, and for one full
+release cycle it described a tree that did not exist. The standing countermeasure is item `I-27` —
+write the entry from the promoted diff at promotion time, not from the issue bodies at planning
+time.
 
-Method: `git show <ref>:<path>` piped to `wc -w` / `grep -c` for each row.
+What has **not** changed with the promotion — re-probed by execution on the v1.1.0-era tree:
 
-**Consequences.**
+| | status |
+|---|---|
+| CLAUDE.md blanket "hook- and CI-enforced" claim | **present** (`CLAUDE.md:43`) |
+| AGENTS.md "server-side by CI" overclaim | **present** (`AGENTS.md:25`) |
+| ADR-0003 "required checks server-side" overclaim | **present** |
+| Guard argv bypasses (`git -C`, `--no-pager`, `--all`, `+refspec`, `-fu`, `gh -R`) | **all rc=0** |
+| MCP write surface (`merge_pull_request` et al.) | **rc=0** |
+| Lane G bootstrap deadlock | **still reproduces** (rc=1) |
 
-- **CI-G-03 is not fixed for anyone yet.** The required-check expansion — the best fix in this
-  cycle — exists only on `development`. Every project seeded before the next promotion inherits
-  the four-context configuration revision 1 flagged.
-- **AGEN-03 / HARN-09 are not fixed for anyone yet.** The `paths:` scoping of
-  `.claude/rules/README.md` is likewise unreleased.
-- **The archaeology fixes *are* released.** The archive deletion and the tracker-ID sweep are in
-  v1.0.5. These are the two that reached downstream.
-- **`blueprint/VERSION` reads 1.0.5 while 23 commits sit past the release caboose.** `UPDATE.md`
-  establishes a downstream project's FROM→TO span from that version number, so a project updating
-  against `development` computes a span that understates what it is pulling. The v1.0.5 changelog
-  entry itself states figures the tree no longer matches (it claims CLAUDE.md at 2,351 words;
-  `v1.0.5` measures 2,531 and `development` 2,005).
-
-A recommendation follows directly: **promote, or stop describing `development` state as
-delivered.** Several of this cycle's issues are closed and their work is on `development` only.
+So the promotion delivered the seed-hygiene and gate-wiring work, and delivered the
+enforcement-overclaim cluster and the bootstrap deadlock along with it, into a released version.
 
 ---
 
@@ -432,7 +429,7 @@ only path by which the required-check expansion can ever reach a seeded project 
 
 ## 8. Ranked backlog — value and ease
 
-35 actionable items, scored on two independent axes so the list can be worked either way: **down
+33 actionable items, scored on two independent axes so the list can be worked either way: **down
 the value column** when there is time for the thing that matters most, or **down the ease column**
 when there is an hour and a wish to bank something safe.
 
@@ -446,7 +443,7 @@ small diff, existing tests cover it, trivially reversible · 6 = several files o
 needed · 4 = load-bearing logic, real regression risk · 2 = needs a decision the operator has not
 made.
 
-**How these were scored.** Three independent agents scored all 35 from different lenses
+**How these were scored.** Three independent agents scored all items from different lenses
 (downstream impact / implementation reality / operator sequencing), then a fourth adversarially
 calibrated: its explicit brief was to **attack every ease ≥ 8**, because those are the items you
 will pick up first and a wrong "easy" is the most expensive error in a list like this. It applied
@@ -459,11 +456,10 @@ were moved, and the moves are the most useful part of the exercise (§8.3).
 |---|---|---|---|---|
 | **10** | **6** | `I-01` | Fix the lane G bootstrap deadlock | Reproduced: compliant bootstrap step 2.2 reds step 5's make verify on v1.0.5 |
 | **8** | **8** | `I-08` | Fix argv parsing in all three guards · _do with I-09,I-10_ | VERIFIED: 9 bypasses rc=0 to rc=2, all 8 suites and make verify green |
-| **8** | **3** | `I-03` | Promote `development` to a release · _I-01,I-04,I-06,I-26_ | 36 files ahead of v1.0.5; operator hard-STOP, two PRs, tag |
 | **7** | **9** | `I-04` | Remove the blanket "Each rule is hook- and CI-enforced" header from `CLAUDE.md` · _merge with I-06_ | Header false only about the CI layer; rewrite from the measured enforcer map |
 | **7** | **9** | `I-06` | Correct AGENTS.md's blanket CI promise · _merge with I-04_ | AGENTS.md promises CI to the audience with no hooks; rewrite from measured map |
 | **7** | **5** | `I-11` | Guard the MCP write surface · _after I-08_ | Zero CI self-merge enforcement anywhere; widen an existing matcher, never add a hook |
-| **6** | **10** | `I-17` | Add `validation:` to `mkdocs.yml` (`anchors: warn`, `nav.omitted_files: warn`) | VERIFIED clean build plus both-ways proof; start here |
+| **6** | **10** | `I-17` | Add `anchors: warn` to `mkdocs.yml`'s `validation:` block · _half landed in v1.1.0_ | The `nav.omitted_files` half shipped; the anchor half — the one guarding the ADR links — is still open. VERIFIED: 2 lines, build clean |
 | **6** | **9** | `I-13` | Validate `--profile` in `github_setup.sh` · _merge with I-24_ | Typo silently takes the data branch; no suite exists and none is demanded |
 | **6** | **9** | `I-18` | Give `/note` and `/epic-closeout` the faithful-read rule `/tick` now has | Two rituals rewrite bodies through a channel /tick calls silently destructive |
 | **6** | **8** | `I-09` | Add `\n` to the guards' segment splitter, and tokenize before splitting · _sub-task of I-08_ | VERIFIED false ALLOW from main; one regex alternation, same three files |
@@ -490,18 +486,16 @@ were moved, and the moves are the most useful part of the exercise (§8.3).
 | **4** | **3** | `I-29` | Define a trivial-change lane | Redundant with the waiver trailer; per-PR required-check variation is infeasible |
 | **3** | **9** | `I-16` | Repair the anchors the re-aim campaign orphaned | VERIFIED exactly four orphan stubs; other eight cited by Decided ADRs. Tidiness |
 | **3** | **8** | `I-19` | Reconcile `/tick` steps 2 and 5 | Real contradiction on the no-gh path; failure is a stall, card has an escape |
-| **2** | **10** | `I-23` | Remove the `#70` citation at `.gitignore:34` | One line, fenced inside a bootstrap-deleted block; cannot reach a seed |
 | **2** | **9** | `I-07` | File issues for I-05 and I-06 | Tracker hygiene; no seeded project affected either way |
 
 ### 8.2 By ease — the quick-win queue (ease ≥ 8)
 
-Seventeen items. The calibrator personally re-checked each; **[ran]** items had the fix applied in
+Sixteen items. The calibrator personally re-checked each; **[ran]** items had the fix applied in
 a scratch copy with the suites re-run.
 
 | Value | Ease | ID | Item | Why |
 |---|---|---|---|---|
-| **6** | **10** | `I-17` | Add `validation:` to `mkdocs.yml` (`anchors: warn`, `nav.omitted_files: warn`) | VERIFIED clean build plus both-ways proof; start here |
-| **2** | **10** | `I-23` | Remove the `#70` citation at `.gitignore:34` | One line, fenced inside a bootstrap-deleted block; cannot reach a seed |
+| **6** | **10** | `I-17` | Add `anchors: warn` to `mkdocs.yml`'s `validation:` block · _half landed in v1.1.0_ | The `nav.omitted_files` half shipped; the anchor half — the one guarding the ADR links — is still open. VERIFIED: 2 lines, build clean |
 | **7** | **9** | `I-04` | Remove the blanket "Each rule is hook- and CI-enforced" header from `CLAUDE.md` · _merge with I-06_ | Header false only about the CI layer; rewrite from the measured enforcer map |
 | **7** | **9** | `I-06` | Correct AGENTS.md's blanket CI promise · _merge with I-04_ | AGENTS.md promises CI to the audience with no hooks; rewrite from measured map |
 | **6** | **9** | `I-13` | Validate `--profile` in `github_setup.sh` · _merge with I-24_ | Typo silently takes the data branch; no suite exists and none is demanded |
@@ -557,8 +551,8 @@ The calibration moved ten ratings. These are the ones worth knowing before you s
 
 Not a schedule — a reading of the table that respects the dependencies.
 
-1. **`I-17`** — 4 lines, verified both ways, no dependency, arms a gate. Start here; it costs
-   minutes and it is the only ease-10 item with real value.
+1. **`I-17`** — now 2 lines: `anchors: warn` beside the `nav.omitted_files: warn` that v1.1.0
+   already shipped. Verified build-clean. Start here; it is the only remaining ease-10 item.
 2. **`I-08` + `I-09` + `I-10` as one patch.** The calibrator applied all three together: 9 bypasses
    went rc=0 → rc=2, 9 innocent forms stayed rc=0, and all 8 shipped suites plus `make verify`
    stayed green. Same function, same three files. **The highest-value verified win in the list**,
@@ -569,8 +563,9 @@ Not a schedule — a reading of the table that respects the dependencies.
 4. **`I-04` + `I-06` together**, rewritten from §3.3's measured map. Two prose edits that restore
    the doctrine's central property, then **`I-07`** to give them owners.
 5. **`I-13` + `I-12` + `I-24` as one `github_setup.sh` pass**, then **`I-32`** to propagate it.
-6. **`I-03` — promote.** Sequence it after 1–5 so the release carries them, rather than shipping a
-   v1.0.6 that repeats v1.0.5's pattern of describing work it does not contain.
+6. **Promote once 1–5 have landed**, so the release carries them rather than repeating v1.0.5's
+   pattern of describing work it does not contain. (The v1.1.0 promotion — former `I-03` — is
+   done; this is the standing rule that replaces it.)
 7. Everything else by the value column, taking ease-≥8 items opportunistically.
 
 **One item to consider dropping:** `I-29` (trivial-change lane, value 4 / ease 3). The waiver
