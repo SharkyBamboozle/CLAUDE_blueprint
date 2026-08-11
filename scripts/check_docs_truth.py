@@ -123,6 +123,12 @@ KNOWN_EXEMPT_CEILING = 15
 
 
 def exempt(lane: str, path: str, citation: str):
+    # Ledger fragments are POSIX-style; callers pass os.path.relpath output,
+    # which renders with os.sep — normalize so exemptions match on Windows
+    # too. Backslashes are replaced unconditionally, not via os.sep: os.sep
+    # is "/" where CI runs, so an os.sep-based replace would be a no-op there
+    # and no self-test fixture could catch its removal.
+    path = path.replace("\\", "/")
     for i, (l, file_frag, cite_frag, _reason) in enumerate(KNOWN_EXEMPT):
         if l != lane:
             continue
@@ -402,8 +408,10 @@ def lane_d_consistency(root: str, issues: list):
                 "(ID · statement · status · link)."
             )
 
-    # Nav presence, both directions. (mkdocs --strict already fails on nav
-    # entries pointing nowhere; the file-without-nav direction is ours.)
+    # Nav presence, both directions. The strict build now gates both for
+    # every page (nav entries pointing nowhere; orphan pages, via
+    # validation.nav.omitted_files in mkdocs.yml) — this stays for the
+    # ADR-specific message that names the /adr-new step to fix it.
     mk = os.path.join(root, "mkdocs.yml")
     if os.path.isfile(mk) and adr_files:
         with open(mk, encoding="utf-8") as f:
@@ -913,6 +921,28 @@ def self_test() -> int:
                 [("path", "docs/x/", "y", "reason")], set())
     if ledger_audit({0}, ledger=[("path", "docs/.templates/", "*", "reusable skeletons")]):
         failures.append("ledger/allow: a valid itemized entry was rejected")
+
+    # The exemption matcher itself, both ways per separator. Ledger file
+    # fragments are POSIX-style while every caller passes os.path.relpath
+    # output, which renders with os.sep — so before exempt() normalized
+    # backslashes, no exemption ever applied on Windows and the ledger
+    # falsely reported every entry stale there. The Windows-separator paths
+    # are hard-coded backslash strings on purpose: they fail on POSIX (where
+    # CI runs) if the unconditional normalization is ever removed.
+    _live_ledger = KNOWN_EXEMPT[:]
+    KNOWN_EXEMPT[:] = [("path", "docs/.templates/", "*", "reason")]
+    try:
+        for label, sep_path, want in (
+            ("posix-sep-match", "docs/.templates/skeleton.md", 0),
+            ("windows-sep-match", "docs\\.templates\\skeleton.md", 0),
+            ("posix-sep-miss", "docs/elsewhere/page.md", None),
+            ("windows-sep-miss", "docs\\elsewhere\\page.md", None),
+        ):
+            got = exempt("path", sep_path, "any citation")
+            if got != want:
+                failures.append(f"exempt/{label}: expected {want!r}, got {got!r}")
+    finally:
+        KNOWN_EXEMPT[:] = _live_ledger
 
     # The self-arm lane must detect code nested under a subdir (the
     # python-package module installs at python/pyproject.toml + python/src/),

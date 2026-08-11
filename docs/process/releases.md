@@ -26,7 +26,13 @@ standardized two-PR train run by the `/promote` ritual
    never did), while on a dev-default repo they are a harmless no-op that
    doubles as the release's issue manifest. The `issue-link-guard` vets the
    restated set either way ([Opening a PR](opening-a-pr.md) has the
-   closing-keyword grammar).
+   closing-keyword grammar). If the guard passes on a **waiver**, the
+   promotion PR body also names each waived finding with its true reason.
+   *Advisory, stated as such (D-004):* nothing checks a promotion PR body,
+   and the guard announces every `Skip-Issue-Link-Guard` trailer in range
+   without matching any to a finding — a promotion range can hold stale
+   trailers — so a human states the finding-to-reason match; review
+   verifies it.
 4. **Operator-only finish:** merge (never self-merge, never the agent) and
    the annotated tag on the `main` merge commit.
 

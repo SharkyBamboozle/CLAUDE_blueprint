@@ -4,7 +4,8 @@
 # sides (forbidden blocks, allowed still succeeds) so a fix can't silently
 # over-tighten. State-dependent verdicts (push-to-main birth-vs-armed, bulk-add
 # worktree scan) are made HERMETIC by exercising the hook inside throwaway git
-# repos built here — no network, no dependence on this repo's mutable state.
+# repos built here, with gh mocked through the hook's GUARD_GH_BIN seam — no
+# network, no dependence on this repo's mutable state.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 HOOK="$HERE/../.claude/hooks/guard-git.sh"
@@ -20,20 +21,65 @@ trap 'rm -rf "$TMP"' EXIT
 
 # Hermetic gh for the zombie-push check: the hook's `gh pr list` gets
 # $MOCK_PRS (JSON array; default: no PR history) at rc $MOCK_GH_RC — so the
-# suite never touches the network even on machines with a real gh.
-mkdir -p "$TMP/bin"
-cat >"$TMP/bin/gh" <<'MOCK'
+# suite never touches the network even on machines with a real gh. The mock
+# is delivered through the hook's explicit GUARD_GH_BIN seam (exported in
+# expect below as an "<absolute bash> <script>" argv), NOT via PATH: a
+# Windows-native Python resolves the hook's spawn through CreateProcess,
+# which cannot execute an extensionless shebang script and silently falls
+# through to the real gh — PATH-only delivery would test the live API there
+# while staying green on Linux. The bash in that argv must itself be an
+# ABSOLUTE path: for bare program names CreateProcess searches System32
+# BEFORE PATH, and System32 ships a bash.exe (the WSL launcher) that either
+# errors with no distro installed or runs the script inside WSL, where this
+# suite's MSYS temp paths do not exist — fail-open either way, red suite.
+mkdir -p "$TMP/mock"
+cat >"$TMP/mock/gh" <<'MOCK'
 #!/usr/bin/env bash
 [ "${MOCK_GH_RC:-0}" -ne 0 ] && exit "${MOCK_GH_RC}"
 printf '%s\n' "${MOCK_PRS:-[]}"
 MOCK
+chmod +x "$TMP/mock/gh"
+
+# PATH still gets a gh, but it is a static DECOY that always answers "no
+# PRs" — never the mock above. The decoy keeps the seam revert-sensitive
+# where CI runs: if the hook's spawn ever regresses to bare ["gh", ...],
+# PATH resolution finds the decoy on Linux too, the terminal-PR zombie
+# cases see [] instead of their fixtures, fail open to "allowed", and go
+# red. (A marker-file canary could not pin this — with the seam reverted, a
+# PATH-delivered mock still answers on Linux; only divergent answers make
+# the regression visible where CI runs.)
+mkdir -p "$TMP/bin"
+cat >"$TMP/bin/gh" <<'DECOY'
+#!/usr/bin/env bash
+printf '[]\n'
+DECOY
 chmod +x "$TMP/bin/gh"
+
+# Resolve the RUNNING bash to an absolute path for the seam argv (see the
+# System32 note above). On MSYS the physical file is bash.exe and cygpath -m
+# renders the Windows-mixed C:/ form CreateProcess accepts; on POSIX $BASH
+# is already absolute and both probes are no-ops. Both seam tokens are
+# shlex-quoted — the MSYS bash lives under "C:/Program Files/...".
+SEAM_BASH="${BASH:-$(command -v bash)}"
+[ -f "${SEAM_BASH}.exe" ] && SEAM_BASH="${SEAM_BASH}.exe"
+command -v cygpath >/dev/null 2>&1 && SEAM_BASH="$(cygpath -m "$SEAM_BASH")"
+SEAM_GH="\"$SEAM_BASH\" \"$TMP/mock/gh\""
+
+# Form pin, asserted where CI runs: a bare-name regression here cannot
+# diverge behaviorally on POSIX (any PATH bash works), so pin the FORM the
+# Windows spawn depends on — the seam's program token must be absolute.
+case "$SEAM_BASH" in
+  /*|[A-Za-z]:/*) echo "PASS (form): seam bash path is absolute -> pin holds" ;;
+  *) echo "FAIL (form): seam bash '$SEAM_BASH' not absolute -> CreateProcess would search System32 (WSL launcher) first"
+     fails=$((fails + 1)) ;;
+esac
 
 expect() { # expect <rc> <label> <command> [cwd]
   local want="$1" label="$2" cmd="$3" dir="${4:-$HERE/..}"
   ( cd "$dir" && emit "$cmd" | env -u CLAUDE_PROJECT_DIR \
-      PATH="$TMP/bin:$PATH" MOCK_PRS="${MOCK_PRS:-[]}" \
-      MOCK_GH_RC="${MOCK_GH_RC:-0}" bash "$HOOK" >/dev/null 2>&1 )
+      PATH="$TMP/bin:$PATH" GUARD_GH_BIN="$SEAM_GH" \
+      MOCK_PRS="${MOCK_PRS:-[]}" MOCK_GH_RC="${MOCK_GH_RC:-0}" \
+      bash "$HOOK" >/dev/null 2>&1 )
   local rc=$?
   if [ "$rc" -eq "$want" ]; then echo "PASS (rc=$rc): $label"
   else echo "FAIL (rc=$rc, want $want): $label"; fails=$((fails + 1)); fi

@@ -30,7 +30,12 @@ Promote `development` into `main` as a release. Canonical path:
    bodies): on a main-default repo these lines are what actually closes
    them; on a dev-default repo they are a harmless manifest. Confirm the
    required checks (`flow-guard`, `release-gate`, `issue-link-guard`,
-   `build`) are green.
+   `build`) are green. If `issue-link-guard` passed on a **waiver** (a
+   `::warning::` run, not a merits pass), the PR body must name each
+   waived finding with its **true** reason: the guard announces every
+   `Skip-Issue-Link-Guard` trailer in range but cannot match a trailer
+   to a finding — a promotion range can hold stale trailers arguing
+   findings that no longer exist — so the body states the match.
 5. **Operator steps — never the agent's:** merge the promotion PR (never
    self-merge), then cut the annotated tag on the **`main` merge commit**
    (never a branch tip — see `docs/process/release-checklist.md` →
