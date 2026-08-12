@@ -27,6 +27,7 @@ every scripts/test_* file into the verify recipe).
 """
 
 import os
+import posixpath
 import re
 import shlex
 import sys
@@ -120,7 +121,7 @@ def main():
         return fails
 
     # --- unit tests against the pinned region --------------------------
-    ns = {"os": os, "re": re, "shlex": shlex}
+    ns = {"os": os, "posixpath": posixpath, "re": re, "shlex": shlex}
     exec(compile(ref, "shared-guard-parser", "exec"), ns)
     split_commands = ns["split_commands"]
     _lex = ns["_lex"]
@@ -225,19 +226,24 @@ def main():
     check(cmds('echo "a $(echo hi) b"')[0][0] == "echo",
           "dqs: a benign $(...) still parses without error")
 
-    # cd context tracking across && / ; lists
+    # cd context tracking across && / ; lists. These are POSIX shell paths, so
+    # the expected values are '/'-separated LITERALS, never os.path.join — on
+    # Windows os.path.join would emit '\' and (Python 3.13) os.path.isabs
+    # would misjudge '/abs', but advance_cd/combine_chdir use posixpath and so
+    # return the same '/'-separated result on every platform. Asserting the
+    # literal is what pins that platform-independence.
     advance_cd = ns["advance_cd"]
     combine_chdir = ns["combine_chdir"]
     check(advance_cd("", ["cd", "docs/decisions"]) == "docs/decisions",
-          "cd: advance into a relative dir")
-    check(advance_cd("docs", ["cd", "decisions"]) == os.path.join("docs", "decisions"),
-          "cd: advance accumulates")
+          "cd: advance into a relative dir (POSIX separators on every OS)")
+    check(advance_cd("docs", ["cd", "decisions"]) == "docs/decisions",
+          "cd: advance accumulates (POSIX separators on every OS)")
     check(advance_cd("docs", ["git", "status"]) == "docs",
           "cd: a non-cd command leaves the context unchanged")
     check(advance_cd("docs", ["cd", "/abs"]) is None,
-          "cd: an absolute cd makes the context unknowable (None)")
-    check(combine_chdir("docs", "sub") == os.path.join("docs", "sub"),
-          "cd: combine running-cd with a -C value")
+          "cd: an absolute /abs cd makes the context unknowable (None)")
+    check(combine_chdir("docs", "sub") == "docs/sub",
+          "cd: combine running-cd with a -C value (POSIX separators)")
     check(combine_chdir("", None) is None and combine_chdir(None, None) is None,
           "cd: empty/none context combines to None (start cwd)")
 

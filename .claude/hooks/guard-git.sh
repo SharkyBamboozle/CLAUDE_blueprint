@@ -52,7 +52,7 @@ set -uo pipefail
 INPUT=$(cat 2>/dev/null || true)
 
 python3 - "$INPUT" <<'PY'
-import json, os, re, shlex, subprocess, sys
+import json, os, posixpath, re, shlex, subprocess, sys
 
 try:
     data = json.loads(sys.argv[1])
@@ -524,27 +524,34 @@ def advance_cd(run_cd, tokens):
     # models sequential `&&`/`;`; a cd inside a ( ) subshell does not persist
     # in a real shell — a documented imprecision, and only ever toward
     # MORE matching.
+    #
+    # These are POSIX SHELL paths (always '/'-separated), so they are joined
+    # and normalized with `posixpath`, NEVER `os.path`: on Windows os.path is
+    # ntpath, which would emit '\'-separated output and (Python 3.13) stop
+    # treating a rooted '/abs' as absolute — both platform quirks, neither
+    # correct for a shell path. posixpath is identical to os.path on POSIX.
     if not tokens or prog_name(tokens[0]) != "cd":
         return run_cd
     args = [t for t in tokens[1:] if not t.startswith("-")]
     if not args:
         return None  # `cd` with no arg -> HOME, unknowable
     tgt = args[0]
-    if tgt == "-" or os.path.isabs(tgt) or tgt.startswith("~"):
+    if tgt == "-" or posixpath.isabs(tgt) or tgt.startswith("~"):
         return None
     base = run_cd or ""
-    return os.path.normpath(os.path.join(base, tgt)) if base \
-        else os.path.normpath(tgt)
+    return posixpath.normpath(posixpath.join(base, tgt)) if base \
+        else posixpath.normpath(tgt)
 
 def combine_chdir(run_cd, chdir):
     # Merge the running `cd` context with a command's own `git -C` value into
-    # one directory. None run_cd (unknown) = the start cwd.
+    # one directory. None run_cd (unknown) = the start cwd. POSIX shell paths
+    # -> posixpath (see advance_cd on why not os.path).
     parts = [p for p in (run_cd, chdir) if p]
     if not parts:
         return None
     d = parts[0]
     for p in parts[1:]:
-        d = p if os.path.isabs(p) else os.path.join(d, p)
+        d = p if posixpath.isabs(p) else posixpath.join(d, p)
     return d
 
 # ---8<--- end shared guard command-parser

@@ -19,12 +19,22 @@ emit() { # emit <command> -> PreToolUse JSON on stdout
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+# The hook opens `@file`/`--input` bodies with ITS python, which on Windows is
+# often a native python invoked from MSYS bash — it cannot open the MSYS
+# `/tmp/...` path this suite creates, and would fail closed (block) on a body
+# the test means to be readable. cygpath -m renders the C:/-mixed form both
+# MSYS bash and a Windows python resolve to the same file; a no-op off MSYS.
+winpath(){ if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi; }
+
 # GraphQL body fixtures for the `-F query=@file` self-merge cases: gh reads
 # a field value of the form '@file' from disk, so a merge mutation can hide
 # in a file the raw tokens never contain.
 MERGE_GQL="$TMP/merge.graphql"; PLAIN_GQL="$TMP/plain.graphql"
 printf 'mutation { mergePullRequest(input:{pullRequestId:"PR_x"}) { pullRequest { number } } }\n' >"$MERGE_GQL"
 printf 'query { viewer { login } }\n' >"$PLAIN_GQL"
+# Pass the hook a path its interpreter can open (see winpath); the files stay
+# where bash created them.
+MERGE_GQL="$(winpath "$MERGE_GQL")"; PLAIN_GQL="$(winpath "$PLAIN_GQL")"
 
 # Hermetic gh for the zombie-push check: the hook's `gh pr list` gets
 # $MOCK_PRS (JSON array; default: no PR history) at rc $MOCK_GH_RC — so the
