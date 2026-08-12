@@ -9,6 +9,17 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 HOOK="$HERE/../.claude/hooks/guard-issue-close.sh"
 fails=0
 
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+# --input body fixtures: the hook inspects the FILE, never the flag alone.
+printf '{"state":"closed","state_reason":"completed"}\n' >"$TMP/close.json"
+printf '{"title":"renamed"}\n' >"$TMP/title.json"
+printf '{"query":"mutation { closeIssue(input:{issueId:\\"I_x\\"}) { issue { number } } }"}\n' \
+  >"$TMP/close-mutation.json"
+printf 'closed\n' >"$TMP/statefile"                     # -F state=@file value
+printf 'mutation { closeIssue(input:{issueId:"I_x"}) { clientMutationId } }\n' \
+  >"$TMP/close-mutation-gql"                             # -F query=@file value
+
 J() { python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"; }
 
 expect() { # expect <rc> <label> <tool_name> <tool_input_json>
@@ -17,6 +28,20 @@ expect() { # expect <rc> <label> <tool_name> <tool_input_json>
   local rc=$?
   if [ "$rc" -eq "$1" ]; then echo "PASS (rc=$rc): $2"
   else echo "FAIL (rc=$rc, want $1): $2"; fails=$((fails + 1)); fi
+}
+
+# The definite-close and inconclusive-body blocks carry DIFFERENT messages;
+# assert which one fired so the two paths can't silently swap.
+expect_msg() { # expect_msg <rc> <stderr-snippet> <label> <tool_name> <tool_input_json>
+  local err rc
+  err="$(printf '{"tool_name":%s,"tool_input":%s}' "$(J "$4")" "$5" \
+    | bash "$HOOK" 2>&1 >/dev/null)"
+  rc=$?
+  if [ "$rc" -eq "$1" ] && printf '%s' "$err" | grep -qF "$2"; then
+    echo "PASS (rc=$rc, msg ok): $3"
+  else
+    echo "FAIL (rc=$rc, want $1 + '$2'): $3"; fails=$((fails + 1))
+  fi
 }
 
 # ---- deny side: MCP layer ---------------------------------------------
@@ -45,6 +70,52 @@ expect 2 "gh api graphql closeIssue mutation -> blocked" \
 expect 2 "gh api graphql deleteIssue mutation -> blocked" \
   Bash "{\"command\":$(J 'gh api graphql -f query="mutation { deleteIssue(input:{issueId:\"I_x\"}) { repository { name } } }"')}"
 
+# ---- deny side: hardened parsing (global flags, subshells, newlines) ---
+expect 2 "gh -R flag before issue close -> blocked" \
+  Bash "{\"command\":$(J 'gh -R o/r issue close 5')}"
+expect 2 "gh --repo flag before issue close -> blocked" \
+  Bash "{\"command\":$(J 'gh --repo o/r issue close 5')}"
+expect 2 "(gh issue close 5) subshell -> blocked" \
+  Bash "{\"command\":$(J '(gh issue close 5)')}"
+expect 2 "newline-joined issue close -> blocked" \
+  Bash "{\"command\":$(J "$(printf 'gh issue list\ngh issue close 5')")}"
+expect 2 "issue close with trailing comment -> blocked" \
+  Bash "{\"command\":$(J 'gh issue close 5 # done')}"
+expect 2 "absolute-path gh issue close -> blocked" \
+  Bash "{\"command\":$(J '/usr/bin/gh issue close 5')}"
+expect 2 "top-level backtick gh issue close -> blocked" \
+  Bash "{\"command\":$(J '`gh issue close 5`')}"
+expect 2 "attached -fstate=closed spelling -> blocked" \
+  Bash "{\"command\":$(J 'gh api repos/o/r/issues/12 -fstate=closed')}"
+expect 2 "--field=state=closed spelling -> blocked" \
+  Bash "{\"command\":$(J 'gh api repos/o/r/issues/12 --field=state=closed')}"
+expect_msg 2 "operator-only" "--input body that sets state=closed -> blocked" \
+  Bash "{\"command\":$(J "gh api -X PATCH repos/o/r/issues/12 --input $TMP/close.json")}"
+expect 2 "graphql closeIssue via --input body -> blocked" \
+  Bash "{\"command\":$(J "gh api graphql --input $TMP/close-mutation.json")}"
+expect_msg 2 "inconclusive body" "unreadable --input on closeable endpoint -> blocked (fail closed)" \
+  Bash "{\"command\":$(J "gh api -X PATCH repos/o/r/issues/12 --input $TMP/no-such-file.json")}"
+expect_msg 2 "inconclusive body" "--input - (stdin) on closeable endpoint -> blocked (fail closed)" \
+  Bash "{\"command\":$(J 'gh api -X PATCH repos/o/r/issues/12 --input -')}"
+expect 2 "full-URL issue endpoint + -f state=closed -> blocked (URL normalized)" \
+  Bash "{\"command\":$(J 'gh api https://api.github.com/repos/o/r/issues/12 -X PATCH -f state=closed')}"
+expect 2 "full-URL issue endpoint + --input close body -> blocked" \
+  Bash "{\"command\":$(J "gh api https://api.github.com/repos/o/r/issues/12 -X PATCH --input $TMP/close.json")}"
+expect 2 "GHES /api/v3 issue endpoint + state=closed -> blocked (prefix normalized)" \
+  Bash "{\"command\":$(J 'gh api https://ghe.example.com/api/v3/repos/o/r/issues/12 -X PATCH -f state=closed')}"
+expect 2 "-F state=@file (file contains 'closed') -> blocked" \
+  Bash "{\"command\":$(J "gh api -X PATCH repos/o/r/issues/12 -F state=@$TMP/statefile")}"
+expect 2 "full-URL graphql + inline closeIssue -> blocked (URL normalized)" \
+  Bash "{\"command\":$(J 'gh api https://api.github.com/graphql -f query="mutation{closeIssue(input:{issueId:\"I_x\"}){clientMutationId}}"')}"
+expect 2 "graphql -F query=@file (closeIssue in file) -> blocked" \
+  Bash "{\"command\":$(J "gh api graphql -F query=@$TMP/close-mutation-gql")}"
+expect 2 "graphql updateIssue(state:CLOSED) mutation -> blocked" \
+  Bash "{\"command\":$(J 'gh api graphql -f query="mutation { updateIssue(input:{id:\"I_x\", state:CLOSED}){issue{number}} }"')}"
+expect 2 "graphql updateIssue with CLOSED via a variable field -> blocked" \
+  Bash "{\"command\":$(J 'gh api graphql -f query="mutation($s:IssueState!){updateIssue(input:{id:\"I_x\",state:$s}){issue{id}}}" -f s=CLOSED')}"
+expect 2 "gh api --cache <dur> then state=closed -> blocked (value flag consumed)" \
+  Bash "{\"command\":$(J 'gh api --cache 5m repos/o/r/issues/12 -X PATCH -f state=closed')}"
+
 # ---- allow side (anti-over-tighten) -----------------------------------
 expect 0 "MCP issue_write create (no state) -> allowed" \
   mcp__github__issue_write '{"method":"create","owner":"o","repo":"r","title":"t","body":"b"}'
@@ -66,8 +137,28 @@ expect 0 "gh api title-only PATCH -> allowed" \
   Bash "{\"command\":$(J 'gh api -X PATCH repos/o/r/issues/12 -f title="new"')}"
 expect 0 "gh api reopen (state=open) -> allowed" \
   Bash "{\"command\":$(J 'gh api -X PATCH repos/o/r/issues/12 -f state=open')}"
+expect 0 "graphql updateIssue(state:OPEN) reopen -> allowed" \
+  Bash "{\"command\":$(J 'gh api graphql -f query="mutation { updateIssue(input:{id:\"I_x\", state:OPEN}){issue{number}} }"')}"
+expect 0 "graphql READ query filtering states:CLOSED -> allowed (not a mutation)" \
+  Bash "{\"command\":$(J 'gh api graphql -f query="query { repository(owner:\"o\",name:\"r\"){ issues(states:CLOSED){ nodes{ number } } } }"')}"
+expect 0 "gh api --cache <dur> read (no state field) -> allowed (endpoint not shifted)" \
+  Bash "{\"command\":$(J 'gh api --cache 5m repos/o/r/issues/12')}"
 expect 0 "gh pr close (a PR, not an issue) -> allowed" \
   Bash "{\"command\":$(J 'gh pr close 7 --comment "superseded"')}"
+expect 0 "gh -R flag before issue view -> allowed (partner)" \
+  Bash "{\"command\":$(J 'gh -R o/r issue view 5')}"
+expect 0 "(gh issue view 5) subshell -> allowed (partner)" \
+  Bash "{\"command\":$(J '(gh issue view 5)')}"
+expect 0 "commented-out issue close -> allowed (word-boundary comment)" \
+  Bash "{\"command\":$(J 'echo hi # gh issue close 5')}"
+expect 0 "body field merely CONTAINING state=closed text -> allowed" \
+  Bash "{\"command\":$(J 'gh api -X PATCH repos/o/r/issues/12 -f body="reached state=closed today"')}"
+expect 0 "--input body without close -> allowed (file inspected, flag not blocked)" \
+  Bash "{\"command\":$(J "gh api -X PATCH repos/o/r/issues/12 --input $TMP/title.json")}"
+expect 0 "-F body=@file (issue body edit, not a close) -> allowed" \
+  Bash "{\"command\":$(J "gh api -X PATCH repos/o/r/issues/12 -F body=@$TMP/title.json")}"
+expect 0 "/comments endpoint with close-shaped --input -> allowed (never close-capable)" \
+  Bash "{\"command\":$(J "gh api repos/o/r/issues/12/comments --input $TMP/close.json")}"
 expect 0 "plain git work -> allowed" \
   Bash "{\"command\":$(J 'git add -u && git commit -m x && git push -u origin b')}"
 expect 0 "Edit tool (not this guard's concern) -> allowed" \

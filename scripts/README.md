@@ -16,5 +16,6 @@ module), not here.
 | `adr_unlock_decision.sh` | The ADR-lock decision logic (extracted from `adr-gates.yml` so it is hermetically testable): every path to a `✅ Decided` page — create-as-Decided, promote, edit, delete, rename — must carry an `Unlock-ADR:` trailer. Called by the workflow. |
 | `test_guard_git.sh` | Regression suite for the `guard-git.sh` hook — asserts both the blocked and the still-allowed cases. Runs in `make verify`. |
 | `test_guard_adr.sh` | Regression suite for the `guard-adr.sh` hook — asserts both the blocked and the still-allowed cases. Runs in `make verify`. |
+| `test_guardlib.py` | Pin + unit suite for the shared guard command-parser embedded (deliberately triplicated) in the three guard hooks: 3-way byte-identity of the marked region, python-syntax compile of each hook's heredoc (`bash -n` can't see python), and parser unit tests including the fail-open contract. Runs in `make verify`. |
 | `test_branch_flow_guard.sh` | Regression suite for `branch_flow_decision.sh` (mocked `gh`, both-ways). Runs in `make verify`. |
 | `test_adr_unlock_decision.sh` | Regression suite for `adr_unlock_decision.sh` (fixture git repos, both-ways across all five Decided paths). Runs in `make verify`. |
