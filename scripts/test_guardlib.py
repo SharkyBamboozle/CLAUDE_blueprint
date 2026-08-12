@@ -193,8 +193,13 @@ def main():
     expand_braces = ns["expand_braces"]
     check(set(expand_braces("x{a,b,c}y")) == {"xay", "xby", "xcy"},
           "brace: three-way comma-list")
-    check(len(expand_braces("{a,b}{c,d}{e,f}{g,h}", cap=8)) <= 8,
-          "brace: expansion is capped (no blowup)")
+    # On overflow the partial set is capped and the ORIGINAL braced token is
+    # appended (so scope-based guards still see the '{' rather than a silently
+    # truncated, brace-free list) — length is bounded by cap+1, and the
+    # original token is present.
+    _capped = expand_braces("{a,b}{c,d}{e,f}{g,h}", cap=8)
+    check(len(_capped) <= 9 and "{a,b}{c,d}{e,f}{g,h}" in _capped,
+          "brace: overflow is capped AND retains the original braced token")
     check(cmds("git rm adr-{0001..0003}.md") ==
           [["git", "rm", "adr-0001.md", "adr-0002.md", "adr-0003.md"]],
           "brace: numeric range with zero-pad width preserved")
@@ -210,6 +215,15 @@ def main():
           "backtick: `...` inside \"...\" surfaces the substituted command")
     check(cmds('echo "plain text"') == [["echo", "plain text"]],
           "backtick: a plain double-quoted string is untouched")
+    # double-quoted $(...) command substitution, with paren-depth tracking
+    check(any(c[:4] == ["git", "push", "origin", "main"]
+              for c in cmds('echo "$(git push origin main)"')),
+          "dqs: $(...) inside \"...\" surfaces the substituted command")
+    check(any(c[:2] == ["git", "status"]
+              for c in cmds('echo "wrap $(git status) end"')),
+          "dqs: nested-paren body closes at the matching ')' only")
+    check(cmds('echo "a $(echo hi) b"')[0][0] == "echo",
+          "dqs: a benign $(...) still parses without error")
 
     # cd context tracking across && / ; lists
     advance_cd = ns["advance_cd"]

@@ -34,10 +34,13 @@
 # dirs; `git add --pathspec-from-file` contents are not inspected; and — per
 # the issue's explicit non-scope — nested interpreters (`sh -c '<cmd>'`,
 # `eval`, `bash -c`), string-built/base64 obfuscation, and command-name
-# wrappers are NOT unwrapped: branch protection, the repo-hygiene / CI gates,
-# and the session-start PR verdict (D-004) are the layered net for that tail.
-# `cd <dir> && …` context is tracked for sequential `&&`/`;` lists but not
-# for a cd inside a ( ) subshell.
+# wrappers (`env`, `xargs`, `find -delete`) are NOT unwrapped: branch
+# protection, the repo-hygiene / CI gates, and the session-start PR verdict
+# (D-004) are the layered net for that tail. Command substitutions ARE
+# surfaced (top-level and inside "..", both `...` and $(..)); a `cd` inside a
+# ( ) subshell does not persist in a real shell, and the guards that resolve
+# paths (guard-adr) check both the cd-context AND the no-cd baseline so a
+# leaked subshell-cd can only ADD coverage, never cause a miss.
 #
 # Every block message says WHAT TO DO INSTEAD — a blocked agent with no
 # alternative starts improvising workarounds.
@@ -92,15 +95,16 @@ _OP_CHARS = frozenset("();<>|&")
 def _presplit(cmd):
     # Quote-aware pre-pass: strip word-boundary comments, drop
     # backslash-newline line continuations, turn unquoted newlines into ';',
-    # and turn a top-level (unquoted) backtick into ';' so a
-    # `...`-substituted command surfaces as its own command. Backticks
-    # INSIDE double quotes are still command substitution in the shell but
-    # are left literal here — a documented residual (splitting them would
-    # need to re-open the quote context); double-quoted backtick evasion is
-    # backstopped by branch protection + CI.
+    # and surface command substitutions so a hidden git/gh becomes its own
+    # command — a top-level (unquoted) backtick becomes ';', and a
+    # substitution INSIDE double quotes (`...` via the 'bq' state, $(...) via
+    # the depth-tracked 'dqs' state) closes the quote, breaks the command,
+    # lexes the body bare, and reopens the quote at the close. (An unquoted
+    # $(...) is already split by the '(' / ')' operator chars.)
     out = []
-    state = ""       # '', "'", '"', 'bq' (backtick substitution in a "..")
+    state = ""       # '', "'", '"', 'bq'/'dqs' (`..`/$(..) subst in a "..")
     boundary = True  # at a word boundary (start / after whitespace/operator)
+    dqs_depth = 0    # paren depth inside a double-quoted $( ) substitution
     i, n = 0, len(cmd)
     while i < n:
         c = cmd[i]
@@ -116,6 +120,18 @@ def _presplit(cmd):
                     continue
                 out.append(c)
                 out.append(cmd[i + 1])
+                i += 2
+                continue
+            if c == "$" and i + 1 < n and cmd[i + 1] == "(":
+                # $(...) inside "..." is command substitution: close the
+                # quote, break the command, and lex the body bare (tracking
+                # paren depth) so a hidden git/gh surfaces; the matching ')'
+                # reopens the quote.
+                out.append('"')
+                out.append(";")
+                state = "dqs"
+                dqs_depth = 1
+                boundary = True
                 i += 2
                 continue
             if c == "`":
@@ -144,6 +160,34 @@ def _presplit(cmd):
                 out.append('"')
                 state = '"'
                 boundary = False
+                i += 1
+                continue
+            out.append(c)
+            boundary = c in " \t\r" or c in _OP_CHARS
+            i += 1
+        elif state == "dqs":
+            if c == "\\" and i + 1 < n:
+                out.append(c)
+                out.append(cmd[i + 1])
+                boundary = False
+                i += 2
+                continue
+            if c == "(":
+                dqs_depth += 1
+                out.append(c)
+                boundary = True
+                i += 1
+                continue
+            if c == ")":
+                dqs_depth -= 1
+                if dqs_depth == 0:
+                    out.append(";")
+                    out.append('"')
+                    state = '"'
+                    boundary = False
+                else:
+                    out.append(c)
+                    boundary = True
                 i += 1
                 continue
             out.append(c)
@@ -256,7 +300,11 @@ def expand_braces(token, cap=64):
     # `{m..n}` ranges, so every real path a command would touch is surfaced
     # to the matchers. Quoting is not tracked here (lost at lex) — expanding
     # a quoted brace only ADDS candidate paths, i.e. matches MORE, the safe
-    # direction. Bounded by `cap`.
+    # direction. Bounded by `cap`; on overflow the partial set is returned
+    # WITH the original braced token appended, so a scope-based guard
+    # (guard-adr's rm_scope keys on '{') still sees the '{' and scans the
+    # dropped tail rather than silently missing it — a truncated expansion
+    # must never read as "fully enumerated".
     results, changed = [token], True
     while changed:
         changed = False
@@ -269,7 +317,7 @@ def expand_braces(token, cap=64):
                 out.extend(exp)
                 changed = True
             if len(out) >= cap:
-                return out[:cap]
+                return out[:cap] + [token]
         results = out
     return results
 
@@ -776,14 +824,30 @@ def _cluster_shorts(flag):
         active.add(ch)
     return active
 
-def _long_abbrev_of(flag, full):
+def _long_abbrev_of(flag, full, min_len):
     # True when `flag` (its name, before any '=') is a git-accepted
-    # abbreviation of the long option `full` — any prefix of `full` at least
-    # as long as `min_len`. git resolves unambiguous prefixes to the full
-    # option, so `--force-with-lea` == `--force-with-lease`.
+    # abbreviation of the long option `full`: a prefix of `full` at least
+    # `min_len` chars long (the shortest UNAMBIGUOUS prefix among git push's
+    # options). git resolves unambiguous prefixes to the full option, so
+    # `--force-with-lea` == `--force-with-lease`, `--dry` == `--dry-run`.
     name = flag.split("=", 1)[0]
-    return name.startswith("--") and len(name) >= 9 \
+    return name.startswith("--") and len(name) >= min_len \
         and full.startswith(name)
+
+def _is_dry_run(flag):
+    # --dry-run and its abbreviations (--dry, --dr — '--d' is ambiguous with
+    # --delete). Abbreviation-aware so the ALLOW path matches the block path.
+    return _long_abbrev_of(flag, "--dry-run", 4)
+
+def _is_tags(flag):
+    # --tags and its abbreviations (--tag, --ta — '--t' is ambiguous with
+    # --thin).
+    return _long_abbrev_of(flag, "--tags", 4)
+
+def _is_delete(flag):
+    # --delete and its abbreviations (--de … --delete — '--d' is ambiguous
+    # with --dry-run). Keeps the delete guard abbreviation-aware like force.
+    return _long_abbrev_of(flag, "--delete", 4)
 
 def _is_broad_push(flag):
     # --all/--branches/--mirror push every branch (main included). git
@@ -803,7 +867,7 @@ def _is_force_flag(flag):
     # (--force-w … --force-with-lease). '--force-if-includes' is a lease
     # modifier, not a force by itself, and is not matched here.
     name = flag.split("=", 1)[0]
-    return name == "--force" or _long_abbrev_of(flag, "--force-with-lease")
+    return name == "--force" or _long_abbrev_of(flag, "--force-with-lease", 9)
 
 def check_git_push(args, chdir):
     flags, positional = split_flags(args, _PUSH_VALUE_OPTS)
@@ -811,12 +875,15 @@ def check_git_push(args, chdir):
         if flags else set()
     # A --dry-run (or -n) push transmits NOTHING — it cannot violate any
     # hard rule, so it is always allowed (blocking it is a pure false-block).
-    if "--dry-run" in flags or "n" in cluster_shorts:
+    # Abbreviation-aware (--dry, --dr) so the ALLOW path recognizes the same
+    # option spellings the block paths do (round-4 taught the block flags
+    # abbreviations; the allow flags must keep pace or they false-block).
+    if any(_is_dry_run(f) for f in flags) or "n" in cluster_shorts:
         return
     # Remote branch deletion: --delete/-d (bundled too, e.g. -qd), or a :dst
     # (empty source) refspec. Guarded regardless of branch — the hook can't
     # verify session-authorship, so it defers to the user.
-    if "d" in cluster_shorts or "--delete" in flags or \
+    if "d" in cluster_shorts or any(_is_delete(f) for f in flags) or \
        any(p.lstrip("+").startswith(":") for p in positional):
         block(DELETE_MSG)
     cur = current_branch(chdir)
@@ -839,7 +906,7 @@ def check_git_push(args, chdir):
     explicit_nonmain = any(
         norm_branch(a, cur) not in ("main", "master") for a in refspecs
     )
-    tags_only = "--tags" in flags
+    tags_only = any(_is_tags(f) for f in flags)  # --tags and abbreviations
     implicit_to_main = (cur in ("main", "master")
                         and not explicit_nonmain and not tags_only)
     if (targets_main or implicit_to_main) and not push_to_main_is_birth(chdir):

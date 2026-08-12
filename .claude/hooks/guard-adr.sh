@@ -76,15 +76,16 @@ _OP_CHARS = frozenset("();<>|&")
 def _presplit(cmd):
     # Quote-aware pre-pass: strip word-boundary comments, drop
     # backslash-newline line continuations, turn unquoted newlines into ';',
-    # and turn a top-level (unquoted) backtick into ';' so a
-    # `...`-substituted command surfaces as its own command. Backticks
-    # INSIDE double quotes are still command substitution in the shell but
-    # are left literal here — a documented residual (splitting them would
-    # need to re-open the quote context); double-quoted backtick evasion is
-    # backstopped by branch protection + CI.
+    # and surface command substitutions so a hidden git/gh becomes its own
+    # command — a top-level (unquoted) backtick becomes ';', and a
+    # substitution INSIDE double quotes (`...` via the 'bq' state, $(...) via
+    # the depth-tracked 'dqs' state) closes the quote, breaks the command,
+    # lexes the body bare, and reopens the quote at the close. (An unquoted
+    # $(...) is already split by the '(' / ')' operator chars.)
     out = []
-    state = ""       # '', "'", '"', 'bq' (backtick substitution in a "..")
+    state = ""       # '', "'", '"', 'bq'/'dqs' (`..`/$(..) subst in a "..")
     boundary = True  # at a word boundary (start / after whitespace/operator)
+    dqs_depth = 0    # paren depth inside a double-quoted $( ) substitution
     i, n = 0, len(cmd)
     while i < n:
         c = cmd[i]
@@ -100,6 +101,18 @@ def _presplit(cmd):
                     continue
                 out.append(c)
                 out.append(cmd[i + 1])
+                i += 2
+                continue
+            if c == "$" and i + 1 < n and cmd[i + 1] == "(":
+                # $(...) inside "..." is command substitution: close the
+                # quote, break the command, and lex the body bare (tracking
+                # paren depth) so a hidden git/gh surfaces; the matching ')'
+                # reopens the quote.
+                out.append('"')
+                out.append(";")
+                state = "dqs"
+                dqs_depth = 1
+                boundary = True
                 i += 2
                 continue
             if c == "`":
@@ -128,6 +141,34 @@ def _presplit(cmd):
                 out.append('"')
                 state = '"'
                 boundary = False
+                i += 1
+                continue
+            out.append(c)
+            boundary = c in " \t\r" or c in _OP_CHARS
+            i += 1
+        elif state == "dqs":
+            if c == "\\" and i + 1 < n:
+                out.append(c)
+                out.append(cmd[i + 1])
+                boundary = False
+                i += 2
+                continue
+            if c == "(":
+                dqs_depth += 1
+                out.append(c)
+                boundary = True
+                i += 1
+                continue
+            if c == ")":
+                dqs_depth -= 1
+                if dqs_depth == 0:
+                    out.append(";")
+                    out.append('"')
+                    state = '"'
+                    boundary = False
+                else:
+                    out.append(c)
+                    boundary = True
                 i += 1
                 continue
             out.append(c)
@@ -240,7 +281,11 @@ def expand_braces(token, cap=64):
     # `{m..n}` ranges, so every real path a command would touch is surfaced
     # to the matchers. Quoting is not tracked here (lost at lex) — expanding
     # a quoted brace only ADDS candidate paths, i.e. matches MORE, the safe
-    # direction. Bounded by `cap`.
+    # direction. Bounded by `cap`; on overflow the partial set is returned
+    # WITH the original braced token appended, so a scope-based guard
+    # (guard-adr's rm_scope keys on '{') still sees the '{' and scans the
+    # dropped tail rather than silently missing it — a truncated expansion
+    # must never read as "fully enumerated".
     results, changed = [token], True
     while changed:
         changed = False
@@ -253,7 +298,7 @@ def expand_braces(token, cap=64):
                 out.extend(exp)
                 changed = True
             if len(out) >= cap:
-                return out[:cap]
+                return out[:cap] + [token]
         results = out
     return results
 
@@ -588,7 +633,7 @@ def _glob_scope(rel):
     # scoped to itself (which holds no ADRs) rather than over-blocking.
     keep = []
     for seg in rel.split("/"):
-        if any(c in seg for c in "*?["):
+        if any(c in seg for c in "*?[{"):
             if not keep:
                 return "." if fnmatch.fnmatch(ADR_TOP, seg) else rel
             break
@@ -614,7 +659,12 @@ def rm_scope(arg, chdir):
     if chdir and not from_root and not os.path.isabs(path):
         path = os.path.join(chdir, path)
     rel = norm_rel(path)
-    if any(c in norm for c in "*?["):
+    # '{' is treated like a glob char here so a brace token the shared
+    # expander could not FULLY enumerate (a large/over-cap range left literal,
+    # or a truncated expansion that re-appends the original) still scopes to
+    # its brace-free prefix and scans for a Decided ADR — a truncated
+    # expansion must never read as "nothing to remove here".
+    if any(c in norm for c in "*?[{"):
         if from_root and "/" not in norm.lstrip("/"):
             return "."  # a root-anchored bare glob (':/*') = whole tree
         return _glob_scope(rel)
@@ -645,29 +695,38 @@ def decided_adrs_under(rel):
             out.append(r)
     return out
 
-def check_removal(positional, chdir, is_move):
+def check_removal(positional, chdirs, is_move):
+    # `chdirs` is the SET of base directories the targets might resolve
+    # against — the running `cd` context AND the fallback where that cd did
+    # NOT persist (e.g. a cd inside a ( ) subshell, whose effect a real shell
+    # discards). A target is gated if it resolves to a Decided ADR under ANY
+    # candidate: the cd-context catches `cd docs/decisions && rm <bare>`, the
+    # fallback catches `(cd sub); rm docs/decisions/<adr>` — so cd-tracking
+    # can never MISS relative to the no-cd baseline, only add coverage.
     action = "renaming/moving" if is_move else "deleting"
     # File-level check runs over EVERY argument — for mv that includes the
     # destination, so overwriting a Decided ADR via `mv other.md
     # docs/decisions/adr-....md` stays gated.
     for a in positional:
-        rel = resolve_target(a, chdir)
-        if is_adr(rel) and on_disk_decided(rel):
-            short = adr_short(rel)
-            if not (short and fresh_token(short)):
-                block(rel, short, action)
+        for chdir in chdirs:
+            rel = resolve_target(a, chdir)
+            if is_adr(rel) and on_disk_decided(rel):
+                short = adr_short(rel)
+                if not (short and fresh_token(short)):
+                    block(rel, short, action)
     # Parent-directory check runs over the SOURCES only (moving a file INTO
     # docs/decisions creates, not destroys): removing or renaming a
     # directory that contains a Decided ADR is gated like touching the ADR.
     sources = positional[:-1] if (is_move and len(positional) > 1) else positional
     for a in sources:
-        scope = rm_scope(a, chdir)
-        if scope is None or is_adr(scope):
-            continue
-        for r in decided_adrs_under(scope):
-            short = adr_short(r)
-            if not (short and fresh_token(short)):
-                block(r, short, action)
+        for chdir in chdirs:
+            scope = rm_scope(a, chdir)
+            if scope is None or is_adr(scope):
+                continue
+            for r in decided_adrs_under(scope):
+                short = adr_short(r)
+                if not (short and fresh_token(short)):
+                    block(r, short, action)
 
 def result_decided(fp_rel, tool, ti):
     # Whether the file WOULD carry a Decided status after this edit — applied
@@ -704,23 +763,35 @@ if tool in ("Edit", "Write", "MultiEdit"):
 elif tool == "Bash":
     cmd = ti.get("command", "") or ""
     run_cd = ""  # working dir relative to the Bash tool's start cwd (repo root)
+
+    def candidate_dirs(git_c):
+        # The base dirs a target might resolve against: the cd-context
+        # (combined with any git -C) AND the fallback where the running cd did
+        # NOT persist (git -C alone, and repo root). Deduped, order-stable.
+        cands, seen = [], set()
+        for d in (combine_chdir(run_cd, git_c), git_c, None):
+            key = d or ""
+            if key not in seen:
+                seen.add(key)
+                cands.append(d)
+        return cands
+
     for tokens in split_commands(cmd):
         run_cd = advance_cd(run_cd, tokens)
         # git rm / git mv — targets resolve against the running `cd` context
-        # combined with any `git -C` directory; --pathspec-from-file's value
-        # is consumed (its CONTENTS are a documented residual — adr-gates CI
-        # is the net there).
+        # combined with any `git -C` directory (and the no-cd fallback);
+        # --pathspec-from-file's value is consumed (its CONTENTS are a
+        # documented residual — adr-gates CI is the net there).
         for sub, args, git_c in git_calls(tokens):
             if sub in ("rm", "mv"):
                 _, positional = split_flags(
                     args, frozenset(("--pathspec-from-file",)))
-                check_removal(positional, combine_chdir(run_cd, git_c),
-                              sub == "mv")
+                check_removal(positional, candidate_dirs(git_c), sub == "mv")
         # Plain coreutils `rm`/`mv` reach the same working-tree file — the
         # lock protects the DECISION, not the `git` spelling of the deletion.
         if tokens and prog_name(tokens[0]) in ("rm", "mv"):
             _, positional = split_flags(tokens[1:], frozenset())
-            check_removal(positional, run_cd or None,
+            check_removal(positional, candidate_dirs(None),
                           prog_name(tokens[0]) == "mv")
 
 sys.exit(0)

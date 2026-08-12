@@ -186,6 +186,13 @@ expect 2 "armed: \$(git push origin main) -> blocked"        '$(git push origin 
 expect 0 "armed: commented-out push -> allowed (word-boundary comment)" "echo hi # git push origin main" "$TMP/armed"
 expect 2 'armed: double-quoted backtick push-to-main -> blocked' 'echo "`git push origin main`"' "$TMP/armed"
 expect 0 'armed: benign double-quoted backtick (git status) -> allowed' 'echo "state `git status`"' "$TMP/armed"
+expect 2 'armed: double-quoted $(...) push-to-main -> blocked' 'echo "$(git push origin main)"' "$TMP/armed"
+expect 2 'armed: assignment $(...) push-to-main -> blocked' 'out=$(git push origin main)' "$TMP/armed"
+expect 0 'armed: benign double-quoted $(...) (git status) -> allowed' 'echo "s $(git status) e"' "$TMP/armed"
+expect 0 "armed: --dry-run push on main -> allowed (transmits nothing)" "git push --dry-run origin main" "$TMP/armed"
+expect 0 "armed: --dry (abbrev) push on main -> allowed (no allow/block abbrev skew)" "git push --dry origin main" "$TMP/armed"
+expect 0 "armed: --tags push -> allowed (branch not pushed)"        "git push --tags origin" "$TMP/armed"
+expect 0 "armed: --tag (abbrev) push -> allowed"                    "git push --tag origin"  "$TMP/armed"
 expect 2 "armed: push with trailing comment -> blocked (partner)" "git push origin main # sync" "$TMP/armed"
 expect 0 "armed: quoted multi-line commit message -> allowed" $'git commit -m "subject\n\nbody mentions push origin main"' "$TMP/armed"
 expect 0 "armed: quoted semicolon + push text in message -> allowed" 'git commit -m "x; git push origin main"' "$TMP/armed"
@@ -231,6 +238,8 @@ expect_msg 2 "never push to main" "armed/feat: --mirror carries main -> blocked"
   "git push --mirror origin" "$TMP/armed"
 expect_msg 2 "remote branch deletion" "armed/feat: -qd bundled cluster -> delete-blocked" \
   "git push -qd origin somebranch" "$TMP/armed"
+expect_msg 2 "remote branch deletion" "armed/feat: --del (abbrev of --delete) -> delete-blocked" \
+  "git push --del origin somebranch" "$TMP/armed"
 expect 0 "armed/feat: branch literally named foo/main -> allowed (no false-block)" \
   "git push origin foo/main" "$TMP/armed"
 expect 0 "armed/feat: --follow-tags non-main -> allowed" \

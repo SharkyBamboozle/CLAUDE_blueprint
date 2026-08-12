@@ -111,8 +111,10 @@ expect 2 "graphql -F query=@file (closeIssue in file) -> blocked" \
   Bash "{\"command\":$(J "gh api graphql -F query=@$TMP/close-mutation-gql")}"
 expect 2 "graphql updateIssue(state:CLOSED) mutation -> blocked" \
   Bash "{\"command\":$(J 'gh api graphql -f query="mutation { updateIssue(input:{id:\"I_x\", state:CLOSED}){issue{number}} }"')}"
-expect 2 "graphql updateIssue with CLOSED via a variable field -> blocked" \
+expect 2 "graphql updateIssue with CLOSED bound to state via a variable -> blocked" \
   Bash "{\"command\":$(J 'gh api graphql -f query="mutation($s:IssueState!){updateIssue(input:{id:\"I_x\",state:$s}){issue{id}}}" -f s=CLOSED')}"
+expect 0 "graphql updateIssue with CLOSED bound to a NON-state field (title) -> allowed" \
+  Bash "{\"command\":$(J 'gh api graphql -f query="mutation($t:String){updateIssue(input:{id:\"I_x\",title:$t}){issue{number}}}" -f t=CLOSED')}"
 expect 2 "gh api --cache <dur> then state=closed -> blocked (value flag consumed)" \
   Bash "{\"command\":$(J 'gh api --cache 5m repos/o/r/issues/12 -X PATCH -f state=closed')}"
 

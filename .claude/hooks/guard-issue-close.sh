@@ -94,15 +94,16 @@ _OP_CHARS = frozenset("();<>|&")
 def _presplit(cmd):
     # Quote-aware pre-pass: strip word-boundary comments, drop
     # backslash-newline line continuations, turn unquoted newlines into ';',
-    # and turn a top-level (unquoted) backtick into ';' so a
-    # `...`-substituted command surfaces as its own command. Backticks
-    # INSIDE double quotes are still command substitution in the shell but
-    # are left literal here — a documented residual (splitting them would
-    # need to re-open the quote context); double-quoted backtick evasion is
-    # backstopped by branch protection + CI.
+    # and surface command substitutions so a hidden git/gh becomes its own
+    # command — a top-level (unquoted) backtick becomes ';', and a
+    # substitution INSIDE double quotes (`...` via the 'bq' state, $(...) via
+    # the depth-tracked 'dqs' state) closes the quote, breaks the command,
+    # lexes the body bare, and reopens the quote at the close. (An unquoted
+    # $(...) is already split by the '(' / ')' operator chars.)
     out = []
-    state = ""       # '', "'", '"', 'bq' (backtick substitution in a "..")
+    state = ""       # '', "'", '"', 'bq'/'dqs' (`..`/$(..) subst in a "..")
     boundary = True  # at a word boundary (start / after whitespace/operator)
+    dqs_depth = 0    # paren depth inside a double-quoted $( ) substitution
     i, n = 0, len(cmd)
     while i < n:
         c = cmd[i]
@@ -118,6 +119,18 @@ def _presplit(cmd):
                     continue
                 out.append(c)
                 out.append(cmd[i + 1])
+                i += 2
+                continue
+            if c == "$" and i + 1 < n and cmd[i + 1] == "(":
+                # $(...) inside "..." is command substitution: close the
+                # quote, break the command, and lex the body bare (tracking
+                # paren depth) so a hidden git/gh surfaces; the matching ')'
+                # reopens the quote.
+                out.append('"')
+                out.append(";")
+                state = "dqs"
+                dqs_depth = 1
+                boundary = True
                 i += 2
                 continue
             if c == "`":
@@ -146,6 +159,34 @@ def _presplit(cmd):
                 out.append('"')
                 state = '"'
                 boundary = False
+                i += 1
+                continue
+            out.append(c)
+            boundary = c in " \t\r" or c in _OP_CHARS
+            i += 1
+        elif state == "dqs":
+            if c == "\\" and i + 1 < n:
+                out.append(c)
+                out.append(cmd[i + 1])
+                boundary = False
+                i += 2
+                continue
+            if c == "(":
+                dqs_depth += 1
+                out.append(c)
+                boundary = True
+                i += 1
+                continue
+            if c == ")":
+                dqs_depth -= 1
+                if dqs_depth == 0:
+                    out.append(";")
+                    out.append('"')
+                    state = '"'
+                    boundary = False
+                else:
+                    out.append(c)
+                    boundary = True
                 i += 1
                 continue
             out.append(c)
@@ -258,7 +299,11 @@ def expand_braces(token, cap=64):
     # `{m..n}` ranges, so every real path a command would touch is surfaced
     # to the matchers. Quoting is not tracked here (lost at lex) — expanding
     # a quoted brace only ADDS candidate paths, i.e. matches MORE, the safe
-    # direction. Bounded by `cap`.
+    # direction. Bounded by `cap`; on overflow the partial set is returned
+    # WITH the original braced token appended, so a scope-based guard
+    # (guard-adr's rm_scope keys on '{') still sees the '{' and scans the
+    # dropped tail rather than silently missing it — a truncated expansion
+    # must never read as "fully enumerated".
     results, changed = [token], True
     while changed:
         changed = False
@@ -271,7 +316,7 @@ def expand_braces(token, cap=64):
                 out.extend(exp)
                 changed = True
             if len(out) >= cap:
-                return out[:cap]
+                return out[:cap] + [token]
         results = out
     return results
 
@@ -662,11 +707,20 @@ elif tool == "Bash":
                     if any(gql_closes(a) for a in raw):
                         block()
                     # updateIssue with the CLOSED enum passed via a GraphQL
-                    # VARIABLE (query says `state:$s`; a field supplies the
-                    # enum value CLOSED) evades the literal-text checks.
-                    if any("updateIssue" in a for a in raw) and \
-                       any(v.partition("=")[2] == "CLOSED" for v in fields):
-                        block()
+                    # VARIABLE (query says `state: $s`; a field supplies the
+                    # enum value CLOSED) evades the literal-text checks. Only
+                    # block when the CLOSED-valued variable is the one BOUND TO
+                    # `state:` — an updateIssue that sets a NON-state field
+                    # (title/body/label) to the literal string 'CLOSED' via a
+                    # variable changes no state and stays allowed.
+                    query_text = " ".join(raw)
+                    if "updateIssue" in query_text:
+                        closed_vars = [v.partition("=")[0] for v in fields
+                                       if v.partition("=")[2] == "CLOSED"]
+                        if any(re.search(
+                                r"state\s*:\s*\$" + re.escape(var) + r"\b",
+                                query_text) for var in closed_vars if var):
+                            block()
                     fm = field_close_mutation(fields)
                     if fm == "hit":
                         block()

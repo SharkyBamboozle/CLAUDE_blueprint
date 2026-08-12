@@ -118,6 +118,12 @@ expect 2 "coreutils rm brace-expansion incl. Decided ADR -> blocked" \
   Bash "{\"command\":$(J "rm docs/decisions/adr-{0001-fixture,0007-fixture}.md")}"
 expect 2 "git rm brace-RANGE incl. Decided ADR -> blocked" \
   Bash "{\"command\":$(J 'git rm docs/decisions/adr-{0001..0001}-fixture.md')}"
+expect 2 "git rm over-cap brace-range under decisions -> blocked (scope scan)" \
+  Bash "{\"command\":$(J 'git rm docs/decisions/adr-000{1..2000}-fixture.md')}"
+expect 2 "git rm DESCENDING brace-range past cap -> blocked (scope scan)" \
+  Bash "{\"command\":$(J 'git rm docs/decisions/adr-{0065..0001}-fixture.md')}"
+expect 0 "over-cap brace-range OUTSIDE the ADR tree -> allowed (no false-block)" \
+  Bash "{\"command\":$(J 'rm docs/process/note-{1..2000}.md')}"
 
 # ---- cd context is tracked across && / ; lists -------------------------
 expect 2 "cd docs/decisions && git rm bare Decided name -> blocked" \
@@ -128,6 +134,15 @@ expect 2 "cd docs && rm -r decisions (parent dir via cd) -> blocked" \
   Bash "{\"command\":$(J 'cd docs && rm -r decisions')}"
 expect 0 "cd docs/process && rm contributing.md (not an ADR) -> allowed (partner)" \
   Bash "{\"command\":$(J 'cd docs/process && rm contributing.md')}"
+# subshell cd does NOT persist in a real shell — the running-cd must not leak
+# out of ( ) and cause a MISS relative to the no-cd baseline (both contexts
+# are checked, so the full-path form is still caught).
+expect 2 "(cd sub) ; git rm <full-path Decided> -> blocked (no subshell-cd leak miss)" \
+  Bash "{\"command\":$(J '(cd sub) ; git rm docs/decisions/adr-0001-fixture.md')}"
+expect 2 "(cd docs) ; rm decisions/<Decided> -> blocked (cd-context catches it)" \
+  Bash "{\"command\":$(J '(cd docs) ; rm decisions/adr-0001-fixture.md')}"
+expect 0 "(cd docs/decisions) ; git rm docs/process/<non-ADR> -> allowed (partner)" \
+  Bash "{\"command\":$(J '(cd docs/decisions) ; git rm docs/process/contributing.md')}"
 expect 0 "coreutils rm of Proposed ADR -> allowed (partner)" \
   Bash "{\"command\":$(J "rm $PROPOSED")}"
 expect 0 "coreutils rm of a non-ADR file -> allowed" \
