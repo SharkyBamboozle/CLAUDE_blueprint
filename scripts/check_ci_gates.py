@@ -286,6 +286,17 @@ def check_scaffolding_wired(deny_hooks, checkers, script_files, makefile_text) -
                 "`make verify` (D-005: every checker ships a --self-test that "
                 "runs in the gate)."
             )
+    # Every scripts/test_* file must run inside `make verify` — a suite that
+    # never runs guards nothing (D-005). This widens the deny-hook rule to
+    # ALL test scripts, whatever their language: e.g. the shared
+    # guard-parser pin (test_guardlib.py) is not derivable from any hook
+    # basename, so only this pin keeps it wired.
+    for test in sorted(f for f in script_files if f.startswith("test_")):
+        if test not in makefile_text:
+            problems.append(
+                f"test script scripts/{test} is not wired into `make verify` "
+                "— a suite that never runs guards nothing (D-005)."
+            )
     return problems
 
 
@@ -430,6 +441,13 @@ def self_test() -> int:
     if not any("self-test" in p for p in check_scaffolding_wired(
             [], ["check_new.py"], _scripts, _good_mk)):
         problems.append("scaffold/deny: checker with no wired --self-test escaped")
+    if not any("not wired" in p for p in check_scaffolding_wired(
+            [], [], _scripts | {"test_guardlib.py"}, _good_mk)):
+        problems.append("scaffold/deny: unwired non-hook test script escaped")
+    if check_scaffolding_wired(
+            [], [], _scripts | {"test_guardlib.py"},
+            _good_mk + "python3 scripts/test_guardlib.py\n"):
+        problems.append("scaffold/allow: wired non-hook test script rejected")
 
     # scan() applies the checks to EVERY workflow, not a hardcoded list.
     import tempfile
