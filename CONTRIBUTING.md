@@ -24,9 +24,10 @@ lessons steps of `.claude/commands/session-close.md`, and the page headers under
 here, because in this repo those files are the *stub* of a downstream project's
 diary, not a diary. Neither does one premise of the linking pages — that a
 `Closes` fires when its PR merges into `development` — because here the
-default branch must stay `main` (rule 4). Leave that text exactly as it is —
-the exception is declared here, never by weakening the instructions a seeded
-project needs.
+default branch must stay `main` (rule 4). Only the *premise* fails — the
+procedure those pages prescribe runs here unchanged. Leave that text exactly
+as it is — the exception is declared here, never by weakening the
+instructions a seeded project needs.
 
 Four rules follow. They reach every blueprint session through the
 blueprint-state admonition at the top of `CLAUDE.md`, and die with it at
@@ -81,9 +82,13 @@ close at promotion instead — the promotion PR restates `Closes #N` for every
 issue the train completed, and `docs/process/releases.md` step 3 exists
 precisely for this main-default case. A merged PR whose target issue is still
 open is therefore the *normal between-releases state*: not drift to flag in a
-summary, and never cause for a manual close. Write the closing-keyword grammar
-exactly as the manual says — the `issue-link-guard` vets it at integration,
-and the promotion restatement is what finally fires it. *Overrides:* nothing —
+summary, and never cause for a manual close. The **procedure is unchanged —
+only the firing moment moves**: tick, readout, and `Closes #NN` land exactly
+as the manual says; the `issue-link-guard` vets the keyword at integration,
+and the promotion restatement is what finally fires it. In particular, never
+downgrade a completing PR to `Part of #NN` on the grounds that the close will
+not fire at merge — that hides a completed issue from the guard's completion
+check and from the promotion sweep that closes it. *Overrides:* nothing —
 the linking pages stay as written (true downstream), and `/session-close`
 step 4 already carries the branch this rule feeds: "state why it stays open" —
 *awaiting promotion* is the standing answer. *Enforcement:* the manual-close
