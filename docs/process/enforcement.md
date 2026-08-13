@@ -60,7 +60,9 @@ them (D-004)*.
    *resolved* target blocks: uncertain evidence over-blocks safely.
 2. **Approve-hooks** approve only what they can prove safe, defer the
    rest, and never block — a gap costs a prompt, never a mistake. They
-   never contend with a deny-hook.
+   never contend with a deny-hook. Implemented by
+   `.claude/hooks/guard-command-policy.py` (read-only Bash auto-approval;
+   suite: `scripts/test_guard_command_policy.sh`).
 3. **The permission prompt counts for nothing.** Sessions legitimately
    run prompt-free; hooks and server gates are the layers that fire
    everywhere.

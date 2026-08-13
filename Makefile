@@ -28,6 +28,7 @@ verify:
 	bash scripts/test_release_gate.sh
 	bash scripts/test_guard_issue_close.sh
 	bash scripts/test_issue_close_guard.sh
+	bash scripts/test_guard_command_policy.sh
 	@# Shared guard-parser pin: 3-way byte-identity of the parser region
 	@# embedded in the three guard hooks, python-syntax compile of each
 	@# hook's heredoc (bash -n cannot see python), and parser unit tests.

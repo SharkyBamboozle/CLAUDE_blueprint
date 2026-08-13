@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Windows verification helper for the three PreToolUse guard hooks.
+# Windows verification helper for the PreToolUse guard hooks (three deny
+# hooks + the read-only approve-hook).
 #
 # There is no Windows CI runner (see issue history around the guard suites), so
 # Windows behavior is verified by an operator handoff. This script makes that
@@ -44,7 +45,8 @@ python3 -c 'import sys; print("sys.platform =", sys.platform, "| executable =", 
 echo
 
 echo "== guard suites (the real gate) =="
-for s in test_guard_git.sh test_guard_adr.sh test_guard_issue_close.sh; do
+for s in test_guard_git.sh test_guard_adr.sh test_guard_issue_close.sh \
+         test_guard_command_policy.sh; do
   if bash "$REPO/scripts/$s" >/dev/null 2>&1; then echo "PASS  scripts/$s"
   else echo "FAIL  scripts/$s"; fail=1; fi
 done
