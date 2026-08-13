@@ -364,5 +364,41 @@ MOCK_PRS='[{"number":9,"state":"MERGED"}]'
 expect 0 "restarted branch on current integration line -> allowed (fresh PR next)" "git push -u origin feat" "$TMP/z"
 MOCK_PRS='[]'
 
+# ---- MCP layer: the no-self-merge rule, parser-independent ------------
+# The hook's matcher in .claude/settings.json routes the MCP merge tools
+# here; the block must fire on tool NAME alone (there is no command to
+# parse), and must not over-tighten onto unrelated PR tools.
+expect_tool() { # expect_tool <rc> <label> <tool_name> <tool_input_json>
+  local want="$1" label="$2" tool="$3" input="$4"
+  printf '{"tool_name":"%s","tool_input":%s}' "$tool" "$input" \
+    | env -u CLAUDE_PROJECT_DIR bash "$HOOK" >/dev/null 2>&1
+  local rc=$?
+  if [ "$rc" -eq "$want" ]; then echo "PASS (rc=$rc): $label"
+  else echo "FAIL (rc=$rc, want $want): $label"; fails=$((fails + 1)); fi
+}
+expect_tool_msg() { # expect_tool_msg <rc> <snippet> <label> <tool_name> <tool_input_json>
+  local want="$1" snippet="$2" label="$3" tool="$4" input="$5"
+  local err rc
+  err="$(printf '{"tool_name":"%s","tool_input":%s}' "$tool" "$input" \
+    | env -u CLAUDE_PROJECT_DIR bash "$HOOK" 2>&1 >/dev/null)"
+  rc=$?
+  if [ "$rc" -eq "$want" ] && printf '%s' "$err" | grep -qF "$snippet"; then
+    echo "PASS (rc=$rc, msg ok): $label"
+  else
+    echo "FAIL (rc=$rc, want $want + '$snippet'): $label"; fails=$((fails + 1))
+  fi
+}
+
+expect_tool_msg 2 "never the agent" "MCP merge_pull_request -> blocked (self-merge)" \
+  mcp__github__merge_pull_request '{"owner":"o","repo":"r","pullNumber":5}'
+expect_tool_msg 2 "Auto-merge counts" "MCP enable_pr_auto_merge -> blocked" \
+  mcp__github__enable_pr_auto_merge '{"owner":"o","repo":"r","pullNumber":5}'
+expect_tool 2 "merge tool on a differently-named MCP server -> blocked" \
+  mcp__github-enterprise__merge_pull_request '{"pullNumber":5}'
+expect_tool 0 "MCP disable_pr_auto_merge -> allowed (disabling merges nothing)" \
+  mcp__github__disable_pr_auto_merge '{"owner":"o","repo":"r","pullNumber":5}'
+expect_tool 0 "MCP update_pull_request -> allowed (no merge)" \
+  mcp__github__update_pull_request '{"pullNumber":5,"body":"b"}'
+
 [ "$fails" -eq 0 ] && echo "all asserted cases pass" || echo "$fails case(s) FAILED"
 exit "$fails"
