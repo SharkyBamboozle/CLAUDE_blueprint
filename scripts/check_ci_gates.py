@@ -9,12 +9,13 @@ Two layers of wiring, both of which decay silently if unpinned:
    real: a gate filtered to `branches: [main]` while all PRs target the
    integration branch runs never — a checker whose fatal tier never executes
    isn't a gate.
-2. **Scaffolding suites** — asserts D-005's "every deny-hook ships a suite,
+2. **Scaffolding suites** — asserts D-005's "every hook ships a suite,
    every checker ships a --self-test" holds for the *next* one too: every
-   PreToolUse deny-hook in .claude/settings.json has a matching
-   scripts/test_*.sh wired into `make verify`, and every scripts/check_*
-   checker has its --self-test wired there. Without this, adding a new guard
-   with no suite passes `make verify` unnoticed — the very gap it plugs.
+   PreToolUse hook in .claude/settings.json — deny or approve, .sh or .py —
+   has a matching scripts/test_*.sh wired into `make verify`, and every
+   scripts/check_* checker has its --self-test wired there. Without this,
+   adding a new guard with no suite passes `make verify` unnoticed — the
+   very gap it plugs.
 
 Runs inside `make verify` (PyYAML ships with the docs toolchain) and
 therefore also in CI on every PR. Failure messages say exactly what to
@@ -241,42 +242,47 @@ def validate_coe_ledger(ledger=None, ceiling=CONTINUE_ON_ERROR_CEILING) -> list:
 
 # --------------------------------------------------- scaffolding suite wiring
 
-def deny_hooks_from_settings(settings: dict) -> list:
+def pretooluse_hooks_from_settings(settings: dict) -> list:
     """Basenames of hook scripts registered under PreToolUse — the tier that
-    can deny a tool call. Keying off registration (not the guard-* name)
-    catches a deny-hook whatever it is called."""
+    can deny OR auto-approve a tool call. Keying off registration (not the
+    guard-* name) catches a hook whatever it is called; matching .sh and .py
+    catches it whatever it is written in (an unpinned approve-hook decays as
+    silently as an unpinned deny-hook)."""
     names = []
     for entry in settings.get("hooks", {}).get("PreToolUse") or []:
         for hook in entry.get("hooks") or []:
-            m = re.search(r"/hooks/([A-Za-z0-9_.-]+\.sh)", hook.get("command", ""))
+            m = re.search(r"/hooks/([A-Za-z0-9_.-]+\.(?:sh|py))", hook.get("command", ""))
             if m:
                 names.append(m.group(1))
     return sorted(set(names))
 
 
 def expected_suite(hook_basename: str) -> str:
-    """guard-git.sh -> test_guard_git.sh (hyphens become underscores)."""
-    stem = hook_basename[:-3] if hook_basename.endswith(".sh") else hook_basename
+    """guard-git.sh -> test_guard_git.sh (hyphens become underscores). A .py
+    hook maps the same way — its suite is still a bash script, driving the
+    hook through its real JSON-on-stdin channel."""
+    stem = re.sub(r"\.(?:sh|py)$", "", hook_basename)
     return "test_" + stem.replace("-", "_") + ".sh"
 
 
-def check_scaffolding_wired(deny_hooks, checkers, script_files, makefile_text) -> list:
+def check_scaffolding_wired(hooks, checkers, script_files, makefile_text) -> list:
     """Pure D-005 wiring check (plain data in, problems out, for hermetic
-    self-testing): every deny-hook has a suite that exists AND runs in
-    `make verify`; every checker's --self-test runs there too."""
+    self-testing): every PreToolUse hook (deny or approve) has a suite that
+    exists AND runs in `make verify`; every checker's --self-test runs there
+    too."""
     problems = []
     have = set(script_files)
-    for hook in deny_hooks:
+    for hook in hooks:
         suite = expected_suite(hook)
         if suite not in have:
             problems.append(
-                f"deny-hook '{hook}' has no regression suite: expected "
-                f"scripts/{suite} asserting both the deny and still-allowed "
-                "sides (D-005)."
+                f"PreToolUse hook '{hook}' has no regression suite: expected "
+                f"scripts/{suite} asserting both sides — deny/still-allowed "
+                "for a deny-hook, approve/defer for an approve-hook (D-005)."
             )
         elif suite not in makefile_text:
             problems.append(
-                f"deny-hook suite scripts/{suite} exists but is not wired into "
+                f"hook suite scripts/{suite} exists but is not wired into "
                 "`make verify` — a suite that never runs guards nothing (D-005)."
             )
     for checker in checkers:
@@ -306,8 +312,8 @@ def scan_scaffolding() -> list:
         with open(SETTINGS_PATH, encoding="utf-8") as f:
             settings = json.load(f)
     except (OSError, ValueError) as e:
-        return [f".claude/settings.json unreadable ({e}) — cannot pin deny-hook suites."]
-    deny_hooks = deny_hooks_from_settings(settings)
+        return [f".claude/settings.json unreadable ({e}) — cannot pin hook suites."]
+    hooks = pretooluse_hooks_from_settings(settings)
     script_files = (
         {os.path.basename(p) for p in glob.glob(os.path.join(SCRIPTS_DIR, "*.sh"))}
         | {os.path.basename(p) for p in glob.glob(os.path.join(SCRIPTS_DIR, "*.py"))}
@@ -320,7 +326,7 @@ def scan_scaffolding() -> list:
             makefile_text = f.read()
     except OSError as e:
         return [f"Makefile unreadable ({e}) — cannot pin scaffolding wiring."]
-    return check_scaffolding_wired(deny_hooks, checkers, script_files, makefile_text)
+    return check_scaffolding_wired(hooks, checkers, script_files, makefile_text)
 
 
 # -------------------------------------------------------------- self-test
@@ -417,14 +423,17 @@ def self_test() -> int:
     if validate_coe_ledger({("a.yml", "j"): "a real reason"}):
         problems.append("coe-ledger/allow: valid entry rejected")
 
-    # Scaffolding-suite wiring: every deny-hook has a wired suite, every
-    # checker a wired --self-test. Pure function, so synthetic inventories.
+    # Scaffolding-suite wiring: every PreToolUse hook (deny or approve, .sh
+    # or .py) has a wired suite, every checker a wired --self-test. Pure
+    # function, so synthetic inventories.
     _settings = {"hooks": {"PreToolUse": [
         {"hooks": [{"command": 'bash "$D/.claude/hooks/guard-git.sh"'}]},
         {"hooks": [{"command": 'bash "$D/.claude/hooks/guard-adr.sh"'}]},
+        {"hooks": [{"command": 'python3 "$D/.claude/hooks/guard-command-policy.py"'}]},
     ]}}
-    if deny_hooks_from_settings(_settings) != ["guard-adr.sh", "guard-git.sh"]:
-        problems.append("scaffold: deny-hooks not extracted from PreToolUse registration")
+    if pretooluse_hooks_from_settings(_settings) != [
+            "guard-adr.sh", "guard-command-policy.py", "guard-git.sh"]:
+        problems.append("scaffold: hooks not extracted from PreToolUse registration (.sh + .py)")
     _good_mk = ("bash scripts/test_guard_git.sh\nbash scripts/test_guard_adr.sh\n"
                 "python3 scripts/check_ci_gates.py --self-test\n")
     _scripts = {"test_guard_git.sh", "test_guard_adr.sh", "check_ci_gates.py"}
@@ -434,6 +443,14 @@ def self_test() -> int:
     if not any("no regression suite" in p for p in check_scaffolding_wired(
             ["guard-new.sh"], [], _scripts, _good_mk)):
         problems.append("scaffold/deny: new deny-hook with no suite escaped")
+    if not any("no regression suite" in p for p in check_scaffolding_wired(
+            ["guard-command-policy.py"], [], _scripts, _good_mk)):
+        problems.append("scaffold/deny: .py PreToolUse hook with no suite escaped")
+    if check_scaffolding_wired(
+            ["guard-command-policy.py"], [],
+            _scripts | {"test_guard_command_policy.sh"},
+            _good_mk + "bash scripts/test_guard_command_policy.sh\n"):
+        problems.append("scaffold/allow: wired .py hook suite rejected")
     if not any("not wired" in p for p in check_scaffolding_wired(
             ["guard-git.sh"], [], _scripts | {"test_guard_git.sh"},
             "python3 scripts/check_ci_gates.py --self-test\n")):
