@@ -29,12 +29,16 @@ docs, not a duplicate of them. Extend over time.
 > 3. **`blueprint/CHANGELOG.md` is written exactly once per release**, in the
 >    caboose of the promotion PR that bumps `blueprint/VERSION`. It is the
 >    blueprint's only log.
-> 4. **Issues do not auto-close at integration here** — closing keywords fire
->    only on PRs into the *default* branch, which stays `main` in this repo
->    (projects seed from it; seeded repos flip theirs to `development`).
->    Issues close at promotion via the restated `Closes` lines. A merged PR
->    whose issue is still open is expected state — no anomaly to report,
->    never a manual close.
+> 4. **Issues do not auto-close at integration here — run the PR ritual
+>    unchanged anyway.** Closing keywords fire only on PRs into the *default*
+>    branch, which stays `main` in this repo (projects seed from it; seeded
+>    repos flip theirs to `development`). Tick delivered boxes, post the
+>    readout, and write `Closes #NN` on the completing PR exactly as
+>    `docs/process/opening-a-pr.md` prescribes — never downgrade to
+>    `Part of #NN` because the close "won't fire here". The `issue-link-guard`
+>    vets the keyword at integration; the promotion PR restates it, and that
+>    restatement is what closes the issue. A merged PR whose issue is still
+>    open is expected state — no anomaly to report, never a manual close.
 >
 > <!-- BLUEPRINT: delete this whole admonition, rules included, at bootstrap. -->
 
