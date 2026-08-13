@@ -18,7 +18,10 @@
 #     "task still running" is not decidable from mtimes, so the predicate
 #     only trims the obvious false-positive class and the message must
 #     stay safe whenever it misfires.
-set -euo pipefail
+#
+# No -e, like the sibling print-only hook (pre-compact.sh): a freak
+# failure mid-script must degrade to silence, never to a non-zero exit.
+set -uo pipefail
 
 dir="${CLAUDE_PROJECT_DIR:-.}/.claude/working"
 [[ -d "$dir" ]] || exit 0
