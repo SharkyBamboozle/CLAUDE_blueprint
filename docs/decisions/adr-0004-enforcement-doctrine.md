@@ -19,15 +19,14 @@ ungoverned lists grow until "excepted" is the norm and the gate checks
 nothing. One doctrine must govern both: how rules bind, and how exceptions
 stay honest.
 
-Two later observations sharpen the layering. The client hooks are parsers,
-and a parser can always be evaded — guard work needs a defensible form for
-"this bypass class is out of scope", or a hardening task has no natural
-end. And a server rule that exempts administrators exempts more than the
-administrator: coding agents act with the operator's identity, so an
-ambient admin bypass is an ambient *agent* bypass — a configuration audit
-(2026-08-13) found exactly that live. The permission-prompt layer can
-carry none of this weight: it is mode-dependent, and sessions legitimately
-run prompt-free.
+The same pressures shape *how* each layer may fail. The client hooks are
+parsers, and a parser can always be evaded — guard work needs a defensible
+form for "this bypass class is out of scope", or a hardening task has no
+natural end. A server rule that exempts administrators exempts more than
+the administrator: coding agents act with the operator's identity, so an
+ambient admin bypass is an ambient *agent* bypass. And the
+permission-prompt layer can carry no enforcement weight: it is
+mode-dependent, and sessions legitimately run prompt-free.
 
 ## Decision
 
@@ -133,9 +132,10 @@ PR gates — are process-layer tooling, mapped in
 - **Fail-closed client hooks** (block on any parse failure) — rejected: a
   broken guard would brick every tool call; same ground as the first
   rejection above.
-- **Ambient admin bypass** (the earlier shipped protection default) —
-  rejected: the agent-identity observation voids its premise; its
-  legitimate use survives as the temporary settings edit.
+- **Ambient admin bypass** (exempting administrators from the PR and
+  checks rules) — rejected: agents act with the operator's identity, so
+  the exemption silently extends to every agent session; its legitimate
+  use survives as the temporary settings edit.
 - **Allowlist inversion for deny-hooks** (deny everything unproven) —
   rejected: the permission system already is the allowlist substrate;
   inversion belongs on the approve side, where a failure costs a prompt.
