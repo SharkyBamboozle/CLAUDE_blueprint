@@ -52,8 +52,9 @@ seeded project fills in, so anything written into them arrives downstream as
 false history — a diary of a project the reader never worked on, which
 `scripts/check_bootstrap_complete.sh` cannot catch (no `{{TOKEN}}`, no
 `BLUEPRINT:` marker). Leave both at their stub state. *Overrides:* `CLAUDE.md` →
-*Repo workflow* (the session-changelog rule) and steps 1 and 3 of
-`.claude/commands/session-close.md` — both correct downstream. *Where the
+*Repo workflow* (the session-changelog rule), steps 1 and 3 of
+`.claude/commands/session-close.md`, and the records-commit half of its
+step 5 — all correct downstream. *Where the
 content goes instead:* whatever will still be true in a seeded project — a
 regression case in the matching `scripts/test_*.sh` suite, a rule on a ritual
 card under `.claude/commands/`, a page under `docs/process/` — plus the release
@@ -108,12 +109,21 @@ consequences:
   lock all apply here. Work on a feature branch → PR into `development`; never
   merge your own PR. Changing a ✅ Decided ADR means a *superseding* ADR (or
   `/unlock-adr` for a maintenance edit).
-- **Your scratch stays out of the tree.** `.claude/archive/` is gitignored in
-  *this* repo only — seeded projects track theirs, so the `BLUEPRINT:` marker in
-  `.gitignore` removes the block at bootstrap. Committing session notes here
-  ships blueprint-internal history into every seed (#70). One visible
-  consequence: a `/handoff` that follows an already-committed working doc lands
-  as a **deletion**, not a rename. That is the intended shape.
+- **Your scratch stays out of the tree — the rule flips at the seed
+  boundary.** `.claude/archive/` is gitignored in *this* repo only — seeded
+  projects track theirs, so the `BLUEPRINT:` marker in `.gitignore` removes
+  the block at bootstrap. Committing session notes here ships
+  blueprint-internal history into every seed (#70). One visible consequence:
+  a `/handoff` that follows an already-committed working doc lands as a
+  **deletion**, not a rename. That is the intended shape. In the blueprint,
+  sessions never commit working files or archives — the risk is
+  **contamination**: one session's scratch ships into every seed. In a seeded
+  project, the archive is a record of the agent's work, and the risk is
+  **loss** — task-end records (the changelog entry, the `/handoff` archive)
+  must land on a live branch and ride a PR before the branch or container is
+  gone (`docs/process/pushing.md` → *PR lifecycle*). Under both hats, a
+  still-running task's files stay uncommitted; only the fate of a *finished*
+  task's records differs.
 - **Never run `scripts/github_setup.sh` against this repo.** Its first act on
   the code profile is making `development` the default branch — right for
   every seed, wrong here, where `main` must stay the default (the CLAUDE.md
