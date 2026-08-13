@@ -8,7 +8,9 @@
 # with or without a value, leading-+ refspecs), remote branch deletion,
 # staging un-LFS'd binaries (named files, bulk adds, AND directory adds —
 # scanned scoped to the added directory), self-merging PRs (gh pr merge,
-# gh api .../merge, the mergePullRequest GraphQL mutation), and zombie
+# gh api .../merge, the mergePullRequest GraphQL mutation, and the MCP
+# merge tools — matched by tool NAME before any command parsing, so a
+# parser failure can never disarm that branch), and zombie
 # pushes to a branch whose PR is already merged/closed. It normalizes each
 # command to its INTENT before matching (refspec forms, quoting, global
 # options, bulk adds) rather than pattern-matching one literal form, and
@@ -63,6 +65,20 @@ except Exception:
 def block(msg):
     print(msg, file=sys.stderr)
     sys.exit(2)
+
+# The no-self-merge rule on the MCP surface: merge tools are blocked
+# outright, BEFORE the parser — this branch must never sit behind it, so
+# a parsing failure cannot disarm it (ADR-0004 failure directions). The
+# settings.json matcher routes these tool names here; the permission
+# deny-list carries a secondary copy for prompt-mode sessions.
+tool_name = data.get("tool_name", "") or ""
+if re.search(r"mcp__.*(merge_pull_request|enable_pr_auto_merge)", tool_name):
+    block(
+        "BLOCKED: merging a PR is the operator's act, never the agent's "
+        "(CLAUDE.md hard rule). Auto-merge counts as merging. Instead: "
+        "push the branch, open the PR into development, and ask the "
+        "operator to review and merge it in the GitHub UI."
+    )
 
 # ---8<--- shared guard command-parser — byte-identical in guard-git.sh,
 # guard-adr.sh, and guard-issue-close.sh; pinned (identity + syntax + unit

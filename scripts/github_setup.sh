@@ -22,7 +22,9 @@
 #                    is diff-scoped — build + flow-guard + release-gate +
 #                    issue-link-guard + no-binaries + secret-scan +
 #                    registry-sync + decided-adr-unlock (dependency-audit
-#                    stays a weekly sweep, never merge-blocking)
+#                    stays a weekly sweep, never merge-blocking). Default
+#                    contexts are pinned to the GitHub Actions app;
+#                    explicit --require-check entries stay any-source.
 #   --deploy-docs    (code profile) opt IN to publishing docs to GitHub Pages
 #                    on merges to development/main: provisions the Pages site,
 #                    the github-pages env branch policy, and DEPLOY_DOCS=true.
@@ -85,9 +87,11 @@ if [ "$PROFILE" = "code" ]; then
   # --- Branch protection --------------------------------------------------
   # main: PRs only (0 approvals — solo-dev calibrated: require checks, not
   # reviews), no force-pushes, no deletion, required status checks.
-  # enforce_admins stays false by design: admins bypass the required checks
-  # — the solo operator is the one reading red builds; flipping it on is a
-  # per-project hardening choice, not a template default.
+  # enforce_admins is true: server rules bind administrators (ADR-0004 →
+  # failure directions; docs/process/enforcement.md). Coding agents act
+  # with the operator's identity, so an admin exemption is an agent
+  # exemption. The operator's escape hatch is a temporary, VISIBLE
+  # settings edit — relax, act, restore — never a standing power.
   #
   # Default contexts — the selection principle (D-004): a check may block
   # merges only if it is a verdict on the PR's OWN change; a check whose
@@ -103,23 +107,36 @@ if [ "$PROFILE" = "code" ]; then
   #     third-party disclosure would freeze every open PR, including the
   #     one bumping the vulnerable pin. It stays the weekly sweep.
   # Override with --require-check.
+  #
+  # Producer pinning: every default gate is a GitHub Actions job, so the
+  # defaults are pinned to the Actions app (id 15368) — otherwise ANY app
+  # could satisfy a required check by posting a green status under the
+  # same name. Operator-supplied --require-check contexts stay any-source:
+  # the script cannot know their producer.
   if [ ${#CHECKS[@]} -eq 0 ]; then
     CHECKS=(build flow-guard release-gate issue-link-guard
             no-binaries secret-scan registry-sync decided-adr-unlock)
+    PIN_APP=15368
+  else
+    PIN_APP=""
   fi
-  CONTEXTS_JSON=$(printf '%s\n' "${CHECKS[@]:-}" | python3 -c \
-    'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+  CHECKS_JSON=$(printf '%s\n' "${CHECKS[@]:-}" | PIN_APP="$PIN_APP" python3 -c '
+import json, os, sys
+pin = os.environ.get("PIN_APP", "")
+print(json.dumps([
+    dict({"context": l.strip()}, **({"app_id": int(pin)} if pin else {}))
+    for l in sys.stdin if l.strip()]))')
   gh api -X PUT "repos/$REPO/branches/main/protection" --input - >/dev/null <<JSON
 {
-  "required_status_checks": {"strict": true, "contexts": $CONTEXTS_JSON},
-  "enforce_admins": false,
+  "required_status_checks": {"strict": true, "checks": $CHECKS_JSON},
+  "enforce_admins": true,
   "required_pull_request_reviews": {"required_approving_review_count": 0},
   "restrictions": null,
   "allow_force_pushes": false,
   "allow_deletions": false
 }
 JSON
-  echo "protected: main (PRs only, checks: $CONTEXTS_JSON)"
+  echo "protected: main (PRs only, admins bound; checks: ${CHECKS[*]})"
 
   # development: block force-pushes/deletion AND require the diff-scoped
   # gates — the same selection principle as main, minus the promotion pair:
@@ -131,19 +148,24 @@ JSON
   # requiring them here would block every development PR forever;
   # `dependency-audit` is absent as the deliberate sweep (see above).
   # strict=false: development PRs need green checks but not a rebase race.
+  # enforce_admins + the Actions-app pin: same doctrine as main above.
   gh api -X PUT "repos/$REPO/branches/development/protection" --input - >/dev/null <<'JSON'
 {
-  "required_status_checks": {"strict": false, "contexts": [
-    "build", "issue-link-guard", "no-binaries", "secret-scan",
-    "registry-sync", "decided-adr-unlock"]},
-  "enforce_admins": false,
+  "required_status_checks": {"strict": false, "checks": [
+    {"context": "build", "app_id": 15368},
+    {"context": "issue-link-guard", "app_id": 15368},
+    {"context": "no-binaries", "app_id": 15368},
+    {"context": "secret-scan", "app_id": 15368},
+    {"context": "registry-sync", "app_id": 15368},
+    {"context": "decided-adr-unlock", "app_id": 15368}]},
+  "enforce_admins": true,
   "required_pull_request_reviews": null,
   "restrictions": null,
   "allow_force_pushes": false,
   "allow_deletions": false
 }
 JSON
-  echo "protected: development (no force-push; required checks: build, issue-link-guard, no-binaries, secret-scan, registry-sync, decided-adr-unlock)"
+  echo "protected: development (admins bound; no force-push; required checks pinned to GitHub Actions: build, issue-link-guard, no-binaries, secret-scan, registry-sync, decided-adr-unlock)"
 
   # --- GitHub Pages via Actions: OPT-IN, default OFF -----------------------
   # Publishing docs is an outward-facing act, so it is the owner's decision,
@@ -197,11 +219,12 @@ JSON
 else
   # --- data profile --------------------------------------------------------
   # Data repos take direct pushes from run tooling; protect only against
-  # history rewrites on the default branch.
+  # history rewrites on the default branch — for everyone, admins included
+  # (ADR-0004 → failure directions).
   gh api -X PUT "repos/$REPO/branches/$DEFAULT_BRANCH/protection" --input - >/dev/null <<'JSON'
 {
   "required_status_checks": null,
-  "enforce_admins": false,
+  "enforce_admins": true,
   "required_pull_request_reviews": null,
   "restrictions": null,
   "allow_force_pushes": false,

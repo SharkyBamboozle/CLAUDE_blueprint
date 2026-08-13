@@ -109,6 +109,11 @@ consequences:
   ships blueprint-internal history into every seed (#70). One visible
   consequence: a `/handoff` that follows an already-committed working doc lands
   as a **deletion**, not a rename. That is the intended shape.
+- **Never run `scripts/github_setup.sh` against this repo.** Its first act on
+  the code profile is making `development` the default branch — right for
+  every seed, wrong here, where `main` must stay the default (the CLAUDE.md
+  admonition, rule 4). Blueprint-repo settings changes are made by hand in
+  the GitHub UI; the script's payloads are the template that seeds inherit.
 
 Durable findings therefore need a permanent home other than an archive file. A
 reproduced bug in the machinery becomes a case in the matching
