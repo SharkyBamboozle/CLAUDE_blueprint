@@ -50,6 +50,29 @@ gate failing loud when its target file is missing, and the canary naming
 convention — are *advisory: convention-strength, with no meta-gate verifying
 them (D-004)*.
 
+## Failure directions (D-004)
+
+**Every layer declares which way it fails.** The doctrine's home is
+[ADR-0004](../decisions/adr-0004-enforcement-doctrine.md); this is the map:
+
+1. **Deny-hooks** block proven intent. Broken machinery falls through — a
+   broken guard must never brick every tool call — but an ambiguous
+   *resolved* target blocks: uncertain evidence over-blocks safely.
+2. **Approve-hooks** approve only what they can prove safe, defer the
+   rest, and never block — a gap costs a prompt, never a mistake. They
+   never contend with a deny-hook.
+3. **The permission prompt counts for nothing.** Sessions legitimately
+   run prompt-free; hooks and server gates are the layers that fire
+   everywhere.
+4. **CI gates and branch protection fail closed and are the authority.**
+   Server rules bind administrators (`enforce_admins: true` is the
+   shipped default; the escape hatch is a temporary, visible settings
+   edit — relax, act, restore). Every bypass class a client guard defers
+   (nested interpreters, command wrappers, time-of-check races) names the
+   server layer that catches it, and that claim is auditable (D-006) —
+   re-audit it after material changes to the gates or the protection
+   rules.
+
 ## Exception lists are ledgers (D-004)
 
 Every allowlist / skip-list / tolerated-issues list any gate grows is a
