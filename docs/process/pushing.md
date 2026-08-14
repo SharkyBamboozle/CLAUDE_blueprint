@@ -57,3 +57,35 @@ default**: subscriptions are session-bound where this failure is
 cross-session, merge events are not reliably delivered, and the blueprint's
 conventions bind any agent — a harness-specific habit no gate can verify
 is not a rule (D-004).
+
+### Where task-end records land
+
+**Task-end records — the session changelog entry and the `/handoff`
+archive — are ordinary commits on the session's own feature branch, and
+ride its open PR.** The two moments they trade on: *push* is the
+durability moment — once records sit on any remote branch, container
+reclamation and branch deletion cannot lose them; *merge* is the
+integration moment, where operator burden lives. The changelog entry is
+tiny but conflict-prone (every session prepends to one file — integrate
+promptly); archive files are bulky but inert (a new dated folder, never
+edited — they can wait once pushed). The `/session-close` card carries the
+records commit as an explicit step.
+
+Recovery, when the branch's PR has already **merged**: the restart rule
+above applies to records too — restart the branch from `development`; the
+records ride the follow-up PR, or a small **records-only PR** when the
+session is fully done. A records PR closes nothing, its body names the
+merged PR it trails, and its content is inert, so review is a skim. Rare
+by construction: the rule covers every case except a merge that lands
+mid-session.
+
+**If unsure: push first, then ask.** A pushed branch is durable, so the
+question can safely fail without losing what it protects — ask-then-push
+is the wrong order. Discarding records is a legitimate operator *answer*,
+never a default (the archive contract: purge only on explicit
+instruction). This guidance lives in the rituals deliberately: a
+context-blind hook cannot know whether a task is finished, so **no hook or
+nudge ever asks for a git action on working docs** — only the rituals
+speak about git (`.claude/working/README.md`). *(Advisory (D-004): no gate
+can read a session's intent; the `/session-close` step and review are the
+net.)*
