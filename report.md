@@ -1,14 +1,76 @@
 # Framework audit — Project Blueprint
 
 **Repository:** `SharkyBamboozle/CLAUDE_blueprint`
-**Revision 2** — re-verified 2026-08-09 against v1.0.5 (`80c3800`).
-**Backlog refreshed 2026-08-14** against **v1.1.0** (= `main` = `0e961b3`) and `development`
-(`691b5f2`, 8 commits ahead). Revision 1 audited v1.0.4 (`28384a7`) on 2026-07-29.
+**Revision 3 — re-verified 2026-08-14 against v1.2.0** (= `main` = `b2df960` = `development`, fully
+promoted). Revision 2 audited v1.0.5 (`80c3800`) on 2026-08-09; revision 1 audited v1.0.4 on
+2026-07-29. The §0 update below carries the current state; §1–§7 and §8's tables are updated in
+place; §9 preserves the earlier revisions' framing where it still reads true.
 
-*Closed since revision 2:* `I-03` (promote — v1.1.0 shipped) and `I-23` (the `.gitignore` `#70`
-citation — fixed on `development`, still present on the released `main`). `I-17` half landed:
-`validation.nav.omitted_files` shipped in v1.1.0; the `anchors: warn` half is still open. The
-backlog in §8 is 33 items.
+---
+
+## 0. Revision 3 — the v1.2.0 update
+
+**v1.2.0 is the strongest release this audit has seen, and it introduced a new critical.** Both
+halves are verified by execution, not read from the changelog.
+
+### What it fixed (verified, refuter-upheld)
+
+- **The whole guard-bypass cluster** (#118). Every one of the nine catalogued bypasses now blocks:
+  `git -C .`, `git --no-pager`, `git --git-dir=`, `git push --all`, `--mirror`, `+HEAD:feature`,
+  `-fu`, `--force-with-lease=main`, and the multi-line false-allow — all rc=2, innocent quoted
+  prose still rc=0. The three guards now share one quote-aware argv parser, triplicated
+  byte-for-byte and identity-pinned by `test_guardlib.py`. Retires revision 2's oldest
+  high-severity item (`I-08`/`I-09`/`I-10`).
+- **MCP self-merge** (#124): the merge and auto-merge MCP tools are denied by name (rc=2), as is
+  `gh -R o/r pr merge`. The parser-independent deny branch sits *before* the parser, so a parse
+  failure can't disarm it.
+- **`enforce_admins: true`** (#124) in all three protection payloads. This is the better fix than
+  the one revision 2 proposed — the *code* was changed to match the doctrine, not the doctrine
+  softened. It resolves `I-05`/SECU-06 (the flow rule now genuinely binds admins, and the agents
+  carrying their identity), and ADR-0004 was refined in place (#122) to state each layer's failure
+  direction, including "server rules bind administrators".
+- The v1.1.0 + v1.2.0 promotions **released the CLAUDE.md diet and the `paths:` scoping** that were
+  development-only at revision 2. Revision 2's §2 "released ≠ current" gap is closed:
+  CLAUDE.md is now 2,056 words on `main`, all four `.claude/rules/` files are `paths:`-scoped.
+- Notably, the v1.2.0 changelog itself carries **no enforcement overclaim** — a clean break from
+  the six-overclaim pattern revision 2 documented in §4.3. It correctly scopes what it fixed and
+  does not claim to have touched `I-04`/`I-06`.
+
+### What it introduced — a new critical trust boundary
+
+v1.2.0 shipped `.claude/hooks/guard-command-policy.py` (#119): a **read-only Bash auto-approver**
+that runs commands it proves read-only with **no permission prompt**. It is a new trust boundary,
+and it auto-approves things that defeat the very guards this release hardened. All reproduced by
+execution against the live hook, with `CLAUDE_PROJECT_DIR` set as a real session has it:
+
+```
+git -c core.pager=id log                       -> APPROVE   (arbitrary code execution via git config)
+git -c core.fsmonitor=touch\ /tmp/X status      -> APPROVE   (runs on status, no tty needed)
+echo evil > .claude/hooks/guard-git.sh          -> APPROVE   (blank the deny-guard itself)
+echo x    > .claude/settings.json               -> APPROVE   (rewrite the hook wiring + deny-list)
+printf x  >> .git/config                         -> APPROVE   (inject core.hooksPath/sshCommand -> exec)
+git branch -f main origin/evil                   -> APPROVE   (force-move main; no layer blocks it)
+```
+
+The two chain into a clean bypass of everything else: step 1 `echo > .claude/hooks/guard-git.sh`
+(auto-approved) disables the push-to-main guard; step 2 the previously-blocked `git push origin
+main` now runs. **The release that hardened the guards also shipped a hook that can silently
+disable them.** These are `I-36` in the backlog — value 9, the highest new item.
+
+Two smaller residuals the #118 hardening left open, both verified: `git push origin $'main'`
+(ANSI-C quoting) and `git push origin "refs/heads/*:refs/heads/*"` (wildcard refspec) still reach
+`main` at rc=0 (`I-37`); and the newline-splitting fix now parses **heredoc body lines as
+commands**, so writing a doc whose heredoc mentions `gh pr merge` is falsely blocked — it blocked
+one of this audit's own commands this session (`I-38`).
+
+### Net
+
+Revision 2's headline — problems concentrate in the enforcement gap — is now **half retired**. The
+*client-side* guard surface went from "trivially bypassable" to "hardened with two exotic
+residuals". The *server-side* gap (`enforce_admins`) is closed. What remains: the lane G bootstrap
+deadlock (`I-01`, still the top item), the two prose overclaims whose falsehood v1.2.0 narrowed to
+the self-merge clause but did not edit (`I-04`/`I-06`), and — new and most urgent among the
+additions — the auto-approve hook (`I-36`). The refreshed backlog is §8.
 
 ---
 
@@ -313,8 +375,14 @@ release log the artifact a downstream maintainer reads to decide whether a pull 
 
 ## 5. Still open — the unchanged core
 
-109 of 146 findings reproduce exactly. The load-bearing ones, re-probed by execution against the
-current tree:
+> **Superseded for the guard rows by §0 (v1.2.0).** The guard-bypass table below reflects the
+> v1.0.5 state this section was written against; #118 has since fixed every row (all rc=2 —
+> verified in §0), leaving only the two exotic residuals `I-37` tracks. The rest of the section
+> (the checkbox regex, the ADR machinery unchanged, the general "109 reproduce exactly" count)
+> still held as of revision 2; §8 carries each item's current status.
+
+109 of 146 findings reproduced exactly **as of revision 2 (v1.0.5)**. The load-bearing ones,
+re-probed by execution against the v1.0.5 tree:
 
 ```
 git push origin main            rc=2  blocked (baseline)
@@ -339,6 +407,11 @@ high-severity items in the report.**
 ---
 
 ## 6. Revised future work
+
+> **Superseded by §8 (the ranked backlog).** This section is the revision-2 prose narrative of the
+> waves; §8's table is the current, v1.2.0-verified, scored version and is what to work from.
+> Wave 1's guard-parsing item and the enforce_admins item have since **landed** (§0). The text is
+> kept for the reasoning behind each wave.
 
 Reordered for the current state. Items marked **▲** are new or promoted since revision 1.
 
@@ -429,9 +502,15 @@ only path by which the required-check expansion can ever reach a seeded project 
 
 ## 8. Ranked backlog — value and ease
 
-33 actionable items, scored on two independent axes so the list can be worked either way: **down
-the value column** when there is time for the thing that matters most, or **down the ease column**
-when there is an hour and a wish to bank something safe.
+**33 open items**, refreshed for v1.2.0. Four items from revision 2 are now **resolved and
+removed** (`I-05` enforce_admins, `I-08`/`I-09`/`I-10` the guard-bypass cluster — all verified by
+execution and upheld by the refutation pass). Two were resolved earlier (`I-03` promote, `I-23`
+the `.gitignore` citation). Four are **new**, from v1.2.0's own regressions: `I-36` (the
+auto-approve hook), `I-37` (the two residual guard bypasses), `I-38` (the heredoc false-block),
+`I-39` (the `github_setup.sh` custom-check gaps).
+
+Work it either way: **down the value column** for the thing that matters most, or **down the ease
+column** to bank something safe in an hour.
 
 **Value / urgency, 1–10.** 10 = the framework is broken for its primary purpose until this lands ·
 8 = a stated guarantee is false in a common path, or a defect reaches every seeded project · 6 =
@@ -439,139 +518,117 @@ real defect with a workaround · 4 = worth doing, nobody is currently hurt · 2 
 Downstream (seeded-project) impact outweighs blueprint-repo-internal impact.
 
 **Ease / low-risk, 1–10.** 10 = a few lines, obviously correct, nothing a test could regress · 8 =
-small diff, existing tests cover it, trivially reversible · 6 = several files or new fixtures
-needed · 4 = load-bearing logic, real regression risk · 2 = needs a decision the operator has not
-made.
+small diff, existing tests cover it · 6 = several files or new fixtures needed · 4 = load-bearing
+logic, real regression risk · 2 = needs a decision the operator has not made.
 
-**How these were scored.** Three independent agents scored all items from different lenses
-(downstream impact / implementation reality / operator sequencing), then a fourth adversarially
-calibrated: its explicit brief was to **attack every ease ≥ 8**, because those are the items you
-will pick up first and a wrong "easy" is the most expensive error in a list like this. It applied
-several fixes in scratch copies and ran the suites. Ratings below are the calibrated ones; ten
-were moved, and the moves are the most useful part of the exercise (§8.3).
+**How these were scored.** For revision 2, three independent agents scored from different lenses,
+then a fourth adversarially calibrated (brief: attack every ease ≥ 8). For revision 3 those
+ratings were re-verified against v1.2.0 by execution and a refutation pass — no false "resolved"
+survived — and the four new items were scored on the same scale. Several eases shifted: `I-13` and
+`I-12` rose to value 7 (a `--profile` typo or a job rename now also drops the *admin* binding
+`enforce_admins:true` added).
 
 ### 8.1 By value
 
 | Value | Ease | ID | Item | Why |
 |---|---|---|---|---|
-| **10** | **6** | `I-01` | Fix the lane G bootstrap deadlock | Reproduced: compliant bootstrap step 2.2 reds step 5's make verify on v1.0.5 |
-| **8** | **8** | `I-08` | Fix argv parsing in all three guards · _do with I-09,I-10_ | VERIFIED: 9 bypasses rc=0 to rc=2, all 8 suites and make verify green |
-| **7** | **9** | `I-04` | Remove the blanket "Each rule is hook- and CI-enforced" header from `CLAUDE.md` · _merge with I-06_ | Header false only about the CI layer; rewrite from the measured enforcer map |
-| **7** | **9** | `I-06` | Correct AGENTS.md's blanket CI promise · _merge with I-04_ | AGENTS.md promises CI to the audience with no hooks; rewrite from measured map |
-| **7** | **5** | `I-11` | Guard the MCP write surface · _after I-08_ | Zero CI self-merge enforcement anywhere; widen an existing matcher, never add a hook |
-| **6** | **10** | `I-17` | Add `anchors: warn` to `mkdocs.yml`'s `validation:` block · _half landed in v1.1.0_ | The `nav.omitted_files` half shipped; the anchor half — the one guarding the ADR links — is still open. VERIFIED: 2 lines, build clean |
-| **6** | **9** | `I-13` | Validate `--profile` in `github_setup.sh` · _merge with I-24_ | Typo silently takes the data branch; no suite exists and none is demanded |
-| **6** | **9** | `I-18` | Give `/note` and `/epic-closeout` the faithful-read rule `/tick` now has | Two rituals rewrite bodies through a channel /tick calls silently destructive |
-| **6** | **8** | `I-09` | Add `\n` to the guards' segment splitter, and tokenize before splitting · _sub-task of I-08_ | VERIFIED false ALLOW from main; one regex alternation, same three files |
-| **6** | **8** | `I-10` | Widen force-push detection · _sub-task of I-08_ | VERIFIED -fu, lease=ref, +refspec, --all, --mirror all disarmed; same function |
-| **6** | **8** | `I-15` | Extend `check_docs_truth.py`'s path-citation scan surface · _needs archive exclusion_ | VERIFIED 49 to 77 files clean, but archive walk reds every seed without exclusion |
-| **6** | **8** | `I-32` | Add a repo-settings step to `UPDATE.md` · _after I-13,I-12_ | Operator-facing machinery; writing it first documents nonexistent behaviour |
-| **6** | **7** | `I-22` | Fix the `.gitignore` two-part BLUEPRINT-marker defect · _merge with I-33_ | Marker-only deletion passes; needs a new both-ways fixture in the gate's self-test |
-| **6** | **6** | `I-12` | Pin the eight required status-check contexts to shipped job ids · _merge with I-24_ | All 8 contexts match job ids today; harm prospective, fix needs new gate lane |
-| **6** | **6** | `I-26` | Correct the v1.0.5 changelog entry's six overclaims | MEASURED 2702 to 2531 words, 171 removed not 351; anchor-preserving claim holds |
-| **6** | **6** | `I-31` | Pin the docs toolchain with a lockfile | Live risk: every build prints the MkDocs 2.0 breaking-change banner; floors unpinned |
-| **6** | **5** | `I-05` | Correct ADR-0003's server-side flow overclaim | Real overclaim, but /unlock-adr token plus trailer plus CI check gate the edit |
-| **5** | **9** | `I-20` | Fix `running-epics.md:17-20`'s agent-close instruction | Corrected wording already exists twice on the same page; harm is a blocked agent |
-| **5** | **8** | `I-14` | Widen the issue-link guard's checkbox regexes | VERIFIED regex widening, suite green; shipped templates use dashes so exposure narrow |
-| **5** | **7** | `I-21` | Restore a reachable home for the config-cites-decision convention · _merge with I-25_ | One-line edit that reopens the shipped CLAUDE.md diet a live rule polices |
-| **5** | **7** | `I-24` | Reconcile the "diff-scoped, so required" selection principle with `build` · _merge with I-12,I-13_ | VERIFIED build runs make verify with GH_TOKEN; lane skips on error, never guesses |
-| **5** | **7** | `I-30` | Give `make verify` a product seam | A Makefile target and a declaration seam; a forcing function, not a check |
-| **5** | **7** | `I-33` | Protect the README blueprint version stamp · _merge with I-22_ | Same script and self-test harness as I-22; new assertion needs a both-ways fixture |
-| **5** | **6** | `I-25` | Resolve the AGENTS.md / path-scoped-rules narrowing · _merge with I-21_ | Wording cheap, but deciding whether rules bind non-Claude agents is the work |
-| **5** | **6** | `I-27` | Make the release log a gated artifact · _after I-26_ | Ritual rule is an 8; an actual gate means decision script plus fixtures |
-| **5** | **2** | `I-28` | Add a process-weight dial to the bootstrap interview | ~9.5k shipped lines measured; interview dimension plus seam plus deletion paths |
-| **4** | **9** | `I-02` | Lane G: strip HTML comments in the changelog half · _ship inside I-01_ | One line inside I-01's function; standalone it loosens lane G without fixing it |
-| **4** | **5** | `I-34` | Define what a blueprint version bump means downstream · _after I-27_ | Typing is cheap; the bump contract is a decision, plausibly an ADR |
-| **4** | **5** | `I-35` | Add a retirement path for process | New status touches STATUS_EMOJI, lane D fixtures, legend, mkdocs, template, card |
-| **4** | **3** | `I-29` | Define a trivial-change lane | Redundant with the waiver trailer; per-PR required-check variation is infeasible |
-| **3** | **9** | `I-16` | Repair the anchors the re-aim campaign orphaned | VERIFIED exactly four orphan stubs; other eight cited by Decided ADRs. Tidiness |
-| **3** | **8** | `I-19` | Reconcile `/tick` steps 2 and 5 | Real contradiction on the no-gh path; failure is a stall, card has an escape |
-| **2** | **9** | `I-07` | File issues for I-05 and I-06 | Tracker hygiene; no seeded project affected either way |
+| **10** | **6** | `I-01` | Fix the lane G bootstrap deadlock | Lane G bootstrap deadlock still reproduces on a v1.2.0 seed (rc=1) |
+| **9** | **4** | `I-36` | Harden the new read-only auto-approve hook (code-exec + guard-overwrite auto-approvals) · _I-11_ | NEW (v1.2.0): the read-only approve-hook auto-approves code-exec (git -c), guard/settings/.git overwrites via project-dir redirect, and git branch -f — no prompt, no block |
+| **7** | **9** | `I-13` | Validate `--profile` in `github_setup.sh` · _merge with I-24_ | --profile still unvalidated; a typo now also drops admin binding on development |
+| **7** | **6** | `I-12` | Pin the eight required status-check contexts to shipped job ids · _merge with I-24_ | #124 pinned the app, not job ids; a renamed job still freezes merges, now binding admins too |
+| **6** | **10** | `I-17` | Add `validation:` to `mkdocs.yml` (`anchors: warn`, `nav.omitted_files: warn`) | anchors: warn still absent (nav half shipped v1.1.0); adding it builds clean |
+| **6** | **9** | `I-18` | Give `/note` and `/epic-closeout` the faithful-read rule `/tick` now has | /note and /epic-closeout still rewrite bodies through the lossy channel /tick now guards |
+| **6** | **8** | `I-15` | Extend `check_docs_truth.py`'s path-citation scan surface · _needs archive exclusion_ | scan-surface still docs-only; the unscanned region grew with the new rules files |
+| **6** | **8** | `I-32` | Add a repo-settings step to `UPDATE.md` · _after I-13,I-12_ | UPDATE.md still has no repo-settings step; the v1.2 admin-binding change reaches a seed only by re-running the script |
+| **6** | **7** | `I-22` | Fix the `.gitignore` two-part BLUEPRINT-marker defect · _merge with I-33_ | .gitignore marker-only deletion still passes the gate leaving archive ignored in the seed |
+| **6** | **6** | `I-26` | Correct the v1.0.5 changelog entry's six overclaims | the v1.0.5 changelog's six overclaims still ship in the log UPDATE.md reads |
+| **6** | **6** | `I-31` | Pin the docs toolchain with a lockfile | docs toolchain still >= floors, no lockfile; the MkDocs 2.0 banner prints every build |
+| **6** | **6** | `I-37` | Close the residual push-to-main/ADR bypasses #118 missed (`$'…'`, wildcard refspec) | NEW (v1.2.0): two push-to-main/ADR bypasses the #118 hardening missed — $'...' ANSI-C quoting and wildcard refspec |
+| **6** | **2** | `I-28` | Add a process-weight dial to the bootstrap interview | no process-weight dial; v1.2.0 only added machinery, so the weight grew |
+| **5** | **9** | `I-20` | Fix `running-epics.md:17-20`'s agent-close instruction | running-epics.md:17-20 still instructs an agent-performed close |
+| **5** | **8** | `I-14` | Widen the issue-link guard's checkbox regexes | checkbox regex still [-*]-only; + and ordered items silently pass |
+| **5** | **7** | `I-21` | Restore a reachable home for the config-cites-decision convention · _merge with I-25_ | config-cites-decision still has no reachable always-loaded home |
+| **5** | **7** | `I-24` | Reconcile the "diff-scoped, so required" selection principle with `build` · _merge with I-12,I-13_ | the diff-scoped principle still ships verbatim; enforce_admins sharpens its build contradiction |
+| **5** | **7** | `I-30` | Give `make verify` a product seam | make verify still has no product seam |
+| **5** | **7** | `I-33` | Protect the README blueprint version stamp · _merge with I-22_ | README version stamp still guarded by nothing; no Blueprint-Commit trailer |
+| **5** | **6** | `I-25` | Resolve the AGENTS.md / path-scoped-rules narrowing · _merge with I-21_ | AGENTS.md still licenses ignoring .claude/rules; no ADR |
+| **5** | **6** | `I-38` | Fix the heredoc-body false-block introduced by #118 | NEW (v1.2.0): #118's newline split parses heredoc bodies as commands — a false block that bit this audit |
+| **5** | **5** | `I-39` | Make `github_setup.sh` custom checks preserve app-pinning and override `development` | NEW (v1.2.0): github_setup.sh custom checks discard app pinning, can't override development, and hardcode app_id 15368 (breaks GHES) |
+| **4** | **9** | `I-02` | Lane G: strip HTML comments in the changelog half · _ship inside I-01_ | strip HTML comments in lane G's changelog half — ship only inside I-01 |
+| **4** | **9** | `I-04` | Remove the blanket "Each rule is hook- and CI-enforced" header from `CLAUDE.md` · _merge with I-06_ | the blanket header is now false only for self-merge, but the prose is verbatim unchanged |
+| **4** | **9** | `I-06` | Correct AGENTS.md's blanket CI promise · _merge with I-04_ | AGENTS.md CI promise now false only for self-merge; prose verbatim unchanged |
+| **4** | **6** | `I-11` | Guard the MCP write surface | self-merge closed (v1.2.0); residual is MCP push_files/create_or_update_file/delete_file to feature branches |
+| **4** | **6** | `I-27` | Make the release log a gated artifact · _after I-26_ | release log still not written from the promoted diff |
+| **4** | **5** | `I-34` | Define what a blueprint version bump means downstream · _after I-27_ | blueprint version bump still carries no downstream contract |
+| **4** | **5** | `I-35` | Add a retirement path for process | still no retirement path for process — every item here is permanent |
+| **4** | **2** | `I-29` | Define a trivial-change lane | trivial-change lane — DROP CANDIDATE: waiver trailer covers it, per-PR checks infeasible |
+| **3** | **9** | `I-16` | Repair the anchors the re-aim campaign orphaned | four orphan anchor stubs still shippable tidiness |
+| **3** | **8** | `I-19` | Reconcile `/tick` steps 2 and 5 | /tick steps 2 and 5 still contradict on the no-gh path |
+| **2** | **9** | `I-07` | File issues for I-05 and I-06 | file issues for the two enforcement-claim items (I-05 now resolved; still relevant for I-04/I-06) |
 
 ### 8.2 By ease — the quick-win queue (ease ≥ 8)
 
-Sixteen items. The calibrator personally re-checked each; **[ran]** items had the fix applied in
-a scratch copy with the suites re-run.
+Thirteen items. Verified against v1.2.0.
 
 | Value | Ease | ID | Item | Why |
 |---|---|---|---|---|
-| **6** | **10** | `I-17` | Add `anchors: warn` to `mkdocs.yml`'s `validation:` block · _half landed in v1.1.0_ | The `nav.omitted_files` half shipped; the anchor half — the one guarding the ADR links — is still open. VERIFIED: 2 lines, build clean |
-| **7** | **9** | `I-04` | Remove the blanket "Each rule is hook- and CI-enforced" header from `CLAUDE.md` · _merge with I-06_ | Header false only about the CI layer; rewrite from the measured enforcer map |
-| **7** | **9** | `I-06` | Correct AGENTS.md's blanket CI promise · _merge with I-04_ | AGENTS.md promises CI to the audience with no hooks; rewrite from measured map |
-| **6** | **9** | `I-13` | Validate `--profile` in `github_setup.sh` · _merge with I-24_ | Typo silently takes the data branch; no suite exists and none is demanded |
-| **6** | **9** | `I-18` | Give `/note` and `/epic-closeout` the faithful-read rule `/tick` now has | Two rituals rewrite bodies through a channel /tick calls silently destructive |
-| **5** | **9** | `I-20` | Fix `running-epics.md:17-20`'s agent-close instruction | Corrected wording already exists twice on the same page; harm is a blocked agent |
-| **4** | **9** | `I-02` | Lane G: strip HTML comments in the changelog half · _ship inside I-01_ | One line inside I-01's function; standalone it loosens lane G without fixing it |
-| **3** | **9** | `I-16` | Repair the anchors the re-aim campaign orphaned | VERIFIED exactly four orphan stubs; other eight cited by Decided ADRs. Tidiness |
-| **2** | **9** | `I-07` | File issues for I-05 and I-06 | Tracker hygiene; no seeded project affected either way |
-| **8** | **8** | `I-08` | Fix argv parsing in all three guards · _do with I-09,I-10_ | VERIFIED: 9 bypasses rc=0 to rc=2, all 8 suites and make verify green |
-| **6** | **8** | `I-09` | Add `\n` to the guards' segment splitter, and tokenize before splitting · _sub-task of I-08_ | VERIFIED false ALLOW from main; one regex alternation, same three files |
-| **6** | **8** | `I-10` | Widen force-push detection · _sub-task of I-08_ | VERIFIED -fu, lease=ref, +refspec, --all, --mirror all disarmed; same function |
-| **6** | **8** | `I-15` | Extend `check_docs_truth.py`'s path-citation scan surface · _needs archive exclusion_ | VERIFIED 49 to 77 files clean, but archive walk reds every seed without exclusion |
-| **6** | **8** | `I-32` | Add a repo-settings step to `UPDATE.md` · _after I-13,I-12_ | Operator-facing machinery; writing it first documents nonexistent behaviour |
-| **5** | **8** | `I-14` | Widen the issue-link guard's checkbox regexes | VERIFIED regex widening, suite green; shipped templates use dashes so exposure narrow |
-| **3** | **8** | `I-19` | Reconcile `/tick` steps 2 and 5 | Real contradiction on the no-gh path; failure is a stall, card has an escape |
+| **6** | **10** | `I-17` | Add `validation:` to `mkdocs.yml` (`anchors: warn`, `nav.omitted_files: warn`) | anchors: warn still absent (nav half shipped v1.1.0); adding it builds clean |
+| **7** | **9** | `I-13` | Validate `--profile` in `github_setup.sh` · _merge with I-24_ | --profile still unvalidated; a typo now also drops admin binding on development |
+| **6** | **9** | `I-18` | Give `/note` and `/epic-closeout` the faithful-read rule `/tick` now has | /note and /epic-closeout still rewrite bodies through the lossy channel /tick now guards |
+| **5** | **9** | `I-20` | Fix `running-epics.md:17-20`'s agent-close instruction | running-epics.md:17-20 still instructs an agent-performed close |
+| **4** | **9** | `I-02` | Lane G: strip HTML comments in the changelog half · _ship inside I-01_ | strip HTML comments in lane G's changelog half — ship only inside I-01 |
+| **4** | **9** | `I-04` | Remove the blanket "Each rule is hook- and CI-enforced" header from `CLAUDE.md` · _merge with I-06_ | the blanket header is now false only for self-merge, but the prose is verbatim unchanged |
+| **4** | **9** | `I-06` | Correct AGENTS.md's blanket CI promise · _merge with I-04_ | AGENTS.md CI promise now false only for self-merge; prose verbatim unchanged |
+| **3** | **9** | `I-16` | Repair the anchors the re-aim campaign orphaned | four orphan anchor stubs still shippable tidiness |
+| **2** | **9** | `I-07` | File issues for I-05 and I-06 | file issues for the two enforcement-claim items (I-05 now resolved; still relevant for I-04/I-06) |
+| **6** | **8** | `I-15` | Extend `check_docs_truth.py`'s path-citation scan surface · _needs archive exclusion_ | scan-surface still docs-only; the unscanned region grew with the new rules files |
+| **6** | **8** | `I-32` | Add a repo-settings step to `UPDATE.md` · _after I-13,I-12_ | UPDATE.md still has no repo-settings step; the v1.2 admin-binding change reaches a seed only by re-running the script |
+| **5** | **8** | `I-14` | Widen the issue-link guard's checkbox regexes | checkbox regex still [-*]-only; + and ordered items silently pass |
+| **3** | **8** | `I-19` | Reconcile `/tick` steps 2 and 5 | /tick steps 2 and 5 still contradict on the no-gh path |
 
 ### 8.3 Traps — items that look easy and are not
 
-The calibration moved ten ratings. These are the ones worth knowing before you start.
+The calibration and the v1.2.0 re-verification together flagged these. They are the reason the
+ease column is worth trusting.
 
-- **I-15 (scan-surface extension) is a landmine without one extra clause.** It passes clean in the
-  blueprint. In a seeded project the walker descends `.claude/archive/`, whose contents are
-  append-only *by inherited rule* — a planted archived note citing a deleted path turned
-  `check_docs_truth` red, and the seed cannot fix it without breaking its own archive rule. Ships
-  only with an `archive/` + `working/` exclusion. Second sting: `doc_files()` filters to `.md`, so
-  the workflow-YAML half of the item is not delivered by the obvious change.
-- **I-04 and I-06 are 9-ease edits whose *content* is the trap.** The backlog's own premise —
-  "self-merge has no enforcer at any layer" — is measurably wrong (§3.3). An agent executing these
-  at face value writes a second inaccurate enforcement statement into the always-loaded file.
-  Rewrite from the measured map, not from the premise.
-- **I-16 → I-17 was a phantom prerequisite.** Verified false. The cost of believing it is a
-  session spent deleting stubs before taking the genuinely free win.
-- **I-02 is a regression on its own.** Stripping HTML comments loosens lane G without fixing the
-  deadlock. Only ever ship it inside I-01.
-- **I-21 and I-25 are keystroke-cheap and decision-expensive.** Restoring a `CLAUDE.md` bullet
-  reopens the diet that v1.0.5 shipped and that a live rule file polices; "resolving" the AGENTS.md
-  narrowing means deciding whether `.claude/rules/` binds non-Claude agents. That is a decision,
-  not an edit.
-- **I-11 carries a new-hook tax.** A fresh `guard-mcp.sh` silently obliges a
-  `scripts/test_guard_mcp.sh` wired into `make verify`, because `check_ci_gates.py` pins
-  deny-hook→suite. Widen an existing matcher instead.
-- **I-27's title says "doc change"; the word "gated" means a decision-script lane** plus both-ways
-  fixtures. Split it: the ritual rule is cheap, the gate is not.
-- **I-32 and I-34 document things that do not exist yet.** Written before I-13/I-12 land, they
-  state intended behaviour as fact — the exact failure mode I-26 exists to punish.
-- **I-05 is a ritual, not an edit.** `/unlock-adr`, a time-boxed token, a commit trailer and a CI
-  trailer check stand between the author and a one-paragraph correction.
-- **I-14's second half is not its first half.** The regex widening is a genuine 8; the
-  "strip HTML comments" clause pulls an interpreter dependency into a script that deliberately
-  counts in-shell so the mocked suite covers the seam.
+- **`I-36` is critical but not quick (ease 4).** It reads like "tighten a hook", but the fix is
+  design work: the approve-hook must inspect `git -c` values, refuse redirect targets that are
+  themselves enforcement files, and add `git branch -f` to its conditional set — each needing
+  paired fixtures. Do not let its value-9 pull it into the quick-win queue.
+- **`I-04` and `I-06` are 9-ease edits whose *content* is the trap.** v1.2.0 narrowed the falsehood
+  but did not remove it: the blanket claims are now false **only for self-merge**, which has a hook
+  (two `gh` spellings + the MCP deny) but still no *CI* enforcer and `required_approving_review_count:
+  0`. Rewrite from that measured fact, not from the header's premise, or you write a third
+  inaccurate enforcement statement into the always-loaded file.
+- **`I-17` is genuinely the free win** (ease 10): `anchors: warn` beside the `nav.omitted_files:
+  warn` that v1.1.0 shipped, verified build-clean with a planted broken anchor. No prerequisite.
+- **`I-15` is a landmine without one clause** — it must exclude `.claude/archive/` and
+  `.claude/working/`, or it reds every seed whose append-only archive cites a since-deleted path.
+- **`I-37`'s two residuals are exotic** (`$'main'`, wildcard refspec) — real push-to-main holes,
+  but the fix is parser work in all three triplicated guards plus fixtures, hence ease 6 not 9.
+- **`I-02` is a regression on its own** — ship it only inside `I-01`.
+- **`I-21`/`I-25` are keystroke-cheap and decision-expensive** — restoring a `CLAUDE.md` bullet
+  reopens the diet a live rule now polices; the AGENTS.md narrowing is a decision, not an edit.
+- **`I-29` is a drop candidate** (value 4 / ease 2): the waiver trailer already covers the case and
+  per-PR required-check variation is not expressible in branch protection. Recording a decision
+  *not* to do it would be the first use of the retirement path `I-35` proposes.
 
 ### 8.4 Suggested sequence
 
-Not a schedule — a reading of the table that respects the dependencies.
+Not a schedule — a reading that respects the dependencies.
 
-1. **`I-17`** — now 2 lines: `anchors: warn` beside the `nav.omitted_files: warn` that v1.1.0
-   already shipped. Verified build-clean. Start here; it is the only remaining ease-10 item.
-2. **`I-08` + `I-09` + `I-10` as one patch.** The calibrator applied all three together: 9 bypasses
-   went rc=0 → rc=2, 9 innocent forms stayed rc=0, and all 8 shipped suites plus `make verify`
-   stayed green. Same function, same three files. **The highest-value verified win in the list**,
-   and it retires the report's oldest high-severity item. Add the missing fixtures (D-005) — no
-   guard suite currently has a multi-line case.
-3. **`I-01`** (+ `I-02` inside it) — the only value-10 item. Harder than it looks (ease 6) because
-   the arming condition is a design choice, but nothing downstream works until it lands.
-4. **`I-04` + `I-06` together**, rewritten from §3.3's measured map. Two prose edits that restore
-   the doctrine's central property, then **`I-07`** to give them owners.
-5. **`I-13` + `I-12` + `I-24` as one `github_setup.sh` pass**, then **`I-32`** to propagate it.
-6. **Promote once 1–5 have landed**, so the release carries them rather than repeating v1.0.5's
-   pattern of describing work it does not contain. (The v1.1.0 promotion — former `I-03` — is
-   done; this is the standing rule that replaces it.)
+1. **`I-17`** — the only ease-10 item, verified, no prerequisite. Bank it first.
+2. **`I-36`** — the new critical. Not quick, but it is the one open item that lets an agent silently
+   disable every other guard, so it outranks everything except the seed-blocker. Scope it properly.
+3. **`I-01`** (+ `I-02` inside it) — the value-10 seed-blocker, unchanged since revision 2 and now
+   shipped in a released version, so every project seeded from v1.2.0 hits it.
+4. **`I-13` + `I-12` + `I-24` as one `github_setup.sh` + gate pass**, folding in `I-39` (same file),
+   then **`I-32`** to propagate the settings downstream.
+5. **`I-04` + `I-06` together**, rewritten from §0's measured self-merge map, then **`I-07`** to
+   give them owners.
+6. **`I-37`** while the guard parser is open — same three files, add the `$'…'` and wildcard cases
+   with fixtures. Fold in **`I-38`** (heredoc false-block) in the same parser pass.
 7. Everything else by the value column, taking ease-≥8 items opportunistically.
-
-**One item to consider dropping:** `I-29` (trivial-change lane, value 4 / ease 3). The waiver
-trailer already covers the case, and per-PR variation of required checks is not expressible in
-branch protection. Recording a decision *not* to do it would be the first use of the retirement
-path `I-35` proposes.
 
 ---
 
@@ -768,3 +825,16 @@ prioritised future work · relationship to the tracker.
 Its headline numbers, for comparison: 146 findings from 15 auditors; 44 refuters moved 108 of
 them; final severities 13 high · 36 medium · 93 low · 4 not-a-finding; 45 CONFIRMED, 92
 PARTIALLY_CONFIRMED, 9 REFUTED.
+
+## Appendix D — release history tracked by this audit
+
+| Blueprint version | Audited | What moved |
+|---|---|---|
+| v1.0.4 | rev 1 (2026-07-29) | baseline — 146 findings |
+| v1.0.5 | rev 2 (2026-08-09) | tracker-ID sweep + `.claude/archive/` deletion released; 8 findings resolved; lane G deadlock (`I-01`) and the blanket-header regression introduced |
+| v1.1.0 | backlog refresh (2026-08-14) | `I-03` (promote) and `I-23` (`.gitignore` citation) closed; `nav.omitted_files` half of `I-17` shipped; required-check expansion released |
+| v1.2.0 | **rev 3 (2026-08-14)** | guard-bypass cluster (`I-08`/`I-09`/`I-10`), MCP self-merge, and `enforce_admins` (`I-05`) resolved; the CLAUDE.md diet + `paths:` scoping released; **new critical:** the read-only auto-approve hook (`I-36`), plus `I-37`/`I-38`/`I-39` |
+
+Each row's claims were verified by execution against that version's tree, not read from its
+changelog — a discipline this audit adopted after finding the v1.0.5 changelog carried six
+overclaims (§4.3). The v1.2.0 changelog, notably, carried none.
