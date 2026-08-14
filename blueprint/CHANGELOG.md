@@ -4,6 +4,96 @@ What each blueprint version changed. Bumped by the harvest ritual
 (`HARVEST.md`); each seeded project records the version it started from in
 its init commit.
 
+## v1.2.0 — A read-only approve-hook, admin-bound server rules, bypass-hardened guards
+
+Eight merged PRs since v1.1.0, in eight changes. The second minor of the 1.x
+line: two changes add machinery — a checked-in approve-hook that auto-approves
+provably read-only Bash commands, and server rules that now bind
+administrators with the shipped gates pinned to their producing app — and the
+largest change hardens the three PreToolUse guards against argv-parsing
+bypasses. Nothing is removed or renamed and every seam holds, so the
+`UPDATE.md` pull carries no breaking change — but two items are worth a look
+before you pull, both flagged in their bullets: re-running `github_setup.sh`
+now binds administrators to the protected-branch rules, and the new
+approve-hook changes which Bash commands run without a permission prompt.
+
+- **A read-only Bash approve-hook joins the harness** (#119):
+  `.claude/hooks/guard-command-policy.py` adopts the upstream Breakwater
+  auto-approver with its newline defect fixed — `normalise()` turns an
+  unquoted newline into a command separator before lexing, so a safe first
+  line can no longer launder a mutating second line (`git status` followed by
+  a newline-smuggled `git push` now defers; the tested all-read-only
+  multi-line commands still auto-approve). The upstream policy tables are adopted byte-unchanged,
+  and the docstring's *Known residuals* note names what they still permit (a
+  bounded set of local git ref ops; best-effort sed/find/awk write
+  detection). The CI meta-gate now discovers `.py` PreToolUse hooks, a new
+  hermetic suite pins hook and gate in `make verify`, and `.gitattributes`
+  pins `*.sh`/`*.py` to LF so CRLF checkouts cannot break shebangs or the
+  pinned parser region. Per ADR-0004's failure directions the hook approves
+  or defers, never blocks. **On update:** the hook changes prompting only —
+  commands it cannot prove read-only fall through to the normal permission
+  flow.
+- **Server rules bind administrators, required checks pin their producer, and
+  MCP self-merge is blocked** (#124): `scripts/github_setup.sh` ships
+  `enforce_admins: true` in all three protection payloads — an admin
+  exemption is an agent exemption, since agents act with the operator's
+  identity; the escape hatch is a temporary, visible settings edit. Required
+  checks move to the modern `checks` field with the shipped Actions gates
+  pinned to the GitHub Actions app, so a same-named check from another app
+  cannot satisfy them (`--require-check` entries stay any-source).
+  `guard-git.sh` gains a parser-independent branch denying the MCP
+  `merge_pull_request` / `enable_pr_auto_merge` tools by name — the
+  never-self-merge rule now holds on the MCP path too. **On update:**
+  re-running the script applies `enforce_admins` to both protected branches —
+  administrators, and agents carrying their identity, are bound by the same
+  rules from then on.
+- **One hardened argv parser across the three PreToolUse guards** (#118): a
+  global option, newline, subshell, comment, or unusual force/pathspec form
+  before the subcommand could silently disarm `guard-git`, `guard-adr`, and
+  `guard-issue-close`. The fragile per-hook parsing is replaced by one
+  quote-aware argv parser, triplicated byte-for-byte so each hook stays a
+  self-contained heredoc (no import path to fail on Windows) and
+  identity-pinned by `scripts/test_guardlib.py` in `make verify`. Per-guard
+  matcher hardening lands with it — force/broad push forms, add-scope,
+  GraphQL merge, `:/`, parent-dir and `-C`/`cd` ADR resolution, `--input`
+  file inspection — plus paired allow/deny hermetic fixtures; the 49-case
+  bypass catalog now returns the correct verdict on every row, confirmed on
+  native Windows. Residual classes the parser does not chase
+  (nested interpreters, command-name wrappers, TOCTOU) are named in the hook
+  headers and backstopped by branch protection and CI (D-004).
+- **stale-working-docs nudge: bounded action set, live-task suppression**
+  (#115): the Stop nudge fired every turn, flagged a live task's own state
+  files, and asked for cleanup without bounding the action — sessions read it
+  as "commit and push the working docs" and published mid-task scratch. The
+  message now carries the closed action set (finished → `/handoff`; still
+  running → do nothing; never a git action), a 6-hour recent-write
+  suppression trims the live-task false positives, and a new hermetic suite
+  pins both. Where task-end records land is now canon — `pushing.md`,
+  `records-and-canon.md`, and `/session-close` name the records path.
+- **ADR-0004 states each layer's failure direction** (#122): additive
+  in-place refinement — deny-hooks fall through when broken, approve-hooks
+  defer and never block, the prompt layer counts for nothing, server gates
+  fail closed and are the authority; a deferred bypass class must name its
+  auditable catcher; server rules bind administrators. The registry row
+  extends to match and `enforcement.md` gains the failure-directions map.
+- **guard-git's suite reaches `gh` through an explicit seam** (#114): on
+  Windows, `CreateProcess` resolution bypassed the suite's hermetic `gh`
+  mock, so the zombie-push cases silently exercised the live `gh`. The hook
+  now resolves `gh` via the `GUARD_GH_BIN` seam (unset/empty → exactly
+  `["gh"]`, byte-identical production behavior); the suite delivers its mock
+  through the seam with a `PATH` decoy that turns any seam revert red on
+  Linux, where CI runs.
+- **Two-hats rule 4 sharpened — the PR ritual runs unchanged here**: three PR
+  rounds in a row downgraded a completing PR's `Closes #NN` to `Part of
+  #NN`, reading "issues do not auto-close at integration" as "no closing
+  keyword on integration PRs". The rule now opens "run the PR ritual
+  unchanged anyway" and names the downgrade as the anti-pattern; only the
+  close's firing moment moves, to promotion. Blueprint-only files — nothing a
+  seed receives changes.
+- **A dangling tracker ID leaves `.gitignore`**: the archive block cited this
+  repo's issue number, which a seed cannot resolve; comment text only, both
+  ignore rules byte-identical.
+
 ## v1.1.0 — Gates that block, path-scoped rules, a leaner CLAUDE.md
 
 Sixteen merged PRs since v1.0.5, in twelve changes. The first minor of the

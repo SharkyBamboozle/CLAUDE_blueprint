@@ -28,6 +28,12 @@ verify:
 	bash scripts/test_release_gate.sh
 	bash scripts/test_guard_issue_close.sh
 	bash scripts/test_issue_close_guard.sh
+	bash scripts/test_guard_command_policy.sh
+	bash scripts/test_stale_working_docs.sh
+	@# Shared guard-parser pin: 3-way byte-identity of the parser region
+	@# embedded in the three guard hooks, python-syntax compile of each
+	@# hook's heredoc (bash -n cannot see python), and parser unit tests.
+	python3 scripts/test_guardlib.py
 	@# Blueprint-only gate: deleted at bootstrap, so no-op in seeded projects.
 	@# Only the hermetic --self-test runs here — the live gate always trips in
 	@# the blueprint itself (tokens present by design), so it belongs in CI's
