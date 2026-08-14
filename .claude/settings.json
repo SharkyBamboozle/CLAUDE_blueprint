@@ -27,6 +27,8 @@
       "Bash(git push -f:*)",
       "Bash(git reset --hard:*)",
       "Bash(gh pr merge:*)",
+      "mcp__github__merge_pull_request",
+      "mcp__github__enable_pr_auto_merge",
       "Bash(gh repo delete:*)",
       "Bash(gh issue close:*)",
       "Bash(gh issue delete:*)"
@@ -36,6 +38,15 @@
     "PreToolUse": [
       {
         "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-command-policy.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|mcp__.*merge_pull_request|mcp__.*enable_pr_auto_merge",
         "hooks": [
           {
             "type": "command",

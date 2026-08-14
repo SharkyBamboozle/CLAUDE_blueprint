@@ -49,6 +49,7 @@ type appears — one home per record type:
 | The **GitHub epic issue** | the **live plan + tracker** — scope, sub-issue DAG, notes index |
 | [Decisions](../decisions/index.md) + topic docs | the **canonical decisions & current system state** |
 | [Agent-Research](../records/agent-research/index.md) | the curated output of a **fan-out research pass** — proposes and rates, never decides |
+| `.claude/archive/` | the **raw record** of finished agent work — working docs moved by `/handoff`, unedited; append-only, never deleted; the layer under the changelog's narrative and lessons' distillate |
 
 **Agent memory vs the canon.** A coding agent's private auto-memory
 (machine-local, uncommitted) is its own scratch; the record lenses above are

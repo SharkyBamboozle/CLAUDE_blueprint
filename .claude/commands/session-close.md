@@ -1,5 +1,5 @@
 ---
-description: End a working session — changelog entry, findings sweep, state check
+description: End a working session — changelog entry, findings sweep, records commit, state check
 disable-model-invocation: true
 ---
 
@@ -30,8 +30,21 @@ Close out this working session. Steps, in order:
    tallies — epic progress counters must match reality at session end.
    (Rule: `docs/process/closing-issues.md`. Epics themselves close only
    at /epic-closeout; notes only at triage.)
-5. **State check** — report honestly:
-   - `git status`: any uncommitted work? (Report it; do not auto-commit.)
+5. **Records commit & state check** — report honestly:
+   - **Commit the session records on this session's feature branch and
+     push** — the changelog entry from step 1, any approved lessons entry
+     from step 3, and the `/handoff` archive — so they ride the branch's
+     open PR (append-only while OPEN; the operator normally merges after
+     close). Records left uncommitted die with an ephemeral container.
+     Branch's PR already **merged**? The zombie-branch recovery applies to
+     records too: restart the branch from `development` and let the
+     records ride the follow-up PR — or a small records-only PR when the
+     session is fully done (`docs/process/pushing.md` → *Where task-end
+     records land*). If unsure where records belong: **push first, then
+     ask** — a pushed branch is durable; discard is an operator answer,
+     never a default.
+   - `git status`: any *other* uncommitted work? Report it; do not
+     auto-commit anything beyond the session records above.
    - Current branch pushed? Any open PR and its CI state?
    - Anything claimed done this session that was NOT verified end-to-end?
 6. **Verify** — if the working tree touched docs or code, run `make verify`

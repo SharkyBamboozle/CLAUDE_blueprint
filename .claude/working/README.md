@@ -13,6 +13,11 @@ Rules:
   `.claude/archive/YYYY-MM-DD/<task-slug>/`.
 - **Archive, never delete.** Purging happens only on explicit user
   instruction.
+- **No hook or nudge ever asks for a git action on working docs** — never
+  commit, push, or delete anything here on account of an automated
+  reminder. A hook cannot know whether a task is finished; whether a
+  *finished* task's records get committed is the rituals' call
+  (`/handoff`, `/session-close`).
 - **Exception:** never archive the state files of a still-running task or
   loop — a cold restart depends on them.
 - **Mid-task checkpoints** — `<task>-progress.md`, written via `/checkpoint`

@@ -9,14 +9,17 @@ labelled advisory.*
 **Scaffolding is code.** Every deny-hook ships a regression suite that
 asserts both the deny side *and* the still-allowed side
 (`scripts/test_guard_git.sh`, `scripts/test_guard_adr.sh`) — a fix must
-not over-tighten; every checker
+not over-tighten; an approve-hook's suite asserts the approve and the
+defer side the same way (`scripts/test_guard_command_policy.sh`); every
+checker
 script ships a `--self-test` proving each check both fails on bad input and
 passes on good. All of them run inside `make verify` — and therefore in CI
 on every PR (`docs.yml`) — so a broken guard fails the gate instead of
 waiting for someone to remember a manual run. *This coverage binds the
 **next** hook too:* the CI meta-gate (`scripts/check_ci_gates.py`) reads
 the PreToolUse registrations in `.claude/settings.json` and fails
-`make verify` if any deny-hook lacks a wired `scripts/test_*.sh`, or any
+`make verify` if any hook there — deny or approve, `.sh` or `.py` — lacks
+a wired `scripts/test_*.sh`, or any
 `check_*` checker lacks a wired `--self-test` — so "add a guard, skip its
 suite" can't pass unnoticed. Tests are **hermetic**: no
 network, no dependence on mutable repo state — a state-dependent verdict is

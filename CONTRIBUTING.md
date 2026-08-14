@@ -24,9 +24,10 @@ lessons steps of `.claude/commands/session-close.md`, and the page headers under
 here, because in this repo those files are the *stub* of a downstream project's
 diary, not a diary. Neither does one premise of the linking pages — that a
 `Closes` fires when its PR merges into `development` — because here the
-default branch must stay `main` (rule 4). Leave that text exactly as it is —
-the exception is declared here, never by weakening the instructions a seeded
-project needs.
+default branch must stay `main` (rule 4). Only the *premise* fails — the
+procedure those pages prescribe runs here unchanged. Leave that text exactly
+as it is — the exception is declared here, never by weakening the
+instructions a seeded project needs.
 
 Four rules follow. They reach every blueprint session through the
 blueprint-state admonition at the top of `CLAUDE.md`, and die with it at
@@ -51,8 +52,9 @@ seeded project fills in, so anything written into them arrives downstream as
 false history — a diary of a project the reader never worked on, which
 `scripts/check_bootstrap_complete.sh` cannot catch (no `{{TOKEN}}`, no
 `BLUEPRINT:` marker). Leave both at their stub state. *Overrides:* `CLAUDE.md` →
-*Repo workflow* (the session-changelog rule) and steps 1 and 3 of
-`.claude/commands/session-close.md` — both correct downstream. *Where the
+*Repo workflow* (the session-changelog rule), steps 1 and 3 of
+`.claude/commands/session-close.md`, and the records-commit half of its
+step 5 — all correct downstream. *Where the
 content goes instead:* whatever will still be true in a seeded project — a
 regression case in the matching `scripts/test_*.sh` suite, a rule on a ritual
 card under `.claude/commands/`, a page under `docs/process/` — plus the release
@@ -81,9 +83,13 @@ close at promotion instead — the promotion PR restates `Closes #N` for every
 issue the train completed, and `docs/process/releases.md` step 3 exists
 precisely for this main-default case. A merged PR whose target issue is still
 open is therefore the *normal between-releases state*: not drift to flag in a
-summary, and never cause for a manual close. Write the closing-keyword grammar
-exactly as the manual says — the `issue-link-guard` vets it at integration,
-and the promotion restatement is what finally fires it. *Overrides:* nothing —
+summary, and never cause for a manual close. The **procedure is unchanged —
+only the firing moment moves**: tick, readout, and `Closes #NN` land exactly
+as the manual says; the `issue-link-guard` vets the keyword at integration,
+and the promotion restatement is what finally fires it. In particular, never
+downgrade a completing PR to `Part of #NN` on the grounds that the close will
+not fire at merge — that hides a completed issue from the guard's completion
+check and from the promotion sweep that closes it. *Overrides:* nothing —
 the linking pages stay as written (true downstream), and `/session-close`
 step 4 already carries the branch this rule feeds: "state why it stays open" —
 *awaiting promotion* is the standing answer. *Enforcement:* the manual-close
@@ -103,12 +109,26 @@ consequences:
   lock all apply here. Work on a feature branch → PR into `development`; never
   merge your own PR. Changing a ✅ Decided ADR means a *superseding* ADR (or
   `/unlock-adr` for a maintenance edit).
-- **Your scratch stays out of the tree.** `.claude/archive/` is gitignored in
-  *this* repo only — seeded projects track theirs, so the `BLUEPRINT:` marker in
-  `.gitignore` removes the block at bootstrap. Committing session notes here
-  ships blueprint-internal history into every seed (#70). One visible
-  consequence: a `/handoff` that follows an already-committed working doc lands
-  as a **deletion**, not a rename. That is the intended shape.
+- **Your scratch stays out of the tree — the rule flips at the seed
+  boundary.** `.claude/archive/` is gitignored in *this* repo only — seeded
+  projects track theirs, so the `BLUEPRINT:` marker in `.gitignore` removes
+  the block at bootstrap. Committing session notes here ships
+  blueprint-internal history into every seed (#70). One visible consequence:
+  a `/handoff` that follows an already-committed working doc lands as a
+  **deletion**, not a rename. That is the intended shape. In the blueprint,
+  sessions never commit working files or archives — the risk is
+  **contamination**: one session's scratch ships into every seed. In a seeded
+  project, the archive is a record of the agent's work, and the risk is
+  **loss** — task-end records (the changelog entry, the `/handoff` archive)
+  must land on a live branch and ride a PR before the branch or container is
+  gone (`docs/process/pushing.md` → *PR lifecycle*). Under both hats, a
+  still-running task's files stay uncommitted; only the fate of a *finished*
+  task's records differs.
+- **Never run `scripts/github_setup.sh` against this repo.** Its first act on
+  the code profile is making `development` the default branch — right for
+  every seed, wrong here, where `main` must stay the default (the CLAUDE.md
+  admonition, rule 4). Blueprint-repo settings changes are made by hand in
+  the GitHub UI; the script's payloads are the template that seeds inherit.
 
 Durable findings therefore need a permanent home other than an archive file. A
 reproduced bug in the machinery becomes a case in the matching
