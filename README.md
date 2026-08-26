@@ -21,6 +21,10 @@ development process — canonical documentation, addressable decisions,
 honest-reporting rules for AI agents, and CI gates that keep all of it true
 — so every project starts on rails, for humans and AI agents alike.
 
+📖 **New here?** The [**adoption report (PDF)**](blueprint/assets/blueprint-report.pdf)
+is the full guided tour — the whole system in nine readable chapters,
+ending with an honest checklist of whether it fits your project.
+
 > [!NOTE]
 > **Agent-agnostic by design, Claude Code-tuned in practice.** The process and
 > its enforcement are tool-neutral — the CI gates in `.github/workflows/` bind
@@ -33,6 +37,7 @@ honest-reporting rules for AI agents, and CI gates that keep all of it true
 > **Contents:**
 > [Why it exists](#-why-it-exists) ·
 > [What a seeded project gets](#-what-a-seeded-project-gets) ·
+> [The documentation](#-the-documentation) ·
 > [Philosophy](#-philosophy-invariants-in-the-core-shape-in-the-modules) ·
 > [Working skeleton](#-the-repo-is-its-own-working-skeleton) ·
 > [Instantiating](#-instantiating-a-new-project) ·
@@ -140,26 +145,24 @@ reachable, so a seeded project doesn't publish until its owner asks.
 
 ![What a seeded project gets](blueprint/assets/README_what_a_seeded_project_gets.png)
 
-## 📖 The report
+## 📚 The documentation
 
-The system described above is documented twice, for two different readers.
-The `docs/` site is the canonical reference — agents and contributors work
-from it. For a **human deciding whether to adopt**, there is a readable
-companion: a PDF report that walks the whole system in nine chapters — the
-documentation spine, the decision lock, the enforcement layers, the agent
-harness, the lifecycle rituals, and an honest checklist of the assumptions
-the template leans on.
-
-[**Read the report (PDF)**](blueprint/assets/blueprint-report.pdf) — its
-facts (decision tables, gate lists, counts) are extracted from this
-repository at build time rather than written by hand, and its cover names
-the exact version and commit it describes. It is regenerated as the
-blueprint evolves; where it and the docs site disagree, the site is right.
+Every seeded project carries its documentation as a **canonical MkDocs
+Material site** under `docs/` — not a wiki trailing the code, but the single
+source of truth the code is judged against, with the strict build and the
+docs truth checker as merge gates. The top level stays deliberately small:
+**Home**, plus a **Project** tab holding the four meta sections the template
+ships — **Direction** (vision → principles → requirements → open questions →
+roadmap), **Decisions** (the ADR registry), **Records** (changelog, lessons,
+epics), and **Process** (the how-to pages). A project's own subject matter
+lives beside them, not inside: one top-level tab per domain area, added as
+the project grows.
 
 ![The documentation site: Home and Project ship with the template; a project's own domain areas sit beside them](blueprint/assets/README_the_documentation.png)
 
-Like everything under `blueprint/`, the report is template documentation —
-it is deleted at bootstrap and does not ship into seeded projects.
+The blueprint's own instance of the site is published at
+[sharkybamboozle.github.io/CLAUDE_blueprint](https://sharkybamboozle.github.io/CLAUDE_blueprint/)
+— browsing it is the fastest way to see what every seeded project starts with.
 
 
 ## 🧱 Philosophy: invariants in the core, shape in the modules
