@@ -140,6 +140,28 @@ reachable, so a seeded project doesn't publish until its owner asks.
 
 ![What a seeded project gets](blueprint/assets/README_what_a_seeded_project_gets.png)
 
+## 📖 The report
+
+The system described above is documented twice, for two different readers.
+The `docs/` site is the canonical reference — agents and contributors work
+from it. For a **human deciding whether to adopt**, there is a readable
+companion: a PDF report that walks the whole system in nine chapters — the
+documentation spine, the decision lock, the enforcement layers, the agent
+harness, the lifecycle rituals, and an honest checklist of the assumptions
+the template leans on.
+
+[**Read the report (PDF)**](blueprint/assets/blueprint-report.pdf) — its
+facts (decision tables, gate lists, counts) are extracted from this
+repository at build time rather than written by hand, and its cover names
+the exact version and commit it describes. It is regenerated as the
+blueprint evolves; where it and the docs site disagree, the site is right.
+
+![The documentation site: Home and Project ship with the template; a project's own domain areas sit beside them](blueprint/assets/README_the_documentation.png)
+
+Like everything under `blueprint/`, the report is template documentation —
+it is deleted at bootstrap and does not ship into seeded projects.
+
+
 ## 🧱 Philosophy: invariants in the core, shape in the modules
 
 The core encodes the process. Everything shape-dependent — Python package
