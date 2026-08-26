@@ -21,6 +21,10 @@ development process — canonical documentation, addressable decisions,
 honest-reporting rules for AI agents, and CI gates that keep all of it true
 — so every project starts on rails, for humans and AI agents alike.
 
+📖 **New here?** The [**adoption report (PDF)**](blueprint/assets/blueprint-report.pdf)
+is the full guided tour — the whole system in nine readable chapters,
+ending with an honest checklist of whether it fits your project.
+
 > [!NOTE]
 > **Agent-agnostic by design, Claude Code-tuned in practice.** The process and
 > its enforcement are tool-neutral — the CI gates in `.github/workflows/` bind
@@ -33,6 +37,7 @@ honest-reporting rules for AI agents, and CI gates that keep all of it true
 > **Contents:**
 > [Why it exists](#-why-it-exists) ·
 > [What a seeded project gets](#-what-a-seeded-project-gets) ·
+> [The documentation](#-the-documentation) ·
 > [Philosophy](#-philosophy-invariants-in-the-core-shape-in-the-modules) ·
 > [Working skeleton](#-the-repo-is-its-own-working-skeleton) ·
 > [Instantiating](#-instantiating-a-new-project) ·
@@ -139,6 +144,26 @@ and the label taxonomy. Publishing the docs to GitHub Pages is opt-in
 reachable, so a seeded project doesn't publish until its owner asks.
 
 ![What a seeded project gets](blueprint/assets/README_what_a_seeded_project_gets.png)
+
+## 📚 The documentation
+
+Every seeded project carries its documentation as a **canonical MkDocs
+Material site** under `docs/` — not a wiki trailing the code, but the single
+source of truth the code is judged against, with the strict build and the
+docs truth checker as merge gates. The top level stays deliberately small:
+**Home**, plus a **Project** tab holding the four meta sections the template
+ships — **Direction** (vision → principles → requirements → open questions →
+roadmap), **Decisions** (the ADR registry), **Records** (changelog, lessons,
+epics), and **Process** (the how-to pages). A project's own subject matter
+lives beside them, not inside: one top-level tab per domain area, added as
+the project grows.
+
+![The documentation site: Home and Project ship with the template; a project's own domain areas sit beside them](blueprint/assets/README_the_documentation.png)
+
+The blueprint's own instance of the site is published at
+[sharkybamboozle.github.io/CLAUDE_blueprint](https://sharkybamboozle.github.io/CLAUDE_blueprint/)
+— browsing it is the fastest way to see what every seeded project starts with.
+
 
 ## 🧱 Philosophy: invariants in the core, shape in the modules
 

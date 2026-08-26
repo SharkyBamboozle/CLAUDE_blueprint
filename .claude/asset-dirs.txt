@@ -11,3 +11,10 @@
 # posture, list the sanctioned prefixes here, e.g.:
 #   assets/
 #   static/
+
+# BLUEPRINT: the single entry below sanctions the template's OWN assets —
+# the README illustrations and the adoption report under blueprint/assets/,
+# a directory BOOTSTRAP.md step 7 deletes wholesale. Remove this entry
+# together with that directory; a seeded project's list is decided by the
+# binary-policy interview above, starting from empty.
+blueprint/assets/
