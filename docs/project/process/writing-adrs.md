@@ -9,7 +9,7 @@ page.*
 Architecture Decision Records capture significant decisions.
 
 1. A new significant decision gets the **next free `D-0NN` ID**.
-2. Create an `adr-00NN-*.md` page under `docs/decisions/` from the template at
+2. Create an `adr-00NN-*.md` page under `docs/project/decisions/` from the template at
    `docs/.templates/adr-template.md` (Status, Decision ID, Related
    requirements/questions, then Context / Decision / Consequences /
    Reversibility / References).

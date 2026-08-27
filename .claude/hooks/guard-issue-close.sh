@@ -520,7 +520,7 @@ def gh_calls(tokens):
 
 def advance_cd(run_cd, tokens):
     # Track the shell's working directory across a `cmd && cmd` / `cmd; cmd`
-    # list so `cd docs/decisions && rm adr-...` resolves the way bash would.
+    # list so `cd docs/project/decisions && rm adr-...` resolves the way bash would.
     # `run_cd` is relative to the Bash tool's start cwd (assumed repo root);
     # a `cd` to an absolute path or ~ makes it unknowable -> None. Returns
     # the (possibly updated) run_cd; non-cd commands leave it unchanged. This
@@ -568,7 +568,7 @@ MSG = (
     "yourself and do not route around this guard via other tools (the "
     "server-side issue-close-guard reverts app-mediated closes). Creating, "
     "commenting, labeling, body edits (box-ticking), and reopening all "
-    "remain allowed. See docs/process/closing-issues.md."
+    "remain allowed. See docs/project/process/closing-issues.md."
 )
 
 INPUT_MSG = (
@@ -579,7 +579,7 @@ INPUT_MSG = (
     "fails closed. Instead: write the body file in its own PRIOR command "
     "so the guard can inspect it (and keep 'state' out of it), or pass "
     "fields via -f/--field flags. Comment posts (/comments) are never "
-    "affected. See docs/process/closing-issues.md."
+    "affected. See docs/project/process/closing-issues.md."
 )
 
 def block(msg=MSG):

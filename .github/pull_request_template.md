@@ -7,7 +7,7 @@
      sub-issue is already closed. Enforcement (D-004): the issue-link-guard
      CI gate blocks closing references to an epic with open sub-issues and
      to any other issue with unchecked (or no) deliverable boxes.
-     See docs/process/opening-a-pr.md. -->
+     See docs/project/process/opening-a-pr.md. -->
 
 **Tick before opening:** on every issue this PR `Closes`, tick each
 deliverable box this PR completes — via `/tick`: per box, *did I deliver

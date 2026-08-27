@@ -72,7 +72,7 @@ DEFAULT_BRANCH=$(gh api "repos/$REPO" --jq .default_branch)
 if [ "$PROFILE" = "code" ]; then
   # --- development branch, made the default ------------------------------
   # Feature branches PR into development; main is the promoted branch
-  # (docs/process/pushing.md, CLAUDE.md → Repo workflow).
+  # (docs/project/process/pushing.md, CLAUDE.md → Repo workflow).
   if ! gh api "repos/$REPO/git/ref/heads/development" >/dev/null 2>&1; then
     SHA=$(gh api "repos/$REPO/git/ref/heads/$DEFAULT_BRANCH" --jq .object.sha)
     gh api -X POST "repos/$REPO/git/refs" \
@@ -88,7 +88,7 @@ if [ "$PROFILE" = "code" ]; then
   # main: PRs only (0 approvals — solo-dev calibrated: require checks, not
   # reviews), no force-pushes, no deletion, required status checks.
   # enforce_admins is true: server rules bind administrators (ADR-0004 →
-  # failure directions; docs/process/enforcement.md). Coding agents act
+  # failure directions; docs/project/process/enforcement.md). Coding agents act
   # with the operator's identity, so an admin exemption is an agent
   # exemption. The operator's escape hatch is a temporary, VISIBLE
   # settings edit — relax, act, restore — never a standing power.

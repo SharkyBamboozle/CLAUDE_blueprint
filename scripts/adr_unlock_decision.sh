@@ -32,7 +32,7 @@ is_decided() { # is_decided <ref> <path>
 # --no-renames: a rename surfaces as delete(old)+add(new); judging each side on
 # its own base/head status catches a renamed Decided page from both directions.
 changed=$(git diff --no-renames --name-only "$BASE" "$HEAD" \
-  | grep -E '^docs/decisions/adr-.*\.md$' || true)
+  | grep -E '^docs/project/decisions/adr-.*\.md$' || true)
 if [ -z "$changed" ]; then
   echo "No ADR pages changed."
   exit 0

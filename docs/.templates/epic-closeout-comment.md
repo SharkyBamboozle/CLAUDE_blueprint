@@ -7,7 +7,7 @@ hard rule). -->
 
 **Epic complete — ready to close.** ✅
 
-Retrospective (canonical story): <link to the epic page under `docs/records/epics/`>
+Retrospective (canonical story): <link to the epic page under `docs/project/records/epics/`>
 
 **Outcome:** <2–3 sentences with numbers where possible; which `D-xxx` moved
 to ✅.>

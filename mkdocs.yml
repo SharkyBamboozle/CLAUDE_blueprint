@@ -29,7 +29,8 @@ theme:
     # Top-level groups become header TABS; deeper levels are collapsible
     # dropdowns in the sidebar. Keep the top level shallow — depth goes inside
     # a tab. Domain-area tabs are the sanctioned exception; any other new tab
-    # is an ADR-worthy structural decision (docs/process/adding-docs-pages.md).
+    # is an ADR-worthy structural decision
+    # (docs/project/process/adding-docs-pages.md).
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.indexes
@@ -77,7 +78,8 @@ plugins:
   - search
 
 # Wires the shared status vocabulary into Material's per-page front-matter
-# `status:` feature — one legend everywhere (docs/process/adding-docs-pages.md).
+# `status:` feature — one legend everywhere
+# (docs/project/process/adding-docs-pages.md).
 extra:
   status:
     decided: Decided
@@ -97,52 +99,53 @@ validation:
   nav:
     omitted_files: warn
 
-# The nav mirrors the directory layout under docs/ (one section = one
-# directory). Project holds the project-meta sections (Direction, Decisions,
+# One top-level tab = one directory under docs/ (D-008): the Project tab
+# maps to docs/project/ (the project-meta sections — Direction, Decisions,
 # Records, Process); each domain area (architecture, design, ...) is its own
-# top-level tab, a sibling of Home and Project
-# (docs/process/adding-docs-pages.md).
+# top-level tab AND its own docs/<area>/ directory, a sibling of Home and
+# docs/project/ (docs/project/process/adding-docs-pages.md).
 nav:
   - Home: index.md
   - Project:
       - Direction:
-          - Vision: direction/vision.md
-          - Design principles: direction/design-principles.md
-          - Requirements: direction/requirements.md
-          - Open questions: direction/open-questions.md
-          - Roadmap: direction/roadmap.md
+          - Vision: project/direction/vision.md
+          - Design principles: project/direction/design-principles.md
+          - Requirements: project/direction/requirements.md
+          - Open questions: project/direction/open-questions.md
+          - Roadmap: project/direction/roadmap.md
       - Decisions:
-          - decisions/index.md
-          - "ADR-0001 — Documentation & records": decisions/adr-0001-documentation-and-records.md
-          - "ADR-0002 — Work tracking": decisions/adr-0002-work-tracking.md
-          - "ADR-0003 — Branch model": decisions/adr-0003-branch-model.md
-          - "ADR-0004 — Enforcement doctrine": decisions/adr-0004-enforcement-doctrine.md
-          - "ADR-0005 — Testing policy": decisions/adr-0005-testing-policy.md
-          - "ADR-0006 — Verification & honesty": decisions/adr-0006-verification-and-honesty.md
-          - "ADR-0007 — Binary hygiene": decisions/adr-0007-binary-hygiene.md
+          - project/decisions/index.md
+          - "ADR-0001 — Documentation & records": project/decisions/adr-0001-documentation-and-records.md
+          - "ADR-0002 — Work tracking": project/decisions/adr-0002-work-tracking.md
+          - "ADR-0003 — Branch model": project/decisions/adr-0003-branch-model.md
+          - "ADR-0004 — Enforcement doctrine": project/decisions/adr-0004-enforcement-doctrine.md
+          - "ADR-0005 — Testing policy": project/decisions/adr-0005-testing-policy.md
+          - "ADR-0006 — Verification & honesty": project/decisions/adr-0006-verification-and-honesty.md
+          - "ADR-0007 — Binary hygiene": project/decisions/adr-0007-binary-hygiene.md
+          - "ADR-0008 — Docs layout": project/decisions/adr-0008-docs-layout.md
       - Records:
           - Epics:
-              - records/epics/index.md
+              - project/records/epics/index.md
           - Agent-Research:
-              - records/agent-research/index.md
-          - Changelog: records/changelog.md
-          - Lessons: records/lessons.md
+              - project/records/agent-research/index.md
+          - Changelog: project/records/changelog.md
+          - Lessons: project/records/lessons.md
       - Process:
           # Hub first, then act pages in workflow order, then doctrine —
           # the act-based split of the contributing guide (D-001, D-004).
-          - Contributing: process/contributing.md
-          - Filing work: process/filing-work.md
-          - Committing: process/committing.md
-          - Pushing: process/pushing.md
-          - Opening a PR: process/opening-a-pr.md
-          - Closing issues: process/closing-issues.md
-          - Running epics: process/running-epics.md
-          - Writing ADRs: process/writing-adrs.md
-          - Adding docs pages: process/adding-docs-pages.md
-          - Testing changes: process/testing-changes.md
-          - Ending a session: process/ending-a-session.md
-          - Releases: process/releases.md
-          - Release checklist: process/release-checklist.md
-          - Enforcement: process/enforcement.md
-          - Records & canon: process/records-and-canon.md
-          - Glossary: process/glossary.md
+          - Contributing: project/process/contributing.md
+          - Filing work: project/process/filing-work.md
+          - Committing: project/process/committing.md
+          - Pushing: project/process/pushing.md
+          - Opening a PR: project/process/opening-a-pr.md
+          - Closing issues: project/process/closing-issues.md
+          - Running epics: project/process/running-epics.md
+          - Writing ADRs: project/process/writing-adrs.md
+          - Adding docs pages: project/process/adding-docs-pages.md
+          - Testing changes: project/process/testing-changes.md
+          - Ending a session: project/process/ending-a-session.md
+          - Releases: project/process/releases.md
+          - Release checklist: project/process/release-checklist.md
+          - Enforcement: project/process/enforcement.md
+          - Records & canon: project/process/records-and-canon.md
+          - Glossary: project/process/glossary.md

@@ -17,10 +17,10 @@ Steps, in order:
    relation. Create it with the `epic` label (+ relevant `area:*`), via
    `gh issue create --label epic --body-file ...` or this session's GitHub
    tools.
-2. **Story-page stub** — create `docs/records/epics/<slug>.md` from
+2. **Story-page stub** — create `docs/project/records/epics/<slug>.md` from
    `docs/.templates/epic-page-template.md`: status line linking the issue +
    the "Why this epic exists" section only (the rest fills in as work lands).
-3. **Index row** — add the epic to the table in `docs/records/epics/index.md`
+3. **Index row** — add the epic to the table in `docs/project/records/epics/index.md`
    (name · status 🟡 · page link · issue link).
 4. Add the page to `mkdocs.yml` nav under Records → Epics.
 5. Run `make verify`.
@@ -31,8 +31,8 @@ Steps, in order:
    `Closes #<sub-issue> (epic: #NN)` when a PR completes a sub-issue,
    `Closes — · Part of #NN (epic)` otherwise — never a closing keyword on
    the epic itself before its closeout PR (the `issue-link-guard` gate
-   blocks it; `docs/process/opening-a-pr.md`).
+   blocks it; `docs/project/process/opening-a-pr.md`).
    And the mirror rule: each sub-issue **closes at the moment its
    deliverable boxes are all ticked** — by its completing PR or a manual
    readout-close, never batched to closeout
-   (`docs/process/closing-issues.md`).
+   (`docs/project/process/closing-issues.md`).

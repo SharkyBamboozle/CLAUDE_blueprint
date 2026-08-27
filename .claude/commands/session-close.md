@@ -6,7 +6,7 @@ disable-model-invocation: true
 Close out this working session. Steps, in order:
 
 1. **Changelog entry** — prepend (newest first, under the header) to
-   `docs/records/changelog.md`:
+   `docs/project/records/changelog.md`:
    `### Session N (YYYY-MM-DD) — <title>` (next free N), then 3–8 sentences:
    what was attempted → what landed (PRs/commits) → what was found (link
    `note` issues) → what was decided (link `D-xxx`) → what carries forward.
@@ -16,7 +16,7 @@ Close out this working session. Steps, in order:
 3. **Lessons reflection (gated)** — did this session learn something a
    future session must not re-learn (an expensive dead-end, a broken
    assumption, a real "never again")? If yes, PROPOSE an entry per the
-   skeleton in `docs/records/lessons.md` (dated, one screen, real incidents
+   skeleton in `docs/project/records/lessons.md` (dated, one screen, real incidents
    only) and append it ONLY on explicit approval — "skip" is a legitimate
    answer and is simply reported. If nothing qualifies, say so in one line
    and move on. Never write to `docs/` without the approval.
@@ -28,7 +28,7 @@ Close out this working session. Steps, in order:
    deliverable's disposition (deferred → where · moot → why); on the PR
    path the issue-link guard requires the declared trailer. Report the
    tallies — epic progress counters must match reality at session end.
-   (Rule: `docs/process/closing-issues.md`. Epics themselves close only
+   (Rule: `docs/project/process/closing-issues.md`. Epics themselves close only
    at /epic-closeout; notes only at triage.)
 5. **Records commit & state check** — report honestly:
    - **Commit the session records on this session's feature branch and
@@ -39,7 +39,7 @@ Close out this working session. Steps, in order:
      Branch's PR already **merged**? The zombie-branch recovery applies to
      records too: restart the branch from `development` and let the
      records ride the follow-up PR — or a small records-only PR when the
-     session is fully done (`docs/process/pushing.md` → *Where task-end
+     session is fully done (`docs/project/process/pushing.md` → *Where task-end
      records land*). If unsure where records belong: **push first, then
      ask** — a pushed branch is durable; discard is an operator answer,
      never a default.

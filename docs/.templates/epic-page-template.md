@@ -5,7 +5,7 @@
 <!-- Created as a stub (status + "why this epic exists" + issue link) at
 kickoff; filled in as work lands; finalised into the retrospective at
 closeout. The arc: goal → built → found → decided → carried forward. Add the
-page's row to docs/records/epics/index.md when creating it. Superseded pages stay,
+page's row to docs/project/records/epics/index.md when creating it. Superseded pages stay,
 marked 🧊 with a pointer admonition to the successor. -->
 
 ## Why this epic exists

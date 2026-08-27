@@ -4,7 +4,7 @@ name: Issue close guard
 # client-side guard-issue-close.sh hook blocks agent closes at the source,
 # but hooks bind only sessions running this repo's harness config — this
 # workflow is the server-side backstop that binds every path (D-004
-# layering), plugging the residual named by docs/process/closing-issues.md
+# layering), plugging the residual named by docs/project/process/closing-issues.md
 # ("manual closes fire no PR event"). GitHub cannot gate closing by role —
 # Triage suffices, and coding agents act with the operator's own identity
 # via a GitHub App user-to-server token — so the boundary is the one thing

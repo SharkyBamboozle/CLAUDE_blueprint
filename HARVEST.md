@@ -21,7 +21,7 @@ specific change by hand only when wanted.
   rule):
     - **Identity / generated files** (Tier 2) — `CLAUDE.md`,
       `docs/index.md`, `README.md`, the decisions registry and ADR pages,
-      the filled `docs/direction/` registries, and the `docs/records/` diary
+      the filled `docs/project/direction/` registries, and the `docs/project/records/` diary
       (changelog, lessons, epics, research). These diverge by design; a
       byte-diff is pure noise.
     - **Tokenized config** (Tier 1) — `mkdocs.yml`, `pyproject.toml`, any
@@ -61,7 +61,7 @@ specific change by hand only when wanted.
   re-parameterize anything project-specific that leaked in).
 - **Placement of a harvested CLAUDE.md convention:** it lands in its
   canonical home, not verbatim where it grew downstream. A process rule
-  goes to its act page under `docs/process/` (routed via the contributing
+  goes to its act page under `docs/project/process/` (routed via the contributing
   hub's *Find your act* table) with its enforcer named (D-004),
   and `CLAUDE.md` gets only a thin pointer; a genuinely CLAUDE.md-shaped
   rule (a hard rule, an autonomy-contract line) joins the matching section

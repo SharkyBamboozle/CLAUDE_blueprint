@@ -8,7 +8,7 @@ is deleted the moment a project is seeded, so nothing here ships downstream.
 
 For the *process* itself — ADRs, stable IDs, notes vs sub-issues, epics, the
 changelog, commit conventions — the blueprint follows its own manual,
-[`docs/process/contributing.md`](docs/process/contributing.md). Read it; it
+[`docs/project/process/contributing.md`](docs/project/process/contributing.md). Read it; it
 applies here too. This page only covers what's **different** about working on a
 template.
 
@@ -16,11 +16,11 @@ template.
 
 The blueprint wears two hats: it is a **template under development** and the
 **worked example** of the process it ships. Nearly all of the
-`docs/process/` pages hold under both hats. The per-session
+`docs/project/process/` pages hold under both hats. The per-session
 **records** instructions do not — `CLAUDE.md` → *Repo workflow* ("every working
-session ends with a `docs/records/changelog.md` entry"), the changelog and
+session ends with a `docs/project/records/changelog.md` entry"), the changelog and
 lessons steps of `.claude/commands/session-close.md`, and the page headers under
-`docs/records/` are **shipped furniture**: correct downstream, inapplicable
+`docs/project/records/` are **shipped furniture**: correct downstream, inapplicable
 here, because in this repo those files are the *stub* of a downstream project's
 diary, not a diary. Neither does one premise of the linking pages — that a
 `Closes` fires when its PR merges into `development` — because here the
@@ -46,8 +46,8 @@ number belongs to. *Enforcement:* advisory (D-004) — a checker needs a
 keep/sweep classification as its exemption ledger, so it waits on the sweep that
 produces one; review is the backstop until then.
 
-**2 · No session records during regular work.** `docs/records/changelog.md` and
-`docs/records/lessons.md` ship to seeded projects. Here they are the stubs a
+**2 · No session records during regular work.** `docs/project/records/changelog.md` and
+`docs/project/records/lessons.md` ship to seeded projects. Here they are the stubs a
 seeded project fills in, so anything written into them arrives downstream as
 false history — a diary of a project the reader never worked on, which
 `scripts/check_bootstrap_complete.sh` cannot catch (no `{{TOKEN}}`, no
@@ -57,7 +57,7 @@ false history — a diary of a project the reader never worked on, which
 step 5 — all correct downstream. *Where the
 content goes instead:* whatever will still be true in a seeded project — a
 regression case in the matching `scripts/test_*.sh` suite, a rule on a ritual
-card under `.claude/commands/`, a page under `docs/process/` — plus the release
+card under `.claude/commands/`, a page under `docs/project/process/` — plus the release
 line of rule 3. *Enforcement:* the blueprint-records lane of
 `scripts/check_docs_truth.py`, which runs in `make verify` and self-disarms when
 `blueprint/` is deleted at bootstrap.
@@ -75,12 +75,12 @@ can tell an early entry from a timely one.
 keywords only on PRs merging into the repo's *default* branch. Seeded projects
 make `development` the default (`scripts/github_setup.sh`), so the shipped
 premise — "the integration branch is the repo default, so every integration PR
-is a live close surface" (`docs/process/opening-a-pr.md`) — holds downstream.
+is a live close surface" (`docs/project/process/opening-a-pr.md`) — holds downstream.
 It cannot hold here: a template is seeded from its default branch, so `main`,
 the released line, must stay the default, and a PR merging into `development`
 closes nothing in this repo, however correct its `Closes #NN` line. The issues
 close at promotion instead — the promotion PR restates `Closes #N` for every
-issue the train completed, and `docs/process/releases.md` step 3 exists
+issue the train completed, and `docs/project/process/releases.md` step 3 exists
 precisely for this main-default case. A merged PR whose target issue is still
 open is therefore the *normal between-releases state*: not drift to flag in a
 summary, and never cause for a manual close. The **procedure is unchanged —
@@ -121,7 +121,7 @@ consequences:
   project, the archive is a record of the agent's work, and the risk is
   **loss** — task-end records (the changelog entry, the `/handoff` archive)
   must land on a live branch and ride a PR before the branch or container is
-  gone (`docs/process/pushing.md` → *PR lifecycle*). Under both hats, a
+  gone (`docs/project/process/pushing.md` → *PR lifecycle*). Under both hats, a
   still-running task's files stay uncommitted; only the fate of a *finished*
   task's records differs.
 - **Never run `scripts/github_setup.sh` against this repo.** Its first act on
@@ -147,7 +147,7 @@ Every file is one of three tiers (`blueprint/TOKENS.md`), and the tier sets the
 blast radius of your change:
 
 - **Literal** — byte-identical in every seeded project (hooks, workflows,
-  commands, skills, doc templates, the `docs/process/` pages). A change here
+  commands, skills, doc templates, the `docs/project/process/` pages). A change here
   reaches every downstream project through `HARVEST` / `UPDATE`. Highest
   scrutiny; keep it project-agnostic.
 - **Tokenized** — carries `{{TOKEN}}` placeholders filled at bootstrap. Never

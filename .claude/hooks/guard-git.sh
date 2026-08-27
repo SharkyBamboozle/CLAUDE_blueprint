@@ -533,7 +533,7 @@ def gh_calls(tokens):
 
 def advance_cd(run_cd, tokens):
     # Track the shell's working directory across a `cmd && cmd` / `cmd; cmd`
-    # list so `cd docs/decisions && rm adr-...` resolves the way bash would.
+    # list so `cd docs/project/decisions && rm adr-...` resolves the way bash would.
     # `run_cd` is relative to the Bash tool's start cwd (assumed repo root);
     # a `cd` to an absolute path or ~ makes it unknowable -> None. Returns
     # the (possibly updated) run_cd; non-cd commands leave it unchanged. This
@@ -685,7 +685,7 @@ def dead_pr(branch, src_ref, chdir=None):
     a fresh PR — allowed. FAILS OPEN (None) on any gh/network error: see the
     header. MCP/API pushes bypass this hook entirely — the session-start
     PR verdict and the PR-lifecycle rule are that net
-    (docs/process/pushing.md)."""
+    (docs/project/process/pushing.md)."""
     try:
         # gh is reached through an explicit seam: GUARD_GH_BIN (POSIX
         # shlex-split) replaces the leading "gh" so the regression suite

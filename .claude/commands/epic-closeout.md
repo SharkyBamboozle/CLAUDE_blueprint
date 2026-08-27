@@ -18,12 +18,12 @@ Close out epic $ARGUMENTS. Steps, in order:
    the operator close them (CLAUDE.md hard rule); **re-home** still-live
    ones to the successor epic (update both epics' Related-notes
    sections); leave truly standalone ones in the `label:note` index.
-3. **Retrospective** — finalise the epic's page under `docs/records/epics/` into the
+3. **Retrospective** — finalise the epic's page under `docs/project/records/epics/` into the
    story (goal → built → found → decided → carried forward), with the note
    list carrying inline resolutions (*resolved — how* / *moot — why* /
-   *live — carried to #NN*). Update its row in `docs/records/epics/index.md`
+   *live — carried to #NN*). Update its row in `docs/project/records/epics/index.md`
    (status ✅, or 🧊 Superseded with a pointer admonition).
-4. **Changelog** — add the session's entry to `docs/records/changelog.md` citing the
+4. **Changelog** — add the session's entry to `docs/project/records/changelog.md` citing the
    epic, its outcome, and any `D-xxx` that moved to ✅.
 5. **Pointer comment** — post the closeout comment from the skeleton in
    `docs/.templates/epic-closeout-comment.md` (retrospective link, outcome,

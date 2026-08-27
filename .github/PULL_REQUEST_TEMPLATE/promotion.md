@@ -1,6 +1,6 @@
 <!-- Promotion PR — development → main. Opened by the /promote ritual
      (.claude/commands/promote.md); canonical path:
-     docs/process/release-checklist.md. Not the default template — the
+     docs/project/process/release-checklist.md. Not the default template — the
      ritual selects it (GitHub cannot auto-pick a template by base branch).
 
      Restate below one `Closes #N` per issue this train COMPLETED, collected
