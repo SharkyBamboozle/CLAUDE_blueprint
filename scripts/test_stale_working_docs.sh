@@ -5,7 +5,7 @@
 # hooks read from .claude/settings.json, so for this Stop hook the
 # Makefile line is the only wiring pin.
 #
-# Fully hermetic per docs/process/testing-changes.md: throwaway temp dirs
+# Fully hermetic per docs/project/process/testing-changes.md: throwaway temp dirs
 # + touch -d, no network, no dependence on this repo's live
 # .claude/working/ state.
 #

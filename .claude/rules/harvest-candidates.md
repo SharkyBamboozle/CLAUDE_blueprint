@@ -6,7 +6,7 @@ paths:
   - ".claude/rules/**"
   - ".claude/settings.json"
   - ".github/**"
-  - "docs/process/**"
+  - "docs/project/process/**"
   - "docs/.templates/**"
   - "scripts/**"
   - "Makefile"

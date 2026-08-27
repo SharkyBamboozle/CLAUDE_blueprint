@@ -8,25 +8,32 @@ rules themselves are advisory, per the labels below.*
 ## How the docs are organised
 
 The top level is deliberately small: **Home**, the **Project** tab, and one
-top-level tab per **domain area**. Project holds four meta sections —
+top-level tab per **domain area** — and **one top-level tab is one directory
+under `docs/`**, uniformly
+([D-008](../decisions/adr-0008-docs-layout.md)). Project maps to
+`docs/project/` and holds four meta sections —
 **Direction** (vision → principles → requirements →
 open questions → roadmap, the traceability chain in reading order),
 **Decisions** (the ADR registry + one page per ADR), **Records** (epic
 stories, agent-research reports, the changelog), and **Process** (the process
-pages + the glossary). The directory layout under `docs/` mirrors the nav — one
+pages + the glossary). Within a tab the same mirroring continues — one
 section, one directory.
 
 **Where does a new page go?** Direction-setting pages → **Direction**; ADRs →
 **Decisions**; history → **Records**; process manuals and lookups →
 **Process**. Domain/system pages (architecture, design, …) get their own
-**top-level tab** (`docs/<area>/`), a sibling of Home and Project — that is
-where the topic pages ADRs link to live. Domain-area tabs are the one
+**top-level tab** and their own `docs/<area>/` directory, a sibling of Home
+and `docs/project/` — that is
+where the topic pages ADRs link to live; the docs root reserves no names for
+the chassis beyond `docs/index.md`, `docs/project/`, and the dot-directories.
+Domain-area tabs are the one
 sanctioned exception to a shallow top level: they are named up front (at
 bootstrap, or when the project grows a new area) and need no ADR; otherwise
 depth goes inside a tab. **Promoting any *other* section to a top-level tab
 is a structural decision**: it gets an ADR and a registry row like any other
-`D-xxx`. *(Advisory — no gate detects a new non-area nav tab that skipped its
-ADR; caught at review, per D-004.)*
+`D-xxx` (D-008 itself is the worked example). *(Advisory — no gate compares
+the nav's top level to the directory tree or detects a new non-area nav tab
+that skipped its ADR; caught at review, per D-004.)*
 
 **Every page gets a `nav` entry.** A page no `nav` entry lists is unreachable
 on the site, so the pairing is gated in both directions: the strict build

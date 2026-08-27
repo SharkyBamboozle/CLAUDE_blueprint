@@ -48,4 +48,4 @@ successor epics.>
 
 ---
 *Sub-issues are added incrementally; findings tracked in Related notes above;
-the story page lives under `docs/records/epics/`.*
+the story page lives under `docs/project/records/epics/`.*

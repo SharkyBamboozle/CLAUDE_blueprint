@@ -234,9 +234,9 @@ def main():
     # literal is what pins that platform-independence.
     advance_cd = ns["advance_cd"]
     combine_chdir = ns["combine_chdir"]
-    check(advance_cd("", ["cd", "docs/decisions"]) == "docs/decisions",
+    check(advance_cd("", ["cd", "docs/project/decisions"]) == "docs/project/decisions",
           "cd: advance into a relative dir (POSIX separators on every OS)")
-    check(advance_cd("docs", ["cd", "decisions"]) == "docs/decisions",
+    check(advance_cd("docs", ["cd", "project/decisions"]) == "docs/project/decisions",
           "cd: advance accumulates (POSIX separators on every OS)")
     check(advance_cd("docs", ["git", "status"]) == "docs",
           "cd: a non-cd command leaves the context unchanged")

@@ -43,7 +43,7 @@ the machinery exclusions above — must be empty.
 ## File-treatment rule of thumb
 
 **Process files are literal** (byte-identical across projects except
-explicitly marked judgment spots — e.g. `docs/process/contributing.md`'s
+explicitly marked judgment spots — e.g. `docs/project/process/contributing.md`'s
 growth-areas block; the `docs/.templates/` skeletons are fully literal);
 **identity files are generated** (Tier 2 — `CLAUDE.md` identity sections,
 `docs/index.md`, vision seeds); **config files are tokenized** (Tier 1 —

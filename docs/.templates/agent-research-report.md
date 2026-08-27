@@ -3,7 +3,7 @@
 <!-- A report is a SNAPSHOT IN TIME: it proposes and rates — it does not
 decide. Load-bearing findings graduate into an ADR / epic / topic page / open
 question; the report stays as the record of how the direction was found. Add
-the report's row to docs/records/agent-research/index.md. -->
+the report's row to docs/project/records/agent-research/index.md. -->
 
 !!! note "Reconciliation (<date>)"
     <!-- If the codebase moved while the scan ran: what changed, which

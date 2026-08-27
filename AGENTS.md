@@ -20,7 +20,7 @@ The *process and behavior* in `CLAUDE.md` is tool-neutral and binding:
   instructions critically instead of executing them blindly; reproduce before
   you fix; honest reporting and adversarial verification of load-bearing claims.
 - **`docs/` is the single source of truth** — read it before acting; the
-  decisions registry (`docs/decisions/`) is authoritative for `D-xxx` ADRs.
+  decisions registry (`docs/project/decisions/`) is authoritative for `D-xxx` ADRs.
 
 These are enforced **server-side by CI** (`.github/workflows/`) for every
 change, by any agent or human — so they bind you even though the Claude-only
@@ -34,7 +34,7 @@ CI is the backstop — but note these conveniences won't fire for you:
 
 - `.claude/hooks/` — edit-time guard hooks that nudge or block bad commits;
 - `.claude/commands/` — ritual slash commands (`/adr-new`, `/note`, …); do the
-  steps by hand, following `docs/process/contributing.md`;
+  steps by hand, following `docs/project/process/contributing.md`;
 - `.claude/skills/` — on-demand protocol cards (still readable as plain
   Markdown if you want the detail);
 - `.claude/rules/` and `.claude/settings.json` — path-scoped rules and

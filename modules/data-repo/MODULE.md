@@ -40,7 +40,7 @@ run outputs are not mutually exclusive.
 4. **Judgment (Tier 2):** name the project's artifact types in the seed
    README and the ADR (plots? videos? checkpoints?), and decide whether the
    project needs a standard artifact pack per change-class
-   (docs/process/records-and-canon.md → *Standard artifact packs & figures*).
+   (docs/project/process/records-and-canon.md → *Standard artifact packs & figures*).
 5. In the **code repo**:
    - copy `code/data/README.md` to `data/README.md` (the `.gitignore` already
      carries `data/*` + `!data/README.md`);

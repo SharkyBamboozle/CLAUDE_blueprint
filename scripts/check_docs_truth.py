@@ -33,7 +33,7 @@ the mechanically verifiable *claims* docs make, in seven lanes:
      true is judgment work and stays out of the merge gate. HTML comments
      are stripped before parsing (templates embed example rows in them).
   E. Epic-page status vs issue state (same reachability posture as
-     lane B — NEVER guesses) — an epic page under docs/records/epics/
+     lane B — NEVER guesses) — an epic page under docs/project/records/epics/
      whose status line says in-progress (🟡/🔴) must cite an OPEN epic
      issue. A closed issue behind an in-progress page means the epic was
      wrongly closed (e.g. a PR's closing keyword slipped past the
@@ -49,8 +49,8 @@ the mechanically verifiable *claims* docs make, in seven lanes:
      Bullet-leading refs only: mid-line refs may legitimately cite PRs.
   G. Blueprint-only: session records written into shipped stubs (armed
      only while blueprint/ exists — i.e. in the template repo, and in a
-     seed until bootstrap deletes the machinery). docs/records/changelog.md
-     and docs/records/lessons.md ship to seeded projects as EMPTY STUBS;
+     seed until bootstrap deletes the machinery). docs/project/records/changelog.md
+     and docs/project/records/lessons.md ship to seeded projects as EMPTY STUBS;
      while the template is being authored they are not its diary, so a
      session entry or a dated lesson written there reaches every seed as
      false history — a diary of a project the reader never worked on. The
@@ -118,6 +118,12 @@ CODE_DIRS = ("src", "lib", "app", "pkg")
 # directory/category pass here — restructure the doc instead.
 KNOWN_EXEMPT = [
     ("path", "docs/.templates/", "*", "reusable skeletons: their citations are placeholders by design"),
+    # ADR-0008's Context quotes the four pre-move section paths — the
+    # decision's before-state, deliberately dead after the move (D-008).
+    ("path", "decisions/adr-0008-docs-layout.md", "docs/direction/", "ADR-0008 before-state citation"),
+    ("path", "decisions/adr-0008-docs-layout.md", "docs/decisions/", "ADR-0008 before-state citation"),
+    ("path", "decisions/adr-0008-docs-layout.md", "docs/records/", "ADR-0008 before-state citation"),
+    ("path", "decisions/adr-0008-docs-layout.md", "docs/process/", "ADR-0008 before-state citation"),
 ]
 KNOWN_EXEMPT_CEILING = 15
 
@@ -313,7 +319,7 @@ def _read_stripped(path: str) -> str:
 
 
 def lane_d_consistency(root: str, issues: list):
-    dec_dir = os.path.join(root, "docs", "decisions")
+    dec_dir = os.path.join(root, "docs", "project", "decisions")
     index_p = os.path.join(dec_dir, "index.md")
     adr_files = []
     if os.path.isdir(dec_dir):
@@ -323,7 +329,7 @@ def lane_d_consistency(root: str, issues: list):
     if not os.path.isfile(index_p):
         if adr_files:  # pages without their registry: fail loud, never green
             issues.append(
-                "[consistency] docs/decisions/ has ADR pages but no index.md "
+                "[consistency] docs/project/decisions/ has ADR pages but no index.md "
                 "registry — restore the registry; pages and registry are a pair."
             )
         return  # dormant: this tree has no decisions system (e.g. fixtures)
@@ -340,7 +346,7 @@ def lane_d_consistency(root: str, issues: list):
         rid = cells[0]
         if rid in seen_ids:
             issues.append(
-                f"[consistency] docs/decisions/index.md: duplicate registry ID "
+                f"[consistency] docs/project/decisions/index.md: duplicate registry ID "
                 f"{rid} (rows {seen_ids[rid]} and {ln}) — stable IDs are never "
                 "reused; renumber the newer decision to the next free ID."
             )
@@ -355,7 +361,7 @@ def lane_d_consistency(root: str, issues: list):
         n = re.match(r"adr-(\d+)", f).group(1)
         if n in nums:
             issues.append(
-                f"[consistency] docs/decisions/: duplicate ADR number {n} "
+                f"[consistency] docs/project/decisions/: duplicate ADR number {n} "
                 f"({nums[n]} and {f}) — two branches claimed the same number; "
                 "renumber one to the next free number and fix its registry row."
             )
@@ -366,7 +372,7 @@ def lane_d_consistency(root: str, issues: list):
     for rid, emoji, link, ln in rows:
         if emoji is None or link is None:
             issues.append(
-                f"[consistency] docs/decisions/index.md row {ln} ({rid}): "
+                f"[consistency] docs/project/decisions/index.md row {ln} ({rid}): "
                 "cannot parse status emoji + ADR link — keep rows in the "
                 "'ID | statement | status | [ADR-…](file.md)' shape."
             )
@@ -375,7 +381,7 @@ def lane_d_consistency(root: str, issues: list):
         page = os.path.join(dec_dir, link)
         if not os.path.isfile(page):
             issues.append(
-                f"[consistency] docs/decisions/index.md: {rid} links {link}, "
+                f"[consistency] docs/project/decisions/index.md: {rid} links {link}, "
                 "which does not exist."
             )
             continue
@@ -384,27 +390,27 @@ def lane_d_consistency(root: str, issues: list):
         p_emoji = _first_status_emoji(sm.group(1)) if sm else None
         if p_emoji is None:
             issues.append(
-                f"[consistency] docs/decisions/{link}: no parsable "
+                f"[consistency] docs/project/decisions/{link}: no parsable "
                 "'- **Status:**' line — the registry cannot be checked against it."
             )
         elif p_emoji != emoji:
             issues.append(
                 f"[consistency] status drift: the registry says {rid} is "
-                f"{emoji} but docs/decisions/{link} says {p_emoji} — update the "
+                f"{emoji} but docs/project/decisions/{link} says {p_emoji} — update the "
                 "ADR page AND the registry row together "
-                "(docs/process/writing-adrs.md)."
+                "(docs/project/process/writing-adrs.md)."
             )
         dm = re.search(r"^\s*-\s*\*\*Decision ID:\*\*\s*(D-\d+)", text, re.M)
         if dm and dm.group(1) != rid:
             issues.append(
-                f"[consistency] docs/decisions/{link}: page header says "
+                f"[consistency] docs/project/decisions/{link}: page header says "
                 f"Decision ID {dm.group(1)} but its registry row says {rid}."
             )
     for f in adr_files:
         if f not in linked:
             issues.append(
-                f"[consistency] docs/decisions/{f} has no row in "
-                "docs/decisions/index.md — every ADR page gets a registry row "
+                f"[consistency] docs/project/decisions/{f} has no row in "
+                "docs/project/decisions/index.md — every ADR page gets a registry row "
                 "(ID · statement · status · link)."
             )
 
@@ -431,8 +437,8 @@ def lane_d_consistency(root: str, issues: list):
 
     # Structured cross-refs in ADR headers cite existing registry entries.
     req_ids, q_rows = set(), []
-    req_p = os.path.join(root, "docs", "direction", "requirements.md")
-    q_p = os.path.join(root, "docs", "direction", "open-questions.md")
+    req_p = os.path.join(root, "docs", "project", "direction", "requirements.md")
+    q_p = os.path.join(root, "docs", "project", "direction", "open-questions.md")
     if os.path.isfile(req_p):
         for line in _read_stripped(req_p).splitlines():
             m = re.match(r"\|\s*(R\d+)\s*\|", line)
@@ -448,9 +454,9 @@ def lane_d_consistency(root: str, issues: list):
     for f in adr_files:
         text = _read_stripped(os.path.join(dec_dir, f))
         for label, pat, known, reg_name in (
-            ("requirements", r"R\d+", req_ids, "docs/direction/requirements.md"),
-            ("questions", r"Q\d+", q_ids, "docs/direction/open-questions.md"),
-            ("decisions", r"D-\d+", reg_ids, "docs/decisions/index.md"),
+            ("requirements", r"R\d+", req_ids, "docs/project/direction/requirements.md"),
+            ("questions", r"Q\d+", q_ids, "docs/project/direction/open-questions.md"),
+            ("decisions", r"D-\d+", reg_ids, "docs/project/decisions/index.md"),
         ):
             hm = re.search(rf"^\s*-\s*\*\*Related {label}:\*\*(.*)$", text, re.M)
             if not hm:
@@ -458,7 +464,7 @@ def lane_d_consistency(root: str, issues: list):
             for tok in sorted(set(re.findall(pat, hm.group(1)))):
                 if tok not in known:
                     issues.append(
-                        f"[consistency] docs/decisions/{f}: header cites {tok} "
+                        f"[consistency] docs/project/decisions/{f}: header cites {tok} "
                         f"but {reg_name} has no such entry — fix the reference "
                         "or add the registry row."
                     )
@@ -467,7 +473,7 @@ def lane_d_consistency(root: str, issues: list):
     for q, rest in q_rows:
         if _first_status_emoji(rest) == "✅" and "Resolved" not in rest:
             issues.append(
-                f"[consistency] docs/direction/open-questions.md: {q} is marked "
+                f"[consistency] docs/project/direction/open-questions.md: {q} is marked "
                 "✅ without a 'Resolved …' outcome/pointer — record what "
                 "resolved it (see the lifecycle note atop the file)."
             )
@@ -488,12 +494,12 @@ DATED_LESSON_RE = re.compile(r"^##\s+\d{4}-\d{2}-\d{2}\b.*$", re.M)
 
 
 def lane_g_blueprint_records(root: str, issues: list):
-    """While the blueprint machinery is present, docs/records/ holds the
+    """While the blueprint machinery is present, docs/project/records/ holds the
     SHIPPED STUBS of a downstream project's diary, not this repo's records."""
     if not os.path.isdir(os.path.join(root, BLUEPRINT_DIR)):
         return  # dormant: bootstrapped project — its records are its own
 
-    changelog = os.path.join(root, "docs", "records", "changelog.md")
+    changelog = os.path.join(root, "docs", "project", "records", "changelog.md")
     if os.path.isfile(changelog):
         with open(changelog, encoding="utf-8") as f:
             text = f.read()
@@ -507,7 +513,7 @@ def lane_g_blueprint_records(root: str, issues: list):
             if "<!--" in head:
                 continue
             issues.append(
-                f"[blueprint-records] docs/records/changelog.md: '{head}' is a "
+                f"[blueprint-records] docs/project/records/changelog.md: '{head}' is a "
                 "real session entry, but the blueprint keeps no per-session "
                 "records — this file ships to seeded projects as a stub, so "
                 "the entry reaches every seed as false history. Remove it; "
@@ -516,17 +522,17 @@ def lane_g_blueprint_records(root: str, issues: list):
                 "-> Two hats)."
             )
 
-    lessons = os.path.join(root, "docs", "records", "lessons.md")
+    lessons = os.path.join(root, "docs", "project", "records", "lessons.md")
     if os.path.isfile(lessons):
         for m in DATED_LESSON_RE.finditer(_read_stripped(lessons)):
             issues.append(
-                f"[blueprint-records] docs/records/lessons.md: '{m.group(0).strip()}' "
+                f"[blueprint-records] docs/project/records/lessons.md: '{m.group(0).strip()}' "
                 "is a dated lesson entry, but this file ships to seeded "
                 "projects as a stub — a blueprint-internal incident recorded "
                 "here becomes false history in every seed. Put the durable "
                 "form where it stays true downstream (a regression case in "
                 "the matching scripts/test_*.sh suite, a rule on a ritual "
-                "card, a docs/process/ page) and drop the entry "
+                "card, a docs/project/process/ page) and drop the entry "
                 "(CONTRIBUTING.md -> Two hats)."
             )
 
@@ -586,7 +592,7 @@ def run_checks(root: str, seam=None):
 
     # Lane E — epic-page status vs issue state. Reuses lane B's
     # resolver: offline / unknown skips, never guesses.
-    epics_dir = os.path.join(root, "docs", "records", "epics")
+    epics_dir = os.path.join(root, "docs", "project", "records", "epics")
     for p, text in texts.items():
         rel = os.path.relpath(p, root)
         if not p.startswith(epics_dir + os.sep) or os.path.basename(p) == "index.md":
@@ -785,25 +791,25 @@ def self_test() -> int:
         # finished-page, and unknown cases pass (never guesses).
         epic_line = "# E\n\n**Status:** {} · epic issue [#{}](https://example.test/{})\n"
         scenario("E-wrongly-closed-epic", ["[epic-state]"], lambda td: write(
-            td, "docs/records/epics/e.md", epic_line.format("🟡 In progress", 42, 42)))
+            td, "docs/project/records/epics/e.md", epic_line.format("🟡 In progress", 42, 42)))
         scenario("E-open-epic", [], lambda td: write(
-            td, "docs/records/epics/e.md", epic_line.format("🟡 In progress", 43, 43)))
+            td, "docs/project/records/epics/e.md", epic_line.format("🟡 In progress", 43, 43)))
         scenario("E-finished-page-closed-issue", [], lambda td: write(
-            td, "docs/records/epics/e.md", epic_line.format("✅ Done", 42, 42)))
+            td, "docs/project/records/epics/e.md", epic_line.format("✅ Done", 42, 42)))
         scenario("E-unknown-skips", [], lambda td: write(
-            td, "docs/records/epics/e.md", epic_line.format("🟡 In progress", 99, 99)))
+            td, "docs/project/records/epics/e.md", epic_line.format("🟡 In progress", 99, 99)))
 
         # Lane F: built-but-open fails; built-and-closed, unknown, and
         # mid-line refs pass (never guesses; bullet-leading refs only).
         built_page = "# F\n\n## What has been built\n\n- #{} vendor block landed\n"
         scenario("F-built-but-open", ["[built-state]"], lambda td: write(
-            td, "docs/records/epics/f.md", built_page.format(43)))
+            td, "docs/project/records/epics/f.md", built_page.format(43)))
         scenario("F-built-and-closed", [], lambda td: write(
-            td, "docs/records/epics/f.md", built_page.format(42)))
+            td, "docs/project/records/epics/f.md", built_page.format(42)))
         scenario("F-unknown-skips", [], lambda td: write(
-            td, "docs/records/epics/f.md", built_page.format(99)))
+            td, "docs/project/records/epics/f.md", built_page.format(99)))
         scenario("F-midline-ref-ignored", [], lambda td: write(
-            td, "docs/records/epics/f.md",
+            td, "docs/project/records/epics/f.md",
             "# F\n\n## What has been built\n\n- #42 done (via PR #43)\n"))
     finally:
         del os.environ["DOCS_TRUTH_FAKE_ISSUES"]
@@ -844,22 +850,22 @@ def self_test() -> int:
     def decisions_fixture(td, page_status="✅ Decided", row_status="✅",
                           in_nav=True, related_q="—", extra_registry="",
                           extra_files=(), questions=None):
-        write(td, "docs/decisions/adr-0001-first.md",
+        write(td, "docs/project/decisions/adr-0001-first.md",
               "# ADR-0001 — First\n\n- **Status:** " + page_status +
               "\n- **Decision ID:** D-001\n- **Related questions:** " +
               related_q + "\n")
         for name, body in extra_files:
-            write(td, f"docs/decisions/{name}", body)
-        write(td, "docs/decisions/index.md",
+            write(td, f"docs/project/decisions/{name}", body)
+        write(td, "docs/project/decisions/index.md",
               "# Registry\n\n| ID | Decision | Status | ADR |\n"
               "|----|----------|--------|-----|\n"
               f"| D-001 | First | {row_status} | [ADR-0001](adr-0001-first.md) |\n"
               + extra_registry)
-        nav_page = "      - decisions/adr-0001-first.md\n" if in_nav else ""
+        nav_page = "      - project/decisions/adr-0001-first.md\n" if in_nav else ""
         write(td, "mkdocs.yml",
-              "nav:\n  - Decisions:\n      - decisions/index.md\n" + nav_page)
+              "nav:\n  - Decisions:\n      - project/decisions/index.md\n" + nav_page)
         if questions is not None:
-            write(td, "docs/direction/open-questions.md", questions)
+            write(td, "docs/project/direction/open-questions.md", questions)
 
     scenario("D-clean", [], lambda td: decisions_fixture(td))
     scenario("D-status-drift", ["status drift"],
@@ -892,12 +898,12 @@ def self_test() -> int:
     def records(td, changelog, lessons, seeded=False):
         if not seeded:
             write(td, "blueprint/VERSION", "1.0.0\n")
-        write(td, "docs/records/changelog.md", changelog)
-        write(td, "docs/records/lessons.md", lessons)
+        write(td, "docs/project/records/changelog.md", changelog)
+        write(td, "docs/project/records/lessons.md", lessons)
     scenario("G-stubs-pass", [], lambda td: records(td, stub_changelog, stub_lessons))
-    scenario("G-session-entry", ["[blueprint-records] docs/records/changelog.md"],
+    scenario("G-session-entry", ["[blueprint-records] docs/project/records/changelog.md"],
              lambda td: records(td, real_changelog, stub_lessons))
-    scenario("G-dated-lesson", ["[blueprint-records] docs/records/lessons.md"],
+    scenario("G-dated-lesson", ["[blueprint-records] docs/project/records/lessons.md"],
              lambda td: records(td, stub_changelog, real_lessons))
     scenario("G-disarmed-after-bootstrap", [], lambda td: records(
         td, real_changelog, real_lessons, seeded=True))

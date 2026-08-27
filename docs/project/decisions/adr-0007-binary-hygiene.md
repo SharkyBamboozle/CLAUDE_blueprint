@@ -14,7 +14,7 @@ strict-without-split), rewrite the Decision section below to state the
 chosen posture as decided (drop the alternative), reconcile the Context,
 Consequences, and Related-decisions lines with the chosen posture (e.g.
 the data-repo references, under a posture without one), flip Status to
-✅ Decided, and update the registry row (docs/decisions/index.md) to match.
+✅ Decided, and update the registry row (docs/project/decisions/index.md) to match.
 Wire the same choice into .claude/asset-dirs.txt and the CLAUDE.md
 hard-rule bullet — all in the same commit. Flipping to ✅ is itself a
 hook-gated path to Decided (guard-adr.sh): first run /unlock-adr adr-0007,

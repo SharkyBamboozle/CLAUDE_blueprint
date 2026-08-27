@@ -1,9 +1,9 @@
 name: ADR gates
 
-# Enforcement for the ADR process (D-004; docs/process/writing-adrs.md):
+# Enforcement for the ADR process (D-004; docs/project/process/writing-adrs.md):
 #
 #   registry-sync — an ADR page change must update the decisions registry
-#     (docs/decisions/index.md) in the same diff, mechanizing the existing
+#     (docs/project/decisions/index.md) in the same diff, mechanizing the existing
 #     rule "update its ADR AND the registry row together". Override for
 #     typo-only page fixes: a 'Skip-Registry-Sync: <reason>' commit trailer.
 #
@@ -42,17 +42,17 @@ jobs:
           # Capture first: a failed git diff must fail the job, never present
           # an empty work-set as a clean pass.
           changed=$(git diff --name-only "$BASE" "$HEAD")
-          adrs=$(printf '%s\n' "$changed" | grep -E '^docs/decisions/adr-.*\.md$' || true)
+          adrs=$(printf '%s\n' "$changed" | grep -E '^docs/project/decisions/adr-.*\.md$' || true)
           if [ -z "$adrs" ]; then
             echo "No ADR pages changed."; exit 0
           fi
-          if printf '%s\n' "$changed" | grep -qx 'docs/decisions/index.md'; then
+          if printf '%s\n' "$changed" | grep -qx 'docs/project/decisions/index.md'; then
             echo "Registry changed alongside ADR page(s) — OK."; exit 0
           fi
           if git log --format=%B "$BASE".."$HEAD" | grep -qE '^Skip-Registry-Sync:[[:space:]]*[^[:space:]]'; then
             echo "Skip-Registry-Sync trailer present — OK."; exit 0
           fi
-          echo "::error::ADR page(s) changed without updating docs/decisions/index.md in the same diff."
+          echo "::error::ADR page(s) changed without updating docs/project/decisions/index.md in the same diff."
           printf 'ADR pages changed:\n%s\n\n' "$adrs"
           echo "Fix: update the registry row (statement/status) in this PR — or, for a"
           echo "typo-only page fix, add to any commit message in this PR:"

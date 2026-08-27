@@ -32,13 +32,13 @@ if [ -n "$dirty" ]; then
   echo "-- Working tree NOT clean (possibly left by a previous session):"
   echo "$dirty"
 fi
-last_entry=$(grep -m1 '^### ' "$ROOT/docs/records/changelog.md" 2>/dev/null || true)
+last_entry=$(grep -m1 '^### ' "$ROOT/docs/project/records/changelog.md" 2>/dev/null || true)
 [ -n "$last_entry" ] && echo "Last changelog entry: $last_entry"
 # Lessons ledger: surface the newest entry titles when real entries exist
 # (entry headings are '## YYYY-MM-DD — …'; the placeholder file has none).
-lessons=$(grep -m2 '^## 2' "$ROOT/docs/records/lessons.md" 2>/dev/null || true)
+lessons=$(grep -m2 '^## 2' "$ROOT/docs/project/records/lessons.md" 2>/dev/null || true)
 if [ -n "$lessons" ]; then
-  echo "-- Newest lessons (docs/records/lessons.md — read before substantial work):"
+  echo "-- Newest lessons (docs/project/records/lessons.md — read before substantial work):"
   echo "$lessons"
 fi
 if command -v gh >/dev/null 2>&1; then
@@ -51,7 +51,7 @@ if command -v gh >/dev/null 2>&1; then
     verdict=$(gh pr list --head "$br" --state all --limit 1 \
       --json number,state --jq '.[0] | "PR #\(.number) \(.state)"' 2>/dev/null || true)
     case "$verdict" in
-      *MERGED*) echo "Branch $br: $verdict — dead history. Restart before pushing: git fetch origin development && git checkout -B $br origin/development (fresh PR; see docs/process/pushing.md)." ;;
+      *MERGED*) echo "Branch $br: $verdict — dead history. Restart before pushing: git fetch origin development && git checkout -B $br origin/development (fresh PR; see docs/project/process/pushing.md)." ;;
       *CLOSED*) echo "Branch $br: $verdict — closed without merging; ask the operator before continuing this line of work." ;;
       *OPEN*)   echo "Branch $br: $verdict" ;;
     esac

@@ -9,9 +9,11 @@
 # stamped ✅, promoting 🟡→✅, and deleting/renaming a Decided page via
 # `git rm`/`git mv` OR plain coreutils `rm`/`mv` (the lock protects the
 # DECISION, not the git spelling of the deletion) — including removes/renames
-# of a PARENT directory (`git rm -r docs/decisions`, `rm -rf docs/decisions`),
-# pathspec magic and root-anchored/empty/glob forms (`:/`, `:`, `:(top)`,
-# `:/*`, `docs/deci*`), brace expansion (`rm docs/decisions/adr-{0001,0007}.md`),
+# of a PARENT directory (`git rm -r docs/project/decisions`,
+# `rm -rf docs/project/decisions`), pathspec magic and
+# root-anchored/empty/glob forms (`:/`, `:`, `:(top)`, `:/*`,
+# `docs/project/deci*`), brace expansion
+# (`rm docs/project/decisions/adr-{0001,0007}.md`),
 # and `git -C <dir>` forms (targets resolve against the -C directory, the way
 # git itself would). Any of these needs a fresh /unlock-adr token (≤1h).
 # Creating or editing a 🟡/🔴/🧊 page is always allowed — the lock protects
@@ -498,7 +500,7 @@ def gh_calls(tokens):
 
 def advance_cd(run_cd, tokens):
     # Track the shell's working directory across a `cmd && cmd` / `cmd; cmd`
-    # list so `cd docs/decisions && rm adr-...` resolves the way bash would.
+    # list so `cd docs/project/decisions && rm adr-...` resolves the way bash would.
     # `run_cd` is relative to the Bash tool's start cwd (assumed repo root);
     # a `cd` to an absolute path or ~ makes it unknowable -> None. Returns
     # the (possibly updated) run_cd; non-cd commands leave it unchanged. This
@@ -538,7 +540,7 @@ def combine_chdir(run_cd, chdir):
 # ---8<--- end shared guard command-parser
 
 ROOT_ABS = os.path.abspath(os.environ.get("CLAUDE_PROJECT_DIR", "."))
-ADR_DIR = "docs/decisions"
+ADR_DIR = "docs/project/decisions"
 
 # A Status field whose VALUE is Decided — tolerant of markup/bullet variants
 # (`- **Status:** ✅`, `**Status**: ✅`, `Status: ✅`, and the emoji-last /
@@ -554,7 +556,7 @@ def block(rel, short, action):
     print(
         f"BLOCKED (CLAUDE.md hard rule): {rel} is (or would become) a "
         f"✅ Decided ADR, and {action} a Decided decision is gated. A changed "
-        "decision is a NEW superseding ADR (docs/process/writing-adrs.md, "
+        "decision is a NEW superseding ADR (docs/project/process/writing-adrs.md, "
         "/adr-new). For a legitimate governance action "
         "(maintenance edit, create-as-Decided, 🟡→✅ promotion, delete, "
         f"rename), first run:\n\n    /unlock-adr {short or '<adr-id>'}\n\n"
@@ -679,8 +681,8 @@ def rm_scope(arg, chdir):
 
 def decided_adrs_under(rel):
     # Decided ADRs on disk beneath directory `rel` ('.' = repo root). ADR
-    # pages live flat in docs/decisions, so listing that one directory is
-    # the complete inventory.
+    # pages live flat in docs/project/decisions, so listing that one
+    # directory is the complete inventory.
     if rel not in (".", "docs") and rel != ADR_DIR \
             and not ADR_DIR.startswith(rel + "/") \
             and not rel.startswith(ADR_DIR + "/"):
@@ -707,13 +709,13 @@ def check_removal(positional, chdirs, is_move):
     # against — the running `cd` context AND the fallback where that cd did
     # NOT persist (e.g. a cd inside a ( ) subshell, whose effect a real shell
     # discards). A target is gated if it resolves to a Decided ADR under ANY
-    # candidate: the cd-context catches `cd docs/decisions && rm <bare>`, the
-    # fallback catches `(cd sub); rm docs/decisions/<adr>` — so cd-tracking
+    # candidate: the cd-context catches `cd docs/project/decisions && rm <bare>`, the
+    # fallback catches `(cd sub); rm docs/project/decisions/<adr>` — so cd-tracking
     # can never MISS relative to the no-cd baseline, only add coverage.
     action = "renaming/moving" if is_move else "deleting"
     # File-level check runs over EVERY argument — for mv that includes the
     # destination, so overwriting a Decided ADR via `mv other.md
-    # docs/decisions/adr-....md` stays gated.
+    # docs/project/decisions/adr-....md` stays gated.
     for a in positional:
         for chdir in chdirs:
             rel = resolve_target(a, chdir)
@@ -722,7 +724,7 @@ def check_removal(positional, chdirs, is_move):
                 if not (short and fresh_token(short)):
                     block(rel, short, action)
     # Parent-directory check runs over the SOURCES only (moving a file INTO
-    # docs/decisions creates, not destroys): removing or renaming a
+    # docs/project/decisions creates, not destroys): removing or renaming a
     # directory that contains a Decided ADR is gated like touching the ADR.
     sources = positional[:-1] if (is_move and len(positional) > 1) else positional
     for a in sources:

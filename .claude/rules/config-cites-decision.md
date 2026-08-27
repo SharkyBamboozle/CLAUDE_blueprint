@@ -12,8 +12,8 @@ paths:
 
 You are editing CI or repo config. Non-obvious lines carry a rationale
 comment naming the `D-###` decision or `#issue` that put them there, so the
-file explains itself. Canonical rule: `docs/process/writing-adrs.md`;
-rationale: `docs/process/enforcement.md` → *Enforcement layering (D-004)*.
+file explains itself. Canonical rule: `docs/project/process/writing-adrs.md`;
+rationale: `docs/project/process/enforcement.md` → *Enforcement layering (D-004)*.
 
 Files that can't carry inline comments (JSON) cite their rationale here or in
 the governing doc — e.g. `.claude/settings.json`'s permission deny-list

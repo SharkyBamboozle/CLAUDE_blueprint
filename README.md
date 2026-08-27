@@ -133,7 +133,7 @@ cards under `.claude/skills/`):
   `/handoff`) so agent notes never pollute curated docs;
 - ritual slash commands (`.claude/commands/`) packaging the
   multi-step conventions, and a lessons ledger
-  (`docs/records/lessons.md`) every future session inherits.
+  (`docs/project/records/lessons.md`) every future session inherits.
 
 **🔧 GitHub wiring a template can't carry, scripted:** `scripts/github_setup.sh`
 idempotently creates the integration branch, branch protection requiring the
@@ -237,7 +237,7 @@ in owner-approved waves with `ADOPT.md` (invariants, not shape).
   points, and the four verbs are the lifecycle at a glance (🧊 fold them
   into a directory when a fifth ritual appears).
 - `CONTRIBUTING.md` — the front door for people improving the **template
-  itself** (distinct from `docs/process/contributing.md`, the inherited
+  itself** (distinct from `docs/project/process/contributing.md`, the inherited
   process router). Not a lifecycle ritual — a human entry point GitHub
   surfaces on the public repo; like the rituals, deleted at instantiation so
   a seeded project never inherits it.

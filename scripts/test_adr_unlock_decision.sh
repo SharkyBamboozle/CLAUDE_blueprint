@@ -12,8 +12,8 @@ fails=0
 B=""; H=""
 
 adr() { # adr <repo> <file> <status-glyph+words>
-  mkdir -p "$1/docs/decisions"
-  printf '# %s\n\n- **Status:** %s\n\nbody\n' "$2" "$3" >"$1/docs/decisions/$2"
+  mkdir -p "$1/docs/project/decisions"
+  printf '# %s\n\n- **Status:** %s\n\nbody\n' "$2" "$3" >"$1/docs/project/decisions/$2"
 }
 ci() { git -C "$1" add -A; git -C "$1" commit -q "${@:2}"; }
 
@@ -35,9 +35,9 @@ UNLOCK="feat
 Unlock-ADR: adr-0001 — deliberate maintenance edit"
 
 b_edit_decided_no_trailer() { adr "$1" adr-0001-x.md "$D"; ci "$1" -m base; B=$(git -C "$1" rev-parse HEAD)
-  printf 'more\n' >>"$1/docs/decisions/adr-0001-x.md"; ci "$1" -m edit; H=$(git -C "$1" rev-parse HEAD); }
+  printf 'more\n' >>"$1/docs/project/decisions/adr-0001-x.md"; ci "$1" -m edit; H=$(git -C "$1" rev-parse HEAD); }
 b_edit_decided_trailer() { adr "$1" adr-0001-x.md "$D"; ci "$1" -m base; B=$(git -C "$1" rev-parse HEAD)
-  printf 'more\n' >>"$1/docs/decisions/adr-0001-x.md"; ci "$1" -m "$UNLOCK"; H=$(git -C "$1" rev-parse HEAD); }
+  printf 'more\n' >>"$1/docs/project/decisions/adr-0001-x.md"; ci "$1" -m "$UNLOCK"; H=$(git -C "$1" rev-parse HEAD); }
 b_add_decided_no_trailer() { ci "$1" --allow-empty -m base; B=$(git -C "$1" rev-parse HEAD)
   adr "$1" adr-0002-y.md "$D"; ci "$1" -m add; H=$(git -C "$1" rev-parse HEAD); }
 b_add_decided_trailer() { ci "$1" --allow-empty -m base; B=$(git -C "$1" rev-parse HEAD)
@@ -49,11 +49,11 @@ b_add_proposed() { ci "$1" --allow-empty -m base; B=$(git -C "$1" rev-parse HEAD
 b_promote_no_trailer() { adr "$1" adr-0004-w.md "$P"; ci "$1" -m base; B=$(git -C "$1" rev-parse HEAD)
   adr "$1" adr-0004-w.md "$D"; ci "$1" -m promote; H=$(git -C "$1" rev-parse HEAD); }
 b_edit_proposed() { adr "$1" adr-0005-p.md "$P"; ci "$1" -m base; B=$(git -C "$1" rev-parse HEAD)
-  printf 'more\n' >>"$1/docs/decisions/adr-0005-p.md"; ci "$1" -m edit; H=$(git -C "$1" rev-parse HEAD); }
+  printf 'more\n' >>"$1/docs/project/decisions/adr-0005-p.md"; ci "$1" -m edit; H=$(git -C "$1" rev-parse HEAD); }
 b_delete_decided_no_trailer() { adr "$1" adr-0006-d.md "$D"; ci "$1" -m base; B=$(git -C "$1" rev-parse HEAD)
-  git -C "$1" rm -q docs/decisions/adr-0006-d.md; ci "$1" -m delete; H=$(git -C "$1" rev-parse HEAD); }
+  git -C "$1" rm -q docs/project/decisions/adr-0006-d.md; ci "$1" -m delete; H=$(git -C "$1" rev-parse HEAD); }
 b_rename_decided_no_trailer() { adr "$1" adr-0007-old.md "$D"; ci "$1" -m base; B=$(git -C "$1" rev-parse HEAD)
-  git -C "$1" mv docs/decisions/adr-0007-old.md docs/decisions/adr-0007-new.md; ci "$1" -m rename; H=$(git -C "$1" rev-parse HEAD); }
+  git -C "$1" mv docs/project/decisions/adr-0007-old.md docs/project/decisions/adr-0007-new.md; ci "$1" -m rename; H=$(git -C "$1" rev-parse HEAD); }
 b_no_adr_change() { adr "$1" adr-0008-k.md "$D"; printf 'x\n' >"$1/README.md"; ci "$1" -m base; B=$(git -C "$1" rev-parse HEAD)
   printf 'y\n' >>"$1/README.md"; ci "$1" -m docs; H=$(git -C "$1" rev-parse HEAD); }
 

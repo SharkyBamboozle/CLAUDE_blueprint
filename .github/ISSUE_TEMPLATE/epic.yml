@@ -1,5 +1,5 @@
 # Epic form — the form fields ARE the convention
-# (docs/process/running-epics.md). Agents using the CLI take the same structure
+# (docs/project/process/running-epics.md). Agents using the CLI take the same structure
 # from docs/.templates/epic-issue-body.md with `gh issue create --body-file`.
 name: Epic
 description: A coherent body of work. Build tasks attach as native sub-issues; findings become `note` issues.
@@ -13,7 +13,7 @@ body:
         findings are filed as **`note`** issues and listed under *Related notes* — never
         as sub-issues. Create the epic's story page from
         `docs/.templates/epic-page-template.md` at kickoff and add its row to
-        `docs/records/epics/index.md`.
+        `docs/project/records/epics/index.md`.
   - type: input
     id: thesis
     attributes:

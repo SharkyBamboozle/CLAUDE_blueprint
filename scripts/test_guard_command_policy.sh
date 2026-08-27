@@ -29,7 +29,7 @@ HOOK="$REPO/.claude/hooks/guard-command-policy.py"
 fails=0
 
 # A file-targeted gate fails loud when its target is missing (house
-# convention, docs/process/enforcement.md) — a moved hook must never turn
+# convention, docs/project/process/enforcement.md) — a moved hook must never turn
 # this suite green.
 if [ ! -f "$HOOK" ]; then
   echo "FAIL: approve-hook missing at $HOOK — suite target gone"
@@ -145,9 +145,9 @@ expect defer "guard-git: gh api pulls/N/merge"      "gh api repos/o/r/pulls/7/me
 expect defer "guard-git: (gh pr merge) subshell"    "(gh pr merge 7)"
 expect defer "guard-git: graphql merge mutation"    'gh api graphql -f query="mutation { mergePullRequest(input:{pullRequestId:\"PR_x\"}) { pullRequest { number } } }"'
 # guard-adr.sh blocked surface (from test_guard_adr.sh):
-expect defer "guard-adr: git rm Decided ADR"        "git rm docs/decisions/adr-0004-enforcement-doctrine.md"
-expect defer "guard-adr: git mv Decided ADR"        "git mv docs/decisions/adr-0004-enforcement-doctrine.md /tmp/x.md"
-expect defer "guard-adr: coreutils rm -rf decisions" "rm -rf docs/decisions"
+expect defer "guard-adr: git rm Decided ADR"        "git rm docs/project/decisions/adr-0004-enforcement-doctrine.md"
+expect defer "guard-adr: git mv Decided ADR"        "git mv docs/project/decisions/adr-0004-enforcement-doctrine.md /tmp/x.md"
+expect defer "guard-adr: coreutils rm -rf decisions" "rm -rf docs/project/decisions"
 # guard-issue-close.sh blocked surface (from test_guard_issue_close.sh):
 expect defer "guard-issue-close: api PATCH closed"  "gh api -X PATCH repos/o/r/issues/5 -f state=closed"
 expect defer "guard-issue-close: graphql closeIssue" 'gh api graphql -f query="mutation { closeIssue(input:{issueId:\"I_x\"}) { issue { id } } }"'
